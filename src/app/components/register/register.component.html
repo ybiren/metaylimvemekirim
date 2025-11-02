@@ -1,0 +1,177 @@
+<form class="form" [formGroup]="form" (ngSubmit)="onSubmit()" dir="rtl">
+  <!-- Intro block -->
+  <section class="intro card">
+    <h1 class="title">הרשמה לפגוש אותי</h1>
+    <p>
+      ברוכים הבאים לרשת החברתית פגוש אותי<br>
+      כאן תוכלו ליצור ולחפש אירועים מעניינים, ליצור קשרים חברתיים חדשים ולהצטרף לקהילות מעניינות.
+      ההרשמה והשימוש באתר הינם <strong>חינם</strong>.
+    </p>
+    <p class="muted"><a href="feedback.asp">אם אינך מצליח להרשם לחץ כאן לעזרה</a></p>
+  </section>
+
+  <!-- Section header -->
+  <h2 class="section-header">פרטי החבר</h2>
+
+  <!-- Grid fields -->
+  <div class="grid card">
+    <label class="label" for="c_name">שם פרטי ושם משפחה*</label>
+    <div class="field">
+      <input id="c_name" type="text" formControlName="c_name" placeholder="שם בעברית" />
+      <div class="errors" *ngIf="f.c_name.touched && f.c_name.invalid">
+        <small *ngIf="f.c_name.errors?.required">שדה חובה</small>
+        <small *ngIf="f.c_name.errors?.hebrewOnly">נא להזין שם בעברית בלבד</small>
+      </div>
+    </div>
+
+    <label class="label" for="c_gender">מין*</label>
+    <div class="field">
+      <select id="c_gender" formControlName="c_gender">
+        <option value=0>בחר</option>
+        <option *ngFor="let r of gender" [value]="r.val">{{ r.txt }}</option>
+      </select>
+      <div class="errors" *ngIf="f.c_gender.touched && (f.c_gender.value===0)">
+        <small>בחר/י אפשרות</small>
+      </div>
+    </div>
+
+    <label class="label">תאריך לידה*</label>
+    <div class="field date-row">
+      <select formControlName="c_birth_day" aria-label="יום">
+        <option [ngValue]="0">יום</option>
+        <option *ngFor="let d of days" [value]="d">{{ d }}</option>
+      </select>
+      <select formControlName="c_birth_month" aria-label="חודש">
+        <option [ngValue]="0">חודש</option>
+        <option *ngFor="let m of months" [value]="m">{{ m }}</option>
+      </select>
+      <select formControlName="c_birth_year" aria-label="שנה">
+        <option [ngValue]="0">שנה</option>
+        <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+      </select>
+      <div class="errors" *ngIf="(f.c_birth_day.touched && f.c_birth_day.invalid) ||
+                                  (f.c_birth_month.touched && f.c_birth_month.invalid) ||
+                                  (f.c_birth_year.touched && f.c_birth_year.invalid)">
+        <small>יש לבחור יום, חודש ושנה</small>
+      </div>
+    </div>
+
+    <label class="label" for="c_country">איזור בארץ</label>
+    <div class="field">
+      <select id="c_country" formControlName="c_country" dir="rtl">
+        <option *ngFor="let r of regions" [value]="r.val">{{ r.txt }}</option>
+      </select>
+    </div>
+
+    <label class="label" for="c_pcell">טלפון נייד</label>
+    <div class="field">
+      <input id="c_pcell" type="text" formControlName="c_pcell" maxlength="13" placeholder="למשל: 050-1234567" />
+      <div class="errors" *ngIf="f.c_pcell.touched && f.c_pcell.invalid">
+        <small>ספרות, רווחים, + או - בלבד (עד 13 תווים)</small>
+      </div>
+    </div>
+
+    <label class="label" for="c_email">דואר אלקטרוני*</label>
+    <div class="field">
+      <input id="c_email" type="email" formControlName="c_email" placeholder="you@example.com" />
+      <div class="errors" *ngIf="f.c_email.touched && f.c_email.invalid">
+        <small *ngIf="f.c_email.errors?.required">שדה חובה</small>
+        <small *ngIf="f.c_email.errors?.email">דוא&quot;ל לא תקין</small>
+      </div>
+    </div>
+
+    <label class="label" for="c_ff">מצב משפחתי</label>
+    <div class="field">
+      <select id="c_ff" formControlName="c_ff" dir="rtl">
+        <option value=0>בחר</option>
+        <option *ngFor="let r of familyStatus" [value]="r.val">{{ r.txt }}</option>
+      </select>
+    </div>
+
+    <!-- Image upload -->
+    <label class="label" for="c_image">תמונת פרופיל*</label>
+    <div class="field">
+      <input
+        id="c_image"
+        type="file"
+        accept="image/*"
+        (change)="onImageSelected($event)"
+        formControlName="c_image"
+      />
+      <div class="preview-row" *ngIf="imagePreviewUrl">
+        <img [src]="imagePreviewUrl" alt="תצוגה מקדימה" class="avatar-preview" />
+        <small class="muted">תצוגה מקדימה</small>
+      </div>
+      <div class="errors" *ngIf="(f.c_image.touched && f.c_image.invalid) || imageError">
+        <small *ngIf="f.c_image.errors?.required">שדה חובה</small>
+        <small *ngIf="f.c_image.errors?.tooLarge">גודל התמונה לא יכול לעלות על ‎256KB‎</small>
+        <small *ngIf="f.c_image.errors?.notImage">נא לבחור קובץ תמונה תקין</small>
+        <small *ngIf="imageError">{{ imageError }}</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Passwords -->
+  <h2 class="section-header">סיסמה לכניסה מאובטחת</h2>
+  <div class="grid card" [class.group-invalid]="form.hasError('passwordMismatch') && (f.password2.touched || f.password.touched)">
+    <label class="label" for="password">סיסמה*</label>
+    <div class="field">
+      <input id="password" type="password" formControlName="password" maxlength="9" />
+      <div class="errors" *ngIf="f.password.touched && f.password.invalid">
+        <small *ngIf="f.password.errors?.required">שדה חובה</small>
+        <small *ngIf="f.password.errors?.maxlength">עד 9 תווים (כמו במקור)</small>
+      </div>
+    </div>
+
+    <label class="label" for="password2">אימות סיסמה*</label>
+    <div class="field">
+      <input id="password2" type="password" formControlName="password2" maxlength="9" />
+      <div class="errors" *ngIf="(f.password2.touched && f.password2.invalid) || form.errors?.passwordMismatch">
+        <small *ngIf="f.password2.errors?.required">שדה חובה</small>
+        <small *ngIf="form.errors?.passwordMismatch">הסיסמאות אינן תואמות</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- About & Interests -->
+  <h2 class="section-header">קצת עליך</h2>
+  <div class="grid card">
+    <label class="label" for="c_details">ספר קצת על עצמך</label>
+    <div class="field">
+      <textarea id="c_details" formControlName="c_details" rows="5"></textarea>
+    </div>
+
+    <label class="label" for="c_details1">תחומי העניין שלי</label>
+    <div class="field">
+      <textarea id="c_details1" formControlName="c_details1" rows="5"
+        placeholder="ספרים, סרטים ותחומים נוספים שמעניינים אותך"></textarea>
+    </div>
+  </div>
+
+  <!-- Terms -->
+  <details class="card terms">
+    <summary>&laquo; לתנאי השימוש באתר</summary>
+    <div class="terms-body">
+      <p><strong>תנאי השימוש באתר פגוש אותי</strong></p>
+      <p>השימוש באתר הינו באחריותו המלאה של המשתמש... (קיצור)</p>
+    </div>
+  </details>
+
+  <label class="accept-terms">
+    <input type="checkbox" formControlName="acceptTerms" />
+    אני מאשר/ת שקראתי את תנאי השימוש
+  </label>
+  <div class="errors" *ngIf="f.acceptTerms.touched && f.acceptTerms.invalid">
+    <small>יש לאשר את תנאי השימוש</small>
+  </div>
+
+  <!-- Hidden session id -->
+  <input type="hidden" name="sessionID" [value]="sessionID()" />
+   
+  <button class="submit" type="submit" [disabled]="form.invalid || submitting()">
+    {{ hasUserInStorage ? 'עדכן פרטים' : 'ברוך הבא – הוספה למערכת' }}
+  </button>
+
+  <!-- Server message -->
+  <p class="server-msg" *ngIf="serverMsg()">{{ serverMsg() }}</p>
+</form>

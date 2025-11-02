@@ -44,3 +44,6 @@ Thumbs.db
 .github/instructions/nx.instructions.md
 
 .angular
+
+fastapi_server/node_modules
+fastapi_server/.venv

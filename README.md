@@ -1,4 +1,12 @@
+# Run with proxy (for ngrok)
+nx serve --proxy-config proxy.conf.json
+
 # Metaylimvemekirim
+
+npx nx build metaylimvemekirim -c production
+npx http-server dist/metaylimvemekirim/browser -p 8080
+ngrok http 8080
+
 
 <a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
 

@@ -1,0 +1,92 @@
+.wrap {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.back {
+  text-decoration: none;
+  color: #2563eb;
+}
+
+.status {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f6f8fa;
+  &.error { color: #b00020; background: #fde7e7; }
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.06);
+}
+
+.avatar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+
+  img {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #f3f4f6;
+  }
+
+  .placeholder {
+    width: 140px; height: 140px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: #f3f4f6; color: #6b7280;
+    border: 2px dashed #e5e7eb;
+  }
+}
+
+.name { text-align: center; margin: 0; }
+.email { display: block; text-align: center; margin-bottom: 8px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px 16px;
+  margin: 10px 0;
+}
+
+.about h3, .about h4 { margin: 12px 0 6px; }
+
+.btn {
+  margin-top: 16px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.block-btn {
+  background: #d9534f;
+  &:hover{
+    background: #b52b27;
+  }
+  &::after {
+    content: "חסום משתמש";
+  }
+}
+
+.unblock-btn {
+  background: green;
+}
+.unblock-btn:hover {
+  background: green;
+}
+.unblock-btn::after {
+  content: "שחרר משתמש";
+}
+
+.msg-btn {
+  background: gray;
+}

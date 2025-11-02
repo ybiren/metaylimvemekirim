@@ -1,0 +1,28 @@
+<section class="users-grid" *ngIf="!loading(); else loadingTpl">
+  <div class="user-card" *ngFor="let u of users(); trackBy: trackByUserId">
+    <img [src]="imageUrl(u)" alt="user photo" class="avatar" />
+
+    <a [routerLink]="['/user', u.userID]" class="name">
+      {{ u.c_name }}
+    </a>
+
+    <!-- Like area -->
+    <div class="actions">
+      <button
+        class="like-btn"
+        type="button"
+        (click)="toggleLike(u)"
+        [attr.aria-pressed]="u.liked ? 'true' : 'false'"
+        aria-label="Like"
+        title="Like"
+      >
+        <span class="heart" [class.liked]="u.liked">❤</span>
+      </button>
+      <span class="like-label">{{ u.liked ? 'Liked' : 'Like' }}</span>
+    </div>
+  </div>
+</section>
+
+<ng-template #loadingTpl>
+  <p class="loading">טוען משתמשים...</p>
+</ng-template>

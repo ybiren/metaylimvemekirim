@@ -1,2 +1,100 @@
-<app-nx-welcome></app-nx-welcome>
+<style>
+  :root {
+    --btn-width: 320px;     /* tweak this */
+    --btn-radius: 12px;
+    --brand: #0b79d0;
+  }
+
+  .container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+  }
+
+  .hide { display: none; }
+
+  /* Command-style buttons */
+  .btn {
+    appearance: none;
+    width: 320px;
+    padding: 12px 18px;
+    border-radius: var(--btn-radius);
+    border: 1px solid #d0d7de;
+    background: linear-gradient(#ffffff, #f6f8fa);
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.06),
+      inset 0 1px 0 rgba(255,255,255,.6);
+    font: 600 16px/1.2 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+    letter-spacing: .2px;
+    color: #0b2948;
+    text-align: center;
+    cursor: pointer;
+    transition: transform .02s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+  }
+  .btn:hover {
+    background: linear-gradient(#ffffff, #eef2f6);
+    box-shadow:
+      0 3px 8px rgba(0,0,0,.08),
+      inset 0 1px 0 rgba(255,255,255,.7);
+    transform: translateY(-1px);
+  }
+  .btn:active {
+    transform: translateY(0);
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.06) inset,
+      0 0 0 1px rgba(0,0,0,.02);
+  }
+  .btn:focus-visible {
+    outline: 3px solid rgba(11,121,208,.35);
+    outline-offset: 2px;
+  }
+  .btn:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+  }
+
+  /* Primary emphasis (Register) */
+  .btn-primary {
+    background: linear-gradient(#0c84e4, #0b79d0);
+    border-color: #0b79d0;
+    color: #fff;
+    text-shadow: 0 1px 0 rgba(0,0,0,.15);
+  }
+  .btn-primary:hover {
+    background: linear-gradient(#0b8ef6, #0b76ca);
+    box-shadow: 0 4px 10px rgba(11,118,202,.3);
+  }
+</style>
+
+<pwa-install></pwa-install>
+
+
+<!-- ✅ show container only on default (home) route -->
+@if(isHome()) {
+<div class="container">
+
+  <app-login></app-login>
+
+  <!--<button type="button" class="btn btn-primary" [routerLink]="'/register'">הרשמה</button>-->
+  <button type="button" class="btn" [routerLink]="'/register1'">כניסה עם פייסבוק</button>
+  <button type="button" class="btn" [routerLink]="'/register2'">כניסה עם גוגל</button>
+  <!--<button type="button" class="btn" [routerLink]="'/kupid'">הצג חברים</button>-->
+</div>
+}
+@else {
+<app-top-menu />
+}
+
+<ngx-spinner
+  [fullScreen]="true"
+  bdColor="rgba(0,0,0,0.35)"
+  [template]="spinnerTplHtml">
+</ngx-spinner>
+
+
 <router-outlet></router-outlet>

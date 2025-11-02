@@ -1,1 +1,64 @@
+
+
 /* You can add global styles to this file, and also import other style files */
+html, body {
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+}
+
+  @keyframes lds-dual-ring {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+ 
+
+ body {
+    width: min(100%, 800px);
+    margin: 0 auto; /* optional: centers content if screen > 500px */
+ 
+    .lds-dual-ring {
+      display: inline-block;
+      width: 64px;
+      height: 64px;
+    }
+    .lds-dual-ring:after {
+      content: " ";
+      display: block;
+      width: 46px;
+      height: 46px;
+      margin: 1px;
+      border-radius: 50%;
+      border: 5px solid currentColor;
+      border-color: currentColor transparent currentColor transparent;
+      animation: lds-dual-ring 1.2s linear infinite;
+   }
+  .loader-text {
+    margin-top: 10px;
+    text-align: center;
+    font-weight: 600;
+  }
+}
+
+/* Desktop modal */
+.im-dialog-desktop .cdk-dialog-container {
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 24px 64px rgba(0,0,0,.18);
+}
+
+/* Mobile full-screen modal */
+.im-dialog-mobile .cdk-dialog-container {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
+  border-radius: 0;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.toast-panel {
+  z-index: 99999 !important;
+}

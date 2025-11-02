@@ -1,0 +1,35 @@
+<section class="wrap" dir="rtl">
+  <a class="back" [routerLink]="'/users'">← חזרה לרשימת המשתמשים</a>
+
+  <div class="status" *ngIf="loading()">טוען...</div>
+  <div class="status error" *ngIf="!loading() && error()">{{ error() }}</div>
+
+  <div class="card" *ngIf="!loading() && !error() && user() as u">
+    <div class="avatar">
+      <img *ngIf="imageUrl(u)" [src]="imageUrl(u)" alt="avatar" />
+      <div *ngIf="!imageUrl(u)" class="placeholder">אין תמונה</div>
+    </div>
+
+    <h2 class="name">{{ u.c_name }}</h2>
+    <a class="email" [href]="'mailto:' + u.c_email">{{ u.c_email }}</a>
+
+    <div class="grid">
+      <div><strong>ת. לידה:</strong> {{ u.c_birth_day || '—' }}/{{ u.c_birth_month || '—' }}/{{ u.c_birth_year || '—' }}</div>
+      <div><strong>מין:</strong> {{ textByValue(gender, u.c_gender)  || '—' }}</div>
+      <div><strong>איזור:</strong> {{ textByValue(regions, u.c_country) || '—' }}</div>
+      <div><strong>טלפון:</strong> {{ u.c_pcell || '—' }}</div>
+      <div><strong>מצב משפחתי:</strong> {{ textByValue(familyStatus, u.c_ff) || '—' }}</div>
+    </div>
+
+    <div class="about" *ngIf="u.c_details || u.c_details1">
+      <h3>אודות</h3>
+      <p *ngIf="u.c_details">{{ u.c_details }}</p>
+      <h4 *ngIf="u.c_details1">תחומי עניין</h4>
+      <p *ngIf="u.c_details1">{{ u.c_details1 }}</p>
+    </div>
+
+    <!-- ✅ Block Button -->
+    <button class="btn block-btn" [ngClass]="{'unblock-btn' : isBlocked() }" (click)="blockUser(u.userID)"></button>
+    <button type="button" class="btn msg-btn" (click)="openCompose()">הודעה</button>
+  </div>
+</section>

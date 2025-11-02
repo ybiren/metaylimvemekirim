@@ -1,0 +1,35 @@
+.top-menu {
+  display: flex;
+  direction: rtl;
+  padding: 14px;
+  align-items: center;
+  background: #f9f9f9;
+  justify-content: space-between;
+  nav {
+    width: 80%;
+    display: flex;
+    justify-content: space-between;
+  
+  }
+
+  a {
+    color: black;
+    text-decoration: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.3s;
+
+    &:hover {
+      color: #007bff;
+    }
+
+    &.active {
+      color: #007bff; // blue for active route
+      text-decoration: underline; // optional, remove if not wanted
+    }
+  }
+
+  .logout {
+    color: red;
+  }
+}

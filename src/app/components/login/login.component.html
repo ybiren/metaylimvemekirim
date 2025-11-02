@@ -1,0 +1,17 @@
+<form class="login-card" (ngSubmit)="onLogin()" #loginForm="ngForm" dir="rtl">
+  <h2>כניסה לחשבון</h2>
+
+  <label for="email">דוא"ל:</label>
+  <input id="email" type="email" name="email" [(ngModel)]="email" required />
+
+  <label for="password">סיסמה:</label>
+  <input id="password" type="password" name="password" [(ngModel)]="password" required />
+
+  <div class="buttons">
+    <button type="submit" [disabled]="!loginForm.valid">כניסה עם דוא"ל וסיסמא</button>
+    <button type="button" class="secondary" (click)="goToRegister()">הרשמה לאתר</button>
+  </div>
+
+  <div class="error" *ngIf="error">{{ error }}</div>
+  <div class="success" *ngIf="success">{{ success }}</div>
+</form>
