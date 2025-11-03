@@ -1,16 +1,23 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal, Signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { IUser } from '../../interfaces';
+import { JsonPipe } from '@angular/common';
+
+import { IMessage, IUser } from '../../interfaces';
+import { MessagesService } from '../../services/messages.service';
+import { MessagesStore } from '../../stores/messages.store';
 
 @Component({
   selector: 'app-top-menu',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive,JsonPipe],
   templateUrl: './top-menu.component.html',
   styleUrls: ['./top-menu.component.scss']
 })
 export class TopMenuComponent implements OnInit {
   loggedInUser?: IUser | null = null;
+  messagesService = inject(MessagesService);
+  messages = signal<IMessage[]>([]);
+  messagesStore = inject(MessagesStore);
 
   constructor(private router: Router) {
   }
@@ -18,6 +25,16 @@ export class TopMenuComponent implements OnInit {
   ngOnInit(): void {
     const storedUser = localStorage.getItem('user');
     this.loggedInUser = storedUser ? (JSON.parse(storedUser) as IUser) : null;
+    if(this.loggedInUser) {
+      this.messagesService.getMessagesByUserId(this.loggedInUser.userID).subscribe({
+      next: (res:any) => {
+        this.messages.set(res.messages ?? [])
+        this.messagesStore.setAll(this.messages());
+      },
+      error: err => console.error('messages error', err)
+    });
+    
+    }
   }
 
   logout(): void {

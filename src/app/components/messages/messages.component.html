@@ -1,0 +1,35 @@
+<section class="wrap" dir="rtl">
+
+  <header class="toolbar">
+    <h3>
+      הודעות אליי
+      <span class="badge" *ngIf="store.unreadCount() > 0">{{ store.unreadCount() }}</span>
+    </h3>
+
+    <div class="tools">
+      <input
+        class="search"
+        type="search"
+        [value]="query()"
+        (input)="query.set($any($event.target).value)"
+        placeholder="חפש בטקסט…"
+      />
+    </div>
+  </header>
+
+  <div *ngIf="gridItems().length === 0" class="empty">
+    אין הודעות להצגה.
+  </div>
+
+  <div class="grid" *ngIf="gridItems().length > 0">
+    <article class="card" *ngFor="let m of gridItems(); trackBy: trackById">
+      <div class="meta">
+        <span class="from">מ־ {{ m.fromId }}</span>
+        <span class="to">אל {{ m.toId }}</span>
+        <span class="time">{{ m.sentAt | date:'dd/MM/yyyy HH:mm' }}</span>
+      </div>
+      <p class="body">{{ m.body }}</p>
+    </article>
+  </div>
+
+</section>

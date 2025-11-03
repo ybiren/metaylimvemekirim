@@ -340,6 +340,39 @@ async def add_message(payload: SendMessagePayload):
 
     return {"ok": True, "message": message, "count": len(msgs)}
 
+@app.get("/messages")
+async def get_messages(
+    userId: int = Query(..., alias="userId"),      # required: who receives
+    since: Optional[str] = Query(None)             # optional ISO filter
+):
+    """
+    Return all messages where toId == userId.
+    Optional: ?since=ISO_DATETIME to return only newer ones.
+    """
+    async with messages_lock:
+        msgs = await load_messages(MESSAGES_PATH)
+
+    # filter by recipient
+    res = [m for m in msgs if int(m.get("toId", -1)) == userId]
+
+    # optional since filter
+    if since:
+        from datetime import datetime
+        try:
+            t0 = datetime.fromisoformat(since.replace("Z", "+00:00"))
+            def _is_after(m):
+                s = m.get("sentAt")
+                if not s: return False
+                try:
+                    return datetime.fromisoformat(str(s).replace("Z", "+00:00")) >= t0
+                except Exception:
+                    return False
+            res = [m for m in res if _is_after(m)]
+        except Exception:
+            # ignore bad `since` and just return all for the user
+            pass
+
+    return {"ok": True, "count": len(res), "messages": res}
 
 
 # ---------------------------------------------------------------------
