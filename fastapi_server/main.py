@@ -342,17 +342,17 @@ async def add_message(payload: SendMessagePayload):
 
 @app.get("/messages")
 async def get_messages(
-    userId: int = Query(..., alias="userId"),      # required: who receives
-    since: Optional[str] = Query(None)             # optional ISO filter
+    userId: int = Query(..., alias="userId"),
+    since: Optional[str] = Query(None)
 ):
-    """
-    Return all messages where toId == userId.
-    Optional: ?since=ISO_DATETIME to return only newer ones.
-    """
     async with messages_lock:
         msgs = await load_messages(MESSAGES_PATH)
 
-    # filter by recipient
+    # load users list
+    users = await load_users(USERS_PATH)
+    users_by_id = {int(u["userID"]): u.get("c_name", f"User {u['userID']}") for u in users}
+
+    # filter messages by recipient
     res = [m for m in msgs if int(m.get("toId", -1)) == userId]
 
     # optional since filter
@@ -362,15 +362,20 @@ async def get_messages(
             t0 = datetime.fromisoformat(since.replace("Z", "+00:00"))
             def _is_after(m):
                 s = m.get("sentAt")
-                if not s: return False
+                if not s: 
+                    return False
                 try:
                     return datetime.fromisoformat(str(s).replace("Z", "+00:00")) >= t0
-                except Exception:
+                except:
                     return False
             res = [m for m in res if _is_after(m)]
-        except Exception:
-            # ignore bad `since` and just return all for the user
+        except:
             pass
+
+    # *** REPLACE ID WITH NAME ***
+    for m in res:
+        m["fromName"] = users_by_id.get(int(m.get("fromId", -1)), "Unknown")
+        m["toName"]   = users_by_id.get(int(m.get("toId", -1)), "Unknown")
 
     return {"ok": True, "count": len(res), "messages": res}
 

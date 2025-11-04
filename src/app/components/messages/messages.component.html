@@ -24,8 +24,11 @@
   <div class="grid" *ngIf="gridItems().length > 0">
     <article class="card" *ngFor="let m of gridItems(); trackBy: trackById">
       <div class="meta">
-        <span class="from">מ־ {{ m.fromId }}</span>
-        <span class="to">אל {{ m.toId }}</span>
+        <span class="from">שולח: 
+          <a [routerLink]="['/user', m.fromId]" class="name">
+          {{ m.fromName }}
+          </a>
+        </span>
         <span class="time">{{ m.sentAt | date:'dd/MM/yyyy HH:mm' }}</span>
       </div>
       <p class="body">{{ m.body }}</p>

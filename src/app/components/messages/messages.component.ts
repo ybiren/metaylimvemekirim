@@ -1,11 +1,12 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { MessagesStore } from '../../stores/messages.store';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
   selector: 'app-messages-store-view',
   standalone: true,
-  imports: [CommonModule, DatePipe],
+  imports: [CommonModule, DatePipe, RouterLink, RouterLinkActive],
   templateUrl: './messages.component.html',
   styleUrls: ['./messages.component.scss'],
 })

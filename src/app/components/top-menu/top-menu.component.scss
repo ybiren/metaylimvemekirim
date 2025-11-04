@@ -1,35 +1,96 @@
 .top-menu {
   display: flex;
   direction: rtl;
-  padding: 14px;
   align-items: center;
-  background: #f9f9f9;
   justify-content: space-between;
+  padding: 14px;
+  background: #f9f9f9;
+  gap: 10px;               /* helps when wrapping */
+
+  /* NAV: spread on desktop */
   nav {
     width: 80%;
     display: flex;
     justify-content: space-between;
-  
+    align-items: center;
+    gap: 12px;
   }
 
+  /* LINKS */
   a {
     color: black;
     text-decoration: none;
     font-weight: 500;
     cursor: pointer;
     transition: color 0.3s;
+    padding-inline: 4px;
+    line-height: 1.3;
+    min-height: 40px;      /* finger-friendly tap target */
+    display: inline-flex;
+    align-items: center;
 
-    &:hover {
-      color: #007bff;
-    }
+    &:hover { color: #007bff; }
 
     &.active {
-      color: #007bff; // blue for active route
-      text-decoration: underline; // optional, remove if not wanted
+      color: #007bff;      /* blue for active route */
+      text-decoration: underline;
     }
   }
 
-  .logout {
-    color: red;
+  .logout { color: red; }
+
+  /* ---------- Mobile tweaks ---------- */
+  @media (max-width: 600px) {
+    /* Allow the header to break lines gracefully */
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding: 10px 12px;
+    gap: 8px;
+
+    /* Make nav full-width and horizontally scrollable (RTL-friendly) */
+    nav {
+      order: 3;                   /* move below any left/right items */
+      width: 100%;
+      justify-content: flex-start;
+      gap: 8px;
+
+      overflow-x: auto;           /* horizontal scroll instead of squish */
+      overflow-y: hidden;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scroll-snap-type: x proximity;
+    }
+
+    /* Keep links compact and non-wrapping with nice scroll snapping */
+    a {
+      font-size: 14px;
+      padding-inline: 6px;
+      white-space: nowrap;
+      max-width: 160px;           /* avoid overly wide items */
+      overflow: hidden;
+      text-overflow: ellipsis;
+      scroll-snap-align: start;
+      min-height: 36px;
+    }
+
+    /* If you have a brand/title element, let it shrink */
+    .brand, h1, h2, h3 {
+      font-size: 15px;
+      margin: 0;
+      flex: 1 1 auto;            /* allow to shrink on small widths */
+      min-width: 0;              /* prevent overflow in RTL */
+    }
+
+    /* Keep logout accessible but not oversized */
+    .logout {
+      font-size: 14px;
+      white-space: nowrap;
+    }
+  }
+
+  @media (max-width: 360px) {
+    a { font-size: 13px; }
+    .logout { font-size: 13px; }
   }
 }

@@ -28,8 +28,6 @@ export class UsersComponent implements OnInit {
   users: WritableSignal<IUser[]> = signal<IUser[]>([]);
   loading = signal(false);
 
-  private LIKE_KEY = 'likedUsers';
-  private likedSet = new Set<number>();
   private didAttemptFetch = false; // guard so we fetch at most once
 
   /** React to input changes or lack thereof */
@@ -38,7 +36,7 @@ export class UsersComponent implements OnInit {
 
     if (incoming !== undefined) {
       // Parent provided something (possibly empty array) -> use it, no fetch
-      this.users.set(this.withLikes(incoming));
+      this.users.set(incoming);
     } else if (!this.didAttemptFetch) {
       // Not provided -> fetch exactly once
       this.didAttemptFetch = true;
@@ -47,21 +45,14 @@ export class UsersComponent implements OnInit {
   }, { allowSignalWrites: true });
 
   ngOnInit() {
-    this.loadLikesFromStorage();
   }
-
-  private withLikes(list: IUser[]): IUser[] {
-    return (list ?? []).map(u => ({
-      ...u,
-      liked: this.likedSet.has(u.userID)
-    }));
-  }
+  
 
   fetchUsers() {
     this.loading.set(true);
     this.http.get<{ users: IUser[] }>(`${this.apiBase}/users`).subscribe({
       next: (res) => {
-        this.users.set(this.withLikes(res.users ?? []));
+        this.users.set(res.users ?? []);
         this.loading.set(false);
       },
       error: (err) => {
@@ -81,24 +72,8 @@ export class UsersComponent implements OnInit {
   }
 
   toggleLike(u: IUser) {
-    u.liked = !u.liked;
-    if (u.liked) this.likedSet.add(u.userID);
-    else this.likedSet.delete(u.userID);
-    this.saveLikesToStorage();
-    // Optionally update the signal to trigger change detection if needed:
-    // this.users.set([...this.users()]);
   }
 
-  private loadLikesFromStorage() {
-    try {
-      const raw = localStorage.getItem(this.LIKE_KEY);
-      if (raw) JSON.parse(raw as string).forEach((id: number) => this.likedSet.add(id));
-    } catch { /* ignore */ }
-  }
-
-  private saveLikesToStorage() {
-    try {
-      localStorage.setItem(this.LIKE_KEY, JSON.stringify([...this.likedSet]));
-    } catch { /* ignore */ }
-  }
+  
+  
 }
