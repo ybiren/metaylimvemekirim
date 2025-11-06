@@ -29,27 +29,17 @@ export class UsersComponent implements OnInit {
   private presence = inject(PresenceService);
   onlineUsers = signal<Set<number>>(new Set);  
 
-
-  private didAttemptFetch = false; // guard so we fetch at most once
-
-  /** React to input changes or lack thereof */
-  private reactToInput = effect(() => {
-    const incoming = this.inputUsers();
-
-    if (incoming !== undefined) {
-      // Parent provided something (possibly empty array) -> use it, no fetch
-      this.users.set(incoming);
-    } else if (!this.didAttemptFetch) {
-      // Not provided -> fetch exactly once
-      this.didAttemptFetch = true;
-      this.fetchUsers();
-    }
-  }, { allowSignalWrites: true });
-
-  ngOnInit() {
-    this.presence.onlineSet$.subscribe(set => this.onlineUsers.set(set));
+  constructor() {
+    this.presenceSub = this.presence.onlineSet$.subscribe(set => this.onlineUsers.set(set));
   }
   
+
+  ngOnInit() {
+  }
+  
+  ngOnDestroy() {
+    this.presenceSub.unsubscribe();
+  }
 
   fetchUsers() {
     this.loading.set(true);
