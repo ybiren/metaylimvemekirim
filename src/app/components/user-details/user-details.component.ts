@@ -12,6 +12,8 @@ import { UsersService } from '../../services/users.service';
 import { MessageComposeComponent } from '../message-compose/messaege-compose.component';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { ToastService } from '../../services/toast.service';
+import { Subscription } from 'rxjs';
+import { PresenceService } from '../../services/presence.service';
 
 @Component({
   selector: 'app-user-details',
@@ -36,7 +38,7 @@ export class UserDetailsComponent implements OnInit {
   error = signal<string>('');
   user = signal<IUser | null>(null);
   loggedInUser = signal<IUser | null>(null);
-
+  
   ngOnInit(): void {
     this.loggedInUser.set(JSON.parse(localStorage.getItem('user')) as IUser)
     const idParam = this.route.snapshot.paramMap.get('userID') || this.route.snapshot.paramMap.get('id');
@@ -46,6 +48,7 @@ export class UserDetailsComponent implements OnInit {
       return;
     }
     this.fetchUser(id);
+  
   }
 
   fetchUser(id: number) {
@@ -99,6 +102,9 @@ export class UserDetailsComponent implements OnInit {
     return me.block?.includes(u.userID );
   });
 
+  
+  
+  
   openCompose() {
   const u = this.user();
   const me = this.loggedInUser();
@@ -111,6 +117,9 @@ export class UserDetailsComponent implements OnInit {
     ...(isMobile ? { width: '100vw', height: '100vh' } : { width: 'min(640px, 95vw)' }),
   });
 }
+
+
+
 
 
 

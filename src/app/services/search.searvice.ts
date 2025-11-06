@@ -7,9 +7,7 @@ import { Observable } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class SearchService {
   private http = inject(HttpClient);
-  private baseUrl = !environment.production
-    ? 'http://localhost:8000'
-    : '';
+  private baseUrl = environment.apibase;
 
   search(filters: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/search`, filters);

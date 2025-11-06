@@ -1,9 +1,11 @@
-import { Component, OnInit, inject, signal, WritableSignal, input, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, WritableSignal, input, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { IUser } from '../../interfaces';
 import { environment } from '../../../environments/environment';
+import { Subscription } from 'rxjs';
+import { PresenceService } from '../../services/presence.service';
 
 @Component({
   selector: 'app-users',
@@ -17,16 +19,16 @@ export class UsersComponent implements OnInit {
 
   apiBase = environment.apibase;
 
-  /** Input from parent:
-   *  - undefined  => not provided -> we will fetch
-   *  - []         => intentionally provided empty -> DO NOT fetch
-   *  - IUser[]    => provided list -> DO NOT fetch
-   */
   inputUsers = input<IUser[] | undefined>(undefined);
 
   /** Internal, writable state used by the template */
   users: WritableSignal<IUser[]> = signal<IUser[]>([]);
   loading = signal(false);
+
+  private presenceSub?: Subscription;
+  private presence = inject(PresenceService);
+  onlineUsers = signal<Set<number>>(new Set);  
+
 
   private didAttemptFetch = false; // guard so we fetch at most once
 
@@ -45,6 +47,7 @@ export class UsersComponent implements OnInit {
   }, { allowSignalWrites: true });
 
   ngOnInit() {
+    this.presence.onlineSet$.subscribe(set => this.onlineUsers.set(set));
   }
   
 
@@ -74,6 +77,10 @@ export class UsersComponent implements OnInit {
   toggleLike(u: IUser) {
   }
 
+  isOnline = computed(() => {
+    const set = this.onlineUsers(); // track
+    return (userId: number) => set.has(userId);
+  });
   
   
 }

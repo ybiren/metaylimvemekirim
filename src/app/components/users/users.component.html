@@ -20,6 +20,9 @@
       </button>
       <span class="like-label">{{ u.liked ? 'Liked' : 'Like' }}</span>
     </div>
+    @if(isOnline()(u.userID)) {
+    <div>כרגע באתר</div>
+    }
   </div>
 </section>
 

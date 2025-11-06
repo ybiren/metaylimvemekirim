@@ -16,6 +16,9 @@ from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse, JSONResponse
 from starlette.types import Scope
 from models import SendMessagePayload
+# import routers
+from ws.notify import router as notify_router
+
 
 # 👇 NEW: import helpers
 from helper import (
@@ -72,6 +75,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(notify_router)
 
 # ---------------------------------------------------------------------
 # Users lock (kept here; helpers are pure)
