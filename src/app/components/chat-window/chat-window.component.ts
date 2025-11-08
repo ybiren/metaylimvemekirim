@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { ChatService, ChatMsg } from '../../services/chat.service';
 import { IUser } from '../../interfaces';
+import { UsersService } from '../../services/users.service';
 
 @Component({
   selector: 'app-chat-window',
@@ -28,6 +29,8 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   private messagesSub?: any;
   private typingSub?: any;
   data = inject(DIALOG_DATA);
+  private usersSvc = inject(UsersService)
+    
   constructor(
     private chat: ChatService,
     private date: DatePipe,
@@ -106,4 +109,9 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     const el = this.scroller.nativeElement;
     el.scrollTop = el.scrollHeight;
   }
+
+  get peerName() {
+    return this.usersSvc.getName(this.peerId);
+  }
+
 }

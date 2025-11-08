@@ -7,6 +7,7 @@ import { environment } from '../../../environments/environment';
 import { Subscription } from 'rxjs';
 import { PresenceService } from '../../services/presence.service';
 import { getCurrentUserId } from '../../core/current-user';
+import { UsersService } from '../../services/users.service';
 
 @Component({
   selector: 'app-users',
@@ -21,31 +22,19 @@ export class UsersComponent implements OnInit {
   loading = signal(false);
   onlineUsers = signal<Set<number>>(new Set);  
   private presence = inject(PresenceService);
-  private http = inject(HttpClient);
+  private usersSvc = inject(UsersService)
   apiBase = environment.apibase;
   private me = getCurrentUserId();
   
   ngOnInit() {
     if(!this.inputUsers()){
-      this.fetchUsers();
+      this.usersSvc.users$.subscribe(users => this.users.set(users))
     }else {
       this.users.set(this.inputUsers().filter(u=>u.userID !== this.me));
     }
   }
     
-  fetchUsers() {
-    this.loading.set(true);
-    this.http.get<{ users: IUser[] }>(`${this.apiBase}/users`).subscribe({
-      next: (res) => {
-        this.users.set(res.users.filter(u=>u.userID !== this.me) ?? []);
-        this.loading.set(false);
-      },
-      error: (err) => {
-        console.error('Failed to load users', err);
-        this.loading.set(false);
-      }
-    });
-  }
+  
 
   imageUrl(u: IUser): string {
     const rand = Math.floor(Math.random() * 1_000_000);

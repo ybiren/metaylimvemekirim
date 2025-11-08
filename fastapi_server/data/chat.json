@@ -41,5 +41,21 @@
         "readAt": "2025-11-08T12:19:16.885146+00:00"
       }
     ]
+  },
+  {
+    "roomId": "dm:2:3",
+    "fromUserId": 2,
+    "toUserId": 3,
+    "messages": [
+      {
+        "id": "093397d0-2c8f-454e-98f8-bd26b016a480",
+        "fromUserId": 3,
+        "toUserId": 2,
+        "content": "שלום שלום",
+        "sentAt": "2025-11-08T17:54:18.600602+00:00",
+        "deliveredAt": null,
+        "readAt": null
+      }
+    ]
   }
 ]
