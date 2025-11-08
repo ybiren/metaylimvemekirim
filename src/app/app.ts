@@ -28,8 +28,6 @@ export class App implements OnDestroy{
   
   private router = inject(Router);
   private presence = inject(PresenceService);
-  
-  private onlineCount = 0;
   private presenceSub?: Subscription;
 
   spinnerTplHtml = `
@@ -46,7 +44,7 @@ export class App implements OnDestroy{
     if (storedUser) {
     
       this.presenceSub = this.presence.start(25_000, (<IUser>JSON.parse(storedUser)).userID); // match HEARTBEAT_SEC
-      this.presence.onlineSet$.subscribe(set => this.onlineCount = set.size);
+      
       
       // Navigate immediately to /users
       this.router.navigateByUrl('/users');

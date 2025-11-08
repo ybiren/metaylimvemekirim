@@ -1,0 +1,32 @@
+/* src/app/components/chat-window/chat-window.component.scss */
+.chat-wrap {
+  display:flex; flex-direction:column; height:100%;
+  background:#ece5dd; /* WhatsApp-ish */
+}
+.chat-header {
+  padding:10px 12px; background:#075e54; color:#fff;
+  .title { display:flex; align-items:center; gap:10px; }
+  .back { background:transparent; border:none; color:#fff; font-size:18px; cursor:pointer; }
+  .typing { font-size:12px; opacity:.85; }
+}
+.scroller {
+  flex:1 1 auto; overflow:auto; padding:12px;
+  display:flex; flex-direction:column; gap:8px;
+}
+.row { display:flex; }
+.row.me { }
+.bubble {
+  max-width:70%; padding:8px 10px; border-radius:10px;
+  background:#fff; position:relative;
+}
+.row.me .bubble { background:#dcf8c6; } /* me = greenish */
+.body { white-space:pre-wrap; word-wrap:break-word; }
+.meta { display:flex; gap:6px; justify-content:flex-end; font-size:11px; color:#6b7280; margin-top:2px; }
+.ticks { margin-inline-start:4px; }
+.ticks.doubleBlue { color:#1996f3; }
+.composer {
+  display:flex; gap:8px; padding:10px; background:#f0f0f0; border-top:1px solid #e5e7eb;
+  input { flex:1 1 auto; padding:10px; border-radius:18px; border:1px solid #d1d5db; }
+  button { padding:8px 14px; border-radius:16px; border:0; background:#25d366; color:#fff; cursor:pointer; }
+}
+ 

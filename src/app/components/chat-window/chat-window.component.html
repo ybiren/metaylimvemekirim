@@ -1,0 +1,51 @@
+<section class="chat-wrap" dir="rtl">
+  <!-- Header -->
+  <header class="chat-header">
+    <button class="icon-btn" (click)="close()" aria-label="סגור">✕</button>
+    <div class="title">
+      <div class="name">צ'אט עם {{ peerId }}</div>
+      <div class="typing" *ngIf="typing">מקליד…</div>
+    </div>
+  </header>
+
+  <!-- Messages -->
+  <div class="scroller" #scroller>
+    <div
+      class="row"
+      *ngFor="let m of msgs; trackBy: trackById"
+      [class.me]="m.fromUserId === me"
+      [class.peer]="m.fromUserId !== me"
+    >
+      <div class="bubble">
+        <div class="body">{{ m.content }}</div>
+
+        <div class="meta">
+          <span class="time">{{ timeStr(m.sentAt) }}</span>
+          <span class="ticks"
+                [class.single]="ticks(m) === 'single'"
+                [class.double]="ticks(m) === 'double'"
+                [class.doubleBlue]="ticks(m) === 'double-blue'">
+            <ng-container [ngSwitch]="ticks(m)">
+              <span *ngSwitchCase="'single'">✓</span>
+              <span *ngSwitchCase="'double'">✓✓</span>
+              <span *ngSwitchCase="'double-blue'">✓✓</span>
+            </ng-container>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Composer -->
+  <footer class="composer">
+    <input
+      type="text"
+      [(ngModel)]="text"
+      (input)="onTyping()"
+      (keydown.enter)="send()"
+      placeholder="כתוב הודעה…"
+      aria-label="הקלד הודעה"
+    />
+    <button class="send" (click)="send()">שלח</button>
+  </footer>
+</section>

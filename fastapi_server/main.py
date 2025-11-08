@@ -18,7 +18,7 @@ from starlette.types import Scope
 from models import SendMessagePayload
 # import routers
 from ws.notify import router as notify_router
-
+from ws.chat import router as chat_router
 
 # 👇 NEW: import helpers
 from helper import (
@@ -77,6 +77,7 @@ app.add_middleware(
 )
 
 app.include_router(notify_router)
+app.include_router(chat_router)
 
 # ---------------------------------------------------------------------
 # Users lock (kept here; helpers are pure)

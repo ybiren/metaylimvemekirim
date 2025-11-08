@@ -14,6 +14,7 @@ import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { ToastService } from '../../services/toast.service';
 import { Subscription } from 'rxjs';
 import { PresenceService } from '../../services/presence.service';
+import { ChatWindowComponent } from '../chat-window/chat-window.component';
 
 @Component({
   selector: 'app-user-details',
@@ -101,26 +102,19 @@ export class UserDetailsComponent implements OnInit {
     if (!u || !me) return false;
     return me.block?.includes(u.userID );
   });
-
-  
   
   
   openCompose() {
-  const u = this.user();
-  const me = this.loggedInUser();
-  if (!u || !me) return;
+    const u = this.user();
+    const me = this.loggedInUser();
+    if (!u || !me) return;
 
-  const isMobile = window.innerWidth < 600;
-  this.dialog.open(MessageComposeComponent, {
-    data: { fromId: me.userID, toId: u.userID, toName: u.c_name },
-    panelClass: isMobile ? 'im-dialog-mobile' : 'im-dialog-desktop',
-    ...(isMobile ? { width: '100vw', height: '100vh' } : { width: 'min(640px, 95vw)' }),
-  });
-}
-
-
-
-
-
-
+    const isMobile = window.innerWidth < 600;
+  
+    this.dialog.open(ChatWindowComponent, {
+      data: { peerId: u.userID },
+      panelClass: isMobile ? 'im-dialog-mobile' : 'im-dialog-desktop',
+      ...(isMobile ? { width: '100vw', height: '100vh' } : { width: 'min(420px, 95vw)', height:'80vh' }),
+    });
+  }
 }

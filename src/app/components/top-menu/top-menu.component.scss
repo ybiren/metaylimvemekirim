@@ -93,4 +93,65 @@
     a { font-size: 13px; }
     .logout { font-size: 13px; }
   }
+
+
+  .inbox { 
+    position: relative; 
+    .inbox-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.inbox-btn .icon { font-size: 18px; line-height: 1; }
+.inbox-btn .label { display: inline-block; }
+
+/* Badge still shows when closed */
+.badge {
+  position: absolute;
+  top: -6px;
+  inset-inline-end: -6px;
+  min-width: 18px; height: 18px; line-height: 18px;
+  padding: 0 5px; border-radius: 999px;
+  background: #ef4444; color: #fff; font-size: 11px; text-align: center;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  inset-inline-end: 0;
+  width: 320px; max-height: 60vh; overflow: auto;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.12); z-index: 50;
+}
+
+    .panel-head { display:flex; justify-content:space-between; padding:8px 12px; border-bottom:1px solid #f1f5f9; }
+    .muted { color:#94a3b8; font-size:12px; }
+    .list { list-style:none; margin:0; padding:0; }
+    li { cursor:pointer; }
+    li + li { border-top:1px solid #f1f5f9; }
+    .row { display:flex; gap:10px; padding:10px 12px; }
+    .avatar { width:36px; height:36px; border-radius:50%; background:#f3f4f6; display:grid; place-items:center; position:relative; }
+    .avatar .letter { font-weight:600; color:#374151; }
+    .dot { position:absolute; bottom:-2px; inset-inline-end:-2px; width:10px; height:10px; border-radius:999px; background:#d1d5db; border:2px solid #fff; }
+    .dot.online { background:#10b981; }
+    .meta { flex:1 1 auto; min-width:0; }
+    .top { display:flex; justify-content:space-between; font-size:13px; }
+    .name { font-weight:600; color:#111827; }
+    .time { color:#9ca3af; }
+    .bottom { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .preview { color:#4b5563; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px; }
+    .unread { min-width:18px; height:18px; border-radius:999px; background:#10b981; color:#fff; font-size:11px; display:grid; place-items:center; padding:0 6px; }
+  }
+ 
+
+
+
+
 }

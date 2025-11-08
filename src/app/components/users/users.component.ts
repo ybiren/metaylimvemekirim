@@ -6,6 +6,7 @@ import { IUser } from '../../interfaces';
 import { environment } from '../../../environments/environment';
 import { Subscription } from 'rxjs';
 import { PresenceService } from '../../services/presence.service';
+import { getCurrentUserId } from '../../core/current-user';
 
 @Component({
   selector: 'app-users',
@@ -15,37 +16,28 @@ import { PresenceService } from '../../services/presence.service';
   styleUrls: ['./users.component.scss']
 })
 export class UsersComponent implements OnInit {
-  private http = inject(HttpClient);
-
-  apiBase = environment.apibase;
-
   inputUsers = input<IUser[] | undefined>(undefined);
-
-  /** Internal, writable state used by the template */
-  users: WritableSignal<IUser[]> = signal<IUser[]>([]);
+  users = signal<IUser[]>([]);
   loading = signal(false);
-
-  private presenceSub?: Subscription;
-  private presence = inject(PresenceService);
   onlineUsers = signal<Set<number>>(new Set);  
-
-  constructor() {
-    this.presenceSub = this.presence.onlineSet$.subscribe(set => this.onlineUsers.set(set));
-  }
+  private presence = inject(PresenceService);
+  private http = inject(HttpClient);
+  apiBase = environment.apibase;
+  private me = getCurrentUserId();
   
-
   ngOnInit() {
+    if(!this.inputUsers()){
+      this.fetchUsers();
+    }else {
+      this.users.set(this.inputUsers().filter(u=>u.userID !== this.me));
+    }
   }
-  
-  ngOnDestroy() {
-    this.presenceSub.unsubscribe();
-  }
-
+    
   fetchUsers() {
     this.loading.set(true);
     this.http.get<{ users: IUser[] }>(`${this.apiBase}/users`).subscribe({
       next: (res) => {
-        this.users.set(res.users ?? []);
+        this.users.set(res.users.filter(u=>u.userID !== this.me) ?? []);
         this.loading.set(false);
       },
       error: (err) => {
@@ -68,8 +60,7 @@ export class UsersComponent implements OnInit {
   }
 
   isOnline = computed(() => {
-    const set = this.onlineUsers(); // track
-    return (userId: number) => set.has(userId);
+    return (userId: number) => this.presence.isOnline(userId);
   });
   
   
