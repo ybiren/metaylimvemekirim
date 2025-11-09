@@ -94,7 +94,12 @@ export class ChatService {
       const j = await r.json();
       const rows = Array.isArray(j.threads) ? (j.threads as ThreadRow[]) : [];
       this.threads$.next(rows);
+      const prevUnreadTotal = this.unreadTotal$.value;
       this.unreadTotal$.next(rows.reduce((sum, t) => sum + (t.unread || 0), 0));
+      if(this.unreadTotal$.value !== prevUnreadTotal) {
+        this.playBeep();
+      }
+
     }, 100); // small debounce
   }
 
@@ -148,14 +153,6 @@ export class ChatService {
           const msg = data.msg as ChatMsg;
           this.messages$.next([...this.messages$.value, msg]);
           this.refreshThreads();
-
-          // Beep if it's an incoming message AND the chat with that peer isn't open
-          const isIncoming = msg.toUserId === this.me;
-          const activePeer = this.activePeer$.value;
-          const chatClosed = activePeer == null || activePeer !== msg.fromUserId;
-          const tabVisible = document.visibilityState === 'visible';
-          if (isIncoming && chatClosed && tabVisible) this.playBeep();
-
         } else if (data.type === 'delivered') {
           const ids: string[] = data.ids || [];
           const at: string | undefined = data.deliveredAt; // optional from server
@@ -252,10 +249,10 @@ export class ChatService {
   }
 
   private playBeep() {
-    if (!this.beep) return;
     try {
       this.beep.currentTime = 0;
       void this.beep.play();
-    } catch {}
+    } catch {
+    }
   }
 }
