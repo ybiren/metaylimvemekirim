@@ -1,53 +1,61 @@
-<div class="top-menu">
+<div class="top-menu" dir="rtl">
   @if (loggedInUser) {
     <div class="greeting">{{ loggedInUser.c_name }} שלום</div>
   }
+
   <nav>
     @if (loggedInUser) {
-    <a routerLink="/register" routerLinkActive="active">
-      עדכון פרטים
-    </a>
-    <a routerLink="/search" [queryParams]=randomInit() routerLinkActive="active">חפש חברים</a>
-    <a routerLink="/users" routerLinkActive="active">כל החברים</a>
-    <div class="inbox" [class.open]="open" dir="rtl">
-  <button class="inbox-btn" (click)="toggleInbox()" aria-label="פתיחת שיחות">
-    <span class="icon">💬</span>
-    <span class="label">שיחות</span>
-    <span class="badge" *ngIf="unreadTotal > 0">{{ unreadTotal }}</span>
-  </button>
+      <a routerLink="/register" routerLinkActive="active">עדכון פרטים</a>
+      <a routerLink="/search" [queryParams]="randomInit()" routerLinkActive="active">חפש חברים</a>
+      <a routerLink="/users" routerLinkActive="active">כל החברים</a>
 
-  <div class="panel" *ngIf="open">
-    <header class="panel-head">
-      <strong>שיחות</strong>
-      <span class="muted" *ngIf="threads.length === 0">אין שיחות</span>
-    </header>
+      <!-- Inbox dropdown -->
+      <div class="inbox" [class.open]="open">
+        <button
+          type="button"
+          class="inbox-btn"
+          (click)="onInboxBtn($event)"
+          aria-label="פתיחת שיחות"
+          [attr.aria-expanded]="open"
+          aria-haspopup="dialog"
+        >
+          <span class="icon">💬</span>
+          <span class="label">שיחות</span>
+          <span class="badge" *ngIf="unreadTotal > 0">{{ unreadTotal }}</span>
+        </button>
 
-    <ul class="list">
-      <li *ngFor="let t of threads" (click)="openChat(t.peerId)">
-        <div class="row">
-          <div class="avatar">
-            <span class="dot" [class.online]="isOnline(t.peerId)"></span>
-            <span class="letter">{{ (nameFor(t.peerId) | slice:0:1) }}</span>
-          </div>
-          <div class="meta">
-            <div class="top">
-              <span class="name">{{ nameFor(t.peerId) }}</span>
-              <span class="time">{{ t.lastAt | date:'shortTime' }}</span>
-            </div>
-            <div class="bottom">
-              <span class="preview">{{ t.lastPreview }}</span>
-              <span class="unread" *ngIf="t.unread > 0">{{ t.unread }}</span>
-            </div>
-          </div>
+        <!-- Panel: click inside shouldn't close -->
+        <div class="panel" *ngIf="open" (click)="$event.stopPropagation()">
+          <header class="panel-head">
+            <strong>שיחות</strong>
+            <button type="button" class="close" (click)="open = false" aria-label="סגירה">✕</button>
+            <span class="muted" *ngIf="threads.length === 0">אין שיחות</span>
+          </header>
+
+          <ul class="list">
+            <li *ngFor="let t of threads" (click)="openChat(t.peerId)">
+              <div class="row">
+                <div class="avatar">
+                  <span class="dot" [class.online]="isOnline(t.peerId)"></span>
+                  <span class="letter">{{ (nameFor(t.peerId) | slice:0:1) }}</span>
+                </div>
+                <div class="meta">
+                  <div class="top">
+                    <span class="name">{{ nameFor(t.peerId) }}</span>
+                    <span class="time">{{ t.lastAt | date:'shortTime' }}</span>
+                  </div>
+                  <div class="bottom">
+                    <span class="preview">{{ t.lastPreview }}</span>
+                    <span class="unread" *ngIf="t.unread > 0">{{ t.unread }}</span>
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ul>
         </div>
-      </li>
-    </ul>
-  </div>
-</div>
-
-    
-    <!--<a routerLink="/likes" routerLinkActive="active">לייקים(0)</a>-->
+      </div>
     }
+
     <a (click)="logout()" class="logout">יציאה</a>
   </nav>
 </div>

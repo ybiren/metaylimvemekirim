@@ -1,117 +1,115 @@
-import { Component, Input, Inject, OnInit, OnDestroy, ViewChild, ElementRef, inject } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import {
+  Component, OnInit, OnDestroy, ViewChild, ElementRef,
+  Input, inject,
+  DestroyRef
+} from '@angular/core';
+import { NgIf, NgFor, DatePipe, NgClass, NgStyle, AsyncPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
+import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { ChatService, ChatMsg } from '../../services/chat.service';
-import { IUser } from '../../interfaces';
+import { PresenceService } from '../../services/presence.service';
 import { UsersService } from '../../services/users.service';
+import { getCurrentUserId } from '../../core/current-user';
 
 @Component({
-  selector: 'app-chat-window',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  providers: [DatePipe],
+  selector: 'app-chat-window',
+  imports: [NgIf, NgFor, DatePipe, FormsModule, NgClass, NgStyle, AsyncPipe],
   templateUrl: './chat-window.component.html',
   styleUrls: ['./chat-window.component.scss']
 })
 export class ChatWindowComponent implements OnInit, OnDestroy {
-  /** The other participant’s userID (injected by parent or dialog data) */
-  @Input() peerId!: number;
+  /** allow using the component directly with [peerId] OR via dialog data */
+  @Input() peerId?: number;
 
-  /** Scroll container */
-  @ViewChild('scroller') scroller!: ElementRef<HTMLDivElement>;
+  me = getCurrentUserId();
+  draft = '';
+  messages: ChatMsg[] = [];
 
-  me = Number(<IUser>JSON.parse(localStorage.getItem("user")).userID || 0);
-  text = '';
-  msgs: ChatMsg[] = [];
-  typing = false;
+  /** services via functional inject */
+  private chat = inject(ChatService);
+  private ref  = inject(DialogRef<unknown>);
+  private presence = inject(PresenceService);
+  private users    = inject(UsersService);
 
-  private messagesSub?: any;
-  private typingSub?: any;
-  data = inject(DIALOG_DATA);
-  private usersSvc = inject(UsersService)
-    
-  constructor(
-    private chat: ChatService,
-    private date: DatePipe,
-    public dialogRef: DialogRef<ChatWindowComponent>,
-  ) {
-    if (this.data?.peerId != null) {
-      this.peerId = Number(this.data.peerId);
-    }
+  /** dialog data (optional) — no decorators needed */
+  private dlgData = inject(DIALOG_DATA, { optional: true }) as { peerId?: number } | null;
+
+  /** expose typing stream to template */
+  typing$ = this.chat.typing$;
+
+  isPeerOnline = false;
+
+  @ViewChild('scrollArea') scrollArea!: ElementRef<HTMLElement>;
+
+  get peerName() { return this.users.getName(this.peerId!); }
+
+  constructor(private destroyRef: DestroyRef) {
+
   }
 
   async ngOnInit() {
-    if (!this.peerId) throw new Error('ChatWindowComponent requires peerId');
+    // Resolve peerId from @Input or dialog data
+    if (this.peerId == null) this.peerId = this.dlgData?.peerId;
 
-    // 1) Load history (server returns DESC; service reverses to ASC for scrolling)
+    if (this.peerId == null) {
+      console.error('[ChatWindow] Missing peerId. Open dialog with { data: { peerId } } or bind [peerId].');
+      this.close();
+      return;
+    }
+
+    // mark active peer (used by service to mute beeps, etc.)
+    this.chat.setActivePeer(this.peerId);
+
+    // load chat history
     await this.chat.loadHistory(this.peerId);
 
-    // 2) Open WS to this DM room
+    // **IMPORTANT**: actually open the WebSocket
     this.chat.connect(this.peerId);
+    console.log('[ChatWindow] connect() called with peerId =', this.peerId);
+    // keep messages in sync + autoscroll
+    this.chat.messages$.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(list => {
+        this.messages = list;
+        this.scrollToEnd();
+      });
 
-    // 3) Subscribe to live updates
-    this.messagesSub = this.chat.messages$.subscribe(list => {
-      this.msgs = list;
-      // scroll to bottom on new messages
-      queueMicrotask(() => this.scrollToBottom());
-
-      // mark as read: last message from peer
-      const lastFromPeer = [...list].reverse().find(m => m.fromUserId === this.peerId);
-      if (lastFromPeer) {
-        this.chat.markReadUpTo(lastFromPeer.sentAt);
-      }
-    });
-
-    this.typingSub = this.chat.typing$.subscribe(v => (this.typing = v));
+    // quick presence snapshot (adjust if you have an observable in PresenceService)
+    this.isPeerOnline = this.presence.isOnline(this.peerId);
   }
 
   ngOnDestroy() {
-    try {
-      // Optional: if you want to close the socket when modal closes,
-      // add a `disconnect()` method to ChatService and call it here.
-      // this.chat.disconnect();
-    } catch {}
-    this.messagesSub?.unsubscribe?.();
-    this.typingSub?.unsubscribe?.();
+    // clear active peer and close socket
+    this.chat.setActivePeer(null);
+    this.chat.disconnect();
   }
 
-  close() {
-    this.dialogRef.close();
-  }
+  trackById = (_: number, m: ChatMsg) => m.id;
 
   send() {
-    const content = this.text.trim();
-    if (!content) return;
-    this.chat.send(content);
-    this.text = '';
-    // keep input focused UX: handled by browser; no need to refocus explicitly
+    const text = (this.draft || '').trim();
+    if (!text) return;
+    this.chat.send(text);
+    this.draft = '';
+    // scroll to end right after sending (in case server echoes with delay)
+    this.scrollToEnd();
   }
 
   onTyping() {
     this.chat.sendTyping();
   }
 
-  ticks(m: ChatMsg): 'single' | 'double' | 'double-blue' {
-    if (m.readAt) return 'double-blue';   // ✓✓ blue
-    if (m.deliveredAt) return 'double';   // ✓✓
-    return 'single';                      // ✓
+  close() {
+    this.ref.close();
   }
 
-  trackById(_i: number, m: ChatMsg) { return m.id; }
-
-  timeStr(iso: string) {
-    return this.date.transform(iso, 'shortTime');
+  private scrollToEnd() {
+    queueMicrotask(() => {
+      const el = this.scrollArea?.nativeElement;
+      if (!el) return;
+      el.scrollTop = el.scrollHeight;
+    });
   }
-
-  private scrollToBottom() {
-    if (!this.scroller) return;
-    const el = this.scroller.nativeElement;
-    el.scrollTop = el.scrollHeight;
-  }
-
-  get peerName() {
-    return this.usersSvc.getName(this.peerId);
-  }
-
 }

@@ -110,7 +110,6 @@ export class UserDetailsComponent implements OnInit {
     if (!u || !me) return;
 
     const isMobile = window.innerWidth < 600;
-  
     this.dialog.open(ChatWindowComponent, {
       data: { peerId: u.userID },
       panelClass: isMobile ? 'im-dialog-mobile' : 'im-dialog-desktop',

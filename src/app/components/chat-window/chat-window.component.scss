@@ -1,32 +1,83 @@
-/* src/app/components/chat-window/chat-window.component.scss */
-.chat-wrap {
-  display:flex; flex-direction:column; height:100%;
-  background:#ece5dd; /* WhatsApp-ish */
+:host{
+  display:flex; flex-direction:column;
+  width:100%;
+  height:100%;                 /* full mobile height */
+  background:#e7f0ea;            /* WA chat tint */
 }
-.chat-header {
-  padding:10px 12px; background:#075e54; color:#fff;
-  .title { display:flex; align-items:center; gap:10px; }
-  .back { background:transparent; border:none; color:#fff; font-size:18px; cursor:pointer; }
-  .typing { font-size:12px; opacity:.85; }
+
+/* Header (WhatsApp green) */
+.chat__header{
+  position:sticky; top:0; z-index:2;
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px;
+  background:#075e54; color:#fff;
 }
-.scroller {
-  flex:1 1 auto; overflow:auto; padding:12px;
-  display:flex; flex-direction:column; gap:8px;
+.chat__close{ border:0; background:transparent; color:#fff; font-size:20px; padding:6px; cursor:pointer; }
+.chat__name{ font-weight:700; }
+.chat__status{ font-size:12px; opacity:.9; }
+.chat__status.online::before{ content:'●'; color:#25d366; margin-inline-start:6px; font-size:10px; }
+
+/* Messages area */
+.chat__scroll{
+  flex:1 1 auto;
+  min-height: 0;                 /* ✅ critical so this area can scroll */
+  overflow:auto;
+  overscroll-behavior-y: contain;/* nicer scroll on mobile */
+  padding:12px;
+  display:grid; gap:10px; align-content:start;
+  background:transparent;
 }
-.row { display:flex; }
-.row.me { }
-.bubble {
-  max-width:70%; padding:8px 10px; border-radius:10px;
-  background:#fff; position:relative;
+
+/* Bubbles */
+.chat__msg{ display:flex; max-width:82%; }
+.chat__msg.me{ justify-self:end; margin-inline-start:auto; }
+.chat__msg:not(.me){ justify-self:start; margin-inline-end:auto; }
+
+.chat__bubble{
+  position:relative; padding:8px 10px 4px 10px;
+  border-radius:12px; color:#111827;
+  box-shadow:0 1px 1px rgba(0,0,0,.05);
+  background:#fff;
 }
-.row.me .bubble { background:#dcf8c6; } /* me = greenish */
-.body { white-space:pre-wrap; word-wrap:break-word; }
-.meta { display:flex; gap:6px; justify-content:flex-end; font-size:11px; color:#6b7280; margin-top:2px; }
-.ticks { margin-inline-start:4px; }
-.ticks.doubleBlue { color:#1996f3; }
-.composer {
-  display:flex; gap:8px; padding:10px; background:#f0f0f0; border-top:1px solid #e5e7eb;
-  input { flex:1 1 auto; padding:10px; border-radius:18px; border:1px solid #d1d5db; }
-  button { padding:8px 14px; border-radius:16px; border:0; background:#25d366; color:#fff; cursor:pointer; }
+.chat__msg.me .chat__bubble{ background:#d9fdd3; }
+
+.chat__text{ white-space:pre-wrap; word-break:break-word; }
+.chat__meta{ display:inline-flex; gap:6px; font-size:11px; color:#6b7280; margin-inline-start:8px; }
+.chat__time{ font-variant-numeric:tabular-nums; }
+.chat__ticks{ opacity:.8; }
+.chat__ticks.delivered{ opacity:.95; }
+.chat__ticks.read{ color:#53bdeb; opacity:1; }
+
+/* Typing chip */
+.chat__typing{
+  margin:4px auto 0;
+  padding:4px 10px; font-size:12px; color:#6b7280;
+  background:#fff; border-radius:10px; box-shadow:0 1px 1px rgba(0,0,0,.05);
 }
- 
+
+/* Composer (WhatsApp beige) */
+.chat__composer{
+  /* was: position:sticky; bottom:0;  */
+  flex: 0 0 auto;                /* ✅ keeps footer at bottom in flex layout */
+  z-index:2;
+  display:grid; grid-template-columns:auto 1fr; gap:8px; align-items:center;
+  padding:10px 12px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom)); /* ✅ iOS safe area */
+  background:#ece5dd;
+  border-top:1px solid rgba(0,0,0,.06);
+}
+.chat__send{
+  border:0; border-radius:999px; padding:10px 14px;
+  background:#25d366; color:#fff; font-weight:700; cursor:pointer;
+}
+.chat__send:active{ transform:translateY(1px); }
+.chat__input{
+  border:0; outline:none; border-radius:999px; padding:10px 14px;
+  background:#fff; font-size:14px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+}
+
+/* Desktop dialog shape */
+@media (min-width:768px){
+  :host{ height:80vh; border-radius:12px; overflow:hidden; }
+}

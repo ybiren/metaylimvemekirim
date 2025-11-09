@@ -1,51 +1,50 @@
-<section class="chat-wrap" dir="rtl">
+<div class="chat" dir="rtl">
   <!-- Header -->
-  <header class="chat-header">
-    <button class="icon-btn" (click)="close()" aria-label="סגור">✕</button>
-    <div class="title">
-      <div class="name">צ'אט עם {{ peerName }}</div>
-      <div class="typing" *ngIf="typing">מקליד…</div>
+  <header class="chat__header">
+    <button type="button" class="chat__close" (click)="close()">✕</button>
+    <div class="chat__title">
+      <div class="chat__name">צ'אט עם {{ peerName }}</div>
+      <div class="chat__status" [class.online]="isPeerOnline">
+        {{ isPeerOnline ? 'מחובר/ת' : 'לא מחובר/ת' }}
+      </div>
     </div>
   </header>
 
   <!-- Messages -->
-  <div class="scroller" #scroller>
-    <div
-      class="row"
-      *ngFor="let m of msgs; trackBy: trackById"
-      [class.me]="m.fromUserId === me"
-      [class.peer]="m.fromUserId !== me"
-    >
-      <div class="bubble">
-        <div class="body">{{ m.content }}</div>
+  <main class="chat__scroll" #scrollArea>
+    <div class="chat__day" *ngIf="messages.length === 0">אין הודעות עדיין</div>
 
-        <div class="meta">
-          <span class="time">{{ timeStr(m.sentAt) }}</span>
-          <span class="ticks"
-                [class.single]="ticks(m) === 'single'"
-                [class.double]="ticks(m) === 'double'"
-                [class.doubleBlue]="ticks(m) === 'double-blue'">
-            <ng-container [ngSwitch]="ticks(m)">
-              <span *ngSwitchCase="'single'">✓</span>
-              <span *ngSwitchCase="'double'">✓✓</span>
-              <span *ngSwitchCase="'double-blue'">✓✓</span>
-            </ng-container>
-          </span>
-        </div>
+    <div class="chat__msg"
+         *ngFor="let m of messages; trackBy: trackById"
+         [class.me]="m.fromUserId === me">
+      <div class="chat__bubble">
+        <span class="chat__text">{{ m.content }}</span>
+        <span class="chat__meta">
+          <span class="chat__time">{{ m.sentAt | date:'HH:mm' }}</span>
+          <span class="chat__ticks"
+                [class.delivered]="!!m.deliveredAt"
+                [class.read]="!!m.readAt">✓✓</span>
+        </span>
       </div>
     </div>
-  </div>
+
+    <div class="chat__typing" *ngIf="typing$ | async">מקליד/ה…</div>
+  </main>
 
   <!-- Composer -->
-  <footer class="composer">
+  <footer class="chat__composer">
+    <button type="button" class="chat__send" (click)="send()">
+      שלח
+    </button>
     <input
+      #input
+      class="chat__input"
       type="text"
-      [(ngModel)]="text"
-      (input)="onTyping()"
+      dir="rtl"
+      [placeholder]="'כתוב הודעה…'"
+      [(ngModel)]="draft"
       (keydown.enter)="send()"
-      placeholder="כתוב הודעה…"
-      aria-label="הקלד הודעה"
+      (input)="onTyping()"
     />
-    <button class="send" (click)="send()">שלח</button>
   </footer>
-</section>
+</div>

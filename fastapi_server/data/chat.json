@@ -39,6 +39,123 @@
         "sentAt": "2025-11-08T12:18:48.181951+00:00",
         "deliveredAt": "2025-11-08T12:19:16.861807+00:00",
         "readAt": "2025-11-08T12:19:16.885146+00:00"
+      },
+      {
+        "id": "c7c673e9-6086-4da9-89dd-285789f65740",
+        "fromUserId": 3,
+        "toUserId": 1,
+        "content": "היי",
+        "sentAt": "2025-11-09T14:25:49.576970+00:00",
+        "deliveredAt": "2025-11-09T14:32:35.698677+00:00",
+        "readAt": "2025-11-09T14:32:35.850489+00:00"
+      },
+      {
+        "id": "86ac8a63-bb00-4655-9ec2-04f802820f2b",
+        "fromUserId": 3,
+        "toUserId": 1,
+        "content": "היי",
+        "sentAt": "2025-11-09T14:37:39.117228+00:00",
+        "deliveredAt": "2025-11-09T14:38:15.839834+00:00",
+        "readAt": "2025-11-09T14:38:16.153271+00:00"
+      },
+      {
+        "id": "75557447-3896-4842-b3ab-e02ebc7af5b4",
+        "fromUserId": 1,
+        "toUserId": 3,
+        "content": "sss",
+        "sentAt": "2025-11-09T15:11:02.833334+00:00",
+        "deliveredAt": "2025-11-09T15:11:19.671014+00:00",
+        "readAt": "2025-11-09T15:11:19.723594+00:00"
+      },
+      {
+        "id": "7e354e29-10c4-420d-986c-265e5dca8b48",
+        "fromUserId": 3,
+        "toUserId": 1,
+        "content": "lll",
+        "sentAt": "2025-11-09T15:33:55.753014+00:00",
+        "deliveredAt": "2025-11-09T15:34:42.231842+00:00",
+        "readAt": null
+      },
+      {
+        "id": "89b6af20-6395-455d-bb14-c8aac445a3f8",
+        "fromUserId": 3,
+        "toUserId": 1,
+        "content": "sdsdsd",
+        "sentAt": "2025-11-09T17:38:44.998823+00:00",
+        "deliveredAt": "2025-11-09T17:51:18.330437+00:00",
+        "readAt": null
+      },
+      {
+        "id": "cfa3dbd0-8a77-4414-840f-60a802ca59f6",
+        "fromUserId": 3,
+        "toUserId": 1,
+        "content": "sdsdsd",
+        "sentAt": "2025-11-09T17:38:52.671177+00:00",
+        "deliveredAt": "2025-11-09T17:51:18.330437+00:00",
+        "readAt": null
+      },
+      {
+        "id": "6fb2be76-419f-4d5f-a6e8-fd63969bede2",
+        "fromUserId": 3,
+        "toUserId": 1,
+        "content": "wewewewe",
+        "sentAt": "2025-11-09T17:39:12.279776+00:00",
+        "deliveredAt": "2025-11-09T17:51:18.330437+00:00",
+        "readAt": null
+      },
+      {
+        "id": "7ddb694c-7a50-4831-92d8-dbf85bc92fbb",
+        "fromUserId": 3,
+        "toUserId": 1,
+        "content": "aaa",
+        "sentAt": "2025-11-09T17:42:30.153973+00:00",
+        "deliveredAt": "2025-11-09T17:51:18.330437+00:00",
+        "readAt": null
+      },
+      {
+        "id": "40166c28-21b0-4850-88de-a219ff63792f",
+        "fromUserId": 3,
+        "toUserId": 1,
+        "content": "www",
+        "sentAt": "2025-11-09T17:45:24.561822+00:00",
+        "deliveredAt": "2025-11-09T17:51:18.330437+00:00",
+        "readAt": null
+      },
+      {
+        "id": "6cf34f76-7d6e-4408-9a00-699d3147b450",
+        "fromUserId": 3,
+        "toUserId": 1,
+        "content": "qwqw",
+        "sentAt": "2025-11-09T18:00:18.110106+00:00",
+        "deliveredAt": "2025-11-09T18:23:36.341258+00:00",
+        "readAt": null
+      },
+      {
+        "id": "8f97b790-6de6-4f87-82e5-509eaa82aae6",
+        "fromUserId": 3,
+        "toUserId": 1,
+        "content": "sssssddd",
+        "sentAt": "2025-11-09T18:17:36.007844+00:00",
+        "deliveredAt": "2025-11-09T18:23:36.341258+00:00",
+        "readAt": null
+      },
+      {
+        "id": "bdee7f6d-8b0e-4e41-a856-207bc21207cd",
+        "fromUserId": 3,
+        "toUserId": 1,
+        "content": "היי היי היי",
+        "sentAt": "2025-11-09T18:17:46.517507+00:00",
+        "deliveredAt": "2025-11-09T18:23:36.341258+00:00",
+        "readAt": null
+      },
+      {
+        "id": "94f10a99-9b80-4bb1-a834-58a5bd52fb0a",
+        "fromUserId": 1,
+        "toUserId": 3,
+        "content": "fdfdf",
+        "sentAt": "2025-11-09T18:23:59.945765+00:00",
+        "deliveredAt": "2025-11-09T18:59:43.278879+00:00",
+        "readAt": null
       }
     ]
   },
@@ -53,6 +170,137 @@
         "toUserId": 2,
         "content": "שלום שלום",
         "sentAt": "2025-11-08T17:54:18.600602+00:00",
+        "deliveredAt": null,
+        "readAt": null
+      },
+      {
+        "id": "ec7493fb-9374-4c71-bfb4-b3e3c98e39d5",
+        "fromUserId": 3,
+        "toUserId": 2,
+        "content": "zxzx",
+        "sentAt": "2025-11-09T17:47:36.799201+00:00",
+        "deliveredAt": null,
+        "readAt": null
+      },
+      {
+        "id": "922053d0-2cff-4fda-b1ff-ca5ff093998a",
+        "fromUserId": 3,
+        "toUserId": 2,
+        "content": "aaaaa",
+        "sentAt": "2025-11-09T17:48:15.224909+00:00",
+        "deliveredAt": null,
+        "readAt": null
+      },
+      {
+        "id": "d4fd36db-3e00-4a53-a4e1-b0f29d3afa52",
+        "fromUserId": 3,
+        "toUserId": 2,
+        "content": "saasasas",
+        "sentAt": "2025-11-09T17:50:17.777700+00:00",
+        "deliveredAt": null,
+        "readAt": null
+      },
+      {
+        "id": "c9e2429d-69b9-4b93-863a-217fa84b2fb1",
+        "fromUserId": 3,
+        "toUserId": 2,
+        "content": "asasdsdsd",
+        "sentAt": "2025-11-09T17:57:30.255363+00:00",
+        "deliveredAt": null,
+        "readAt": null
+      },
+      {
+        "id": "4b723ac9-3ddb-4be4-ab2a-69a7aba00c42",
+        "fromUserId": 3,
+        "toUserId": 2,
+        "content": "sdsdsd",
+        "sentAt": "2025-11-09T18:03:04.596140+00:00",
+        "deliveredAt": null,
+        "readAt": null
+      },
+      {
+        "id": "2da34270-4d90-442e-a486-68d9eead96c2",
+        "fromUserId": 3,
+        "toUserId": 2,
+        "content": "ssss",
+        "sentAt": "2025-11-09T18:54:48.639436+00:00",
+        "deliveredAt": null,
+        "readAt": null
+      },
+      {
+        "id": "8a27faef-5037-4686-a075-ff6bd5aeb967",
+        "fromUserId": 3,
+        "toUserId": 2,
+        "content": "asasas",
+        "sentAt": "2025-11-09T18:54:52.620931+00:00",
+        "deliveredAt": null,
+        "readAt": null
+      }
+    ]
+  },
+  {
+    "roomId": "dm:3:3",
+    "fromUserId": 3,
+    "toUserId": 3,
+    "messages": [
+      {
+        "id": "854cbdbe-f862-4fa2-baa5-665842ea48d0",
+        "fromUserId": 3,
+        "toUserId": 3,
+        "content": "www",
+        "sentAt": "2025-11-09T14:31:49.522838+00:00",
+        "deliveredAt": "2025-11-09T15:36:55.071660+00:00",
+        "readAt": "2025-11-09T14:31:49.701178+00:00"
+      }
+    ]
+  },
+  {
+    "roomId": "dm:1:2",
+    "fromUserId": 1,
+    "toUserId": 2,
+    "messages": [
+      {
+        "id": "ad81bee1-b199-4599-8f35-4210ca332f3b",
+        "fromUserId": 1,
+        "toUserId": 2,
+        "content": "היי",
+        "sentAt": "2025-11-09T14:36:18.163403+00:00",
+        "deliveredAt": "2025-11-09T16:48:26.177774+00:00",
+        "readAt": "2025-11-09T16:48:26.366567+00:00"
+      },
+      {
+        "id": "23bd9c3c-7707-4e93-806c-c5bf4409de29",
+        "fromUserId": 2,
+        "toUserId": 1,
+        "content": "היי",
+        "sentAt": "2025-11-09T16:48:37.543819+00:00",
+        "deliveredAt": "2025-11-09T18:25:06.410291+00:00",
+        "readAt": null
+      },
+      {
+        "id": "f1c6c99f-fb26-47b5-9bf3-97d5af7205c3",
+        "fromUserId": 1,
+        "toUserId": 2,
+        "content": "עעע",
+        "sentAt": "2025-11-09T18:28:19.986702+00:00",
+        "deliveredAt": null,
+        "readAt": null
+      },
+      {
+        "id": "cf127186-072f-4dea-aabb-51232d8a6d9a",
+        "fromUserId": 1,
+        "toUserId": 2,
+        "content": "מה המצב?",
+        "sentAt": "2025-11-09T18:28:30.385049+00:00",
+        "deliveredAt": null,
+        "readAt": null
+      },
+      {
+        "id": "cefc0471-bcac-40fb-abaf-b0f70410926a",
+        "fromUserId": 1,
+        "toUserId": 2,
+        "content": "ששששש",
+        "sentAt": "2025-11-09T18:28:42.667352+00:00",
         "deliveredAt": null,
         "readAt": null
       }
