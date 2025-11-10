@@ -2,7 +2,8 @@
   <!-- Header -->
   <header class="chat__header">
     <button type="button" class="chat__close" (click)="close()">✕</button>
-    <div class="chat__title">
+
+    <div>
       <div class="chat__name">צ'אט עם {{ peerName }}</div>
       <div class="chat__status" [class.online]="isPeerOnline">
         {{ isPeerOnline ? 'מחובר/ת' : 'לא מחובר/ת' }}
@@ -12,20 +13,25 @@
 
   <!-- Messages -->
   <main class="chat__scroll" #scrollArea>
-    <div class="chat__day" *ngIf="messages.length === 0">אין הודעות עדיין</div>
 
-    <div class="chat__msg"
-         *ngFor="let m of messages; trackBy: trackById"
-         [class.me]="m.fromUserId === me">
-      <div class="chat__bubble">
-        <span class="chat__text">{{ m.content }}</span>
-        <span class="chat__meta">
-          <span class="chat__time">{{ m.sentAt | date:'HH:mm' }}</span>
-          <span class="chat__ticks"
-                [class.delivered]="!!m.deliveredAt"
-                [class.read]="!!m.readAt">✓✓</span>
-        </span>
-      </div>
+    <div class="chat__empty" *ngIf="messages.length === 0">
+      אין הודעות עדיין
+    </div>
+
+    <div
+      *ngFor="let m of messages; trackBy: trackById"
+      class="msg"
+      [class.msg--me]="m.fromUserId === me"
+      [class.msg--peer]="m.fromUserId !== me"
+    >
+      <span class="text">{{ m.content }}</span>
+
+      <span class="meta">
+        <span class="time">{{ m.sentAt | date:'HH:mm' }}</span>
+        <span class="ticks"
+              [class.delivered]="!!m.deliveredAt"
+              [class.read]="!!m.readAt">✓✓</span>
+      </span>
     </div>
 
     <div class="chat__typing" *ngIf="typing$ | async">מקליד/ה…</div>
@@ -33,18 +39,19 @@
 
   <!-- Composer -->
   <footer class="chat__composer">
-    <button type="button" class="chat__send" (click)="send()">
-      שלח
-    </button>
     <input
       #input
       class="chat__input"
       type="text"
       dir="rtl"
-      [placeholder]="'כתוב הודעה…'"
+      placeholder="כתוב הודעה…"
       [(ngModel)]="draft"
       (keydown.enter)="send()"
       (input)="onTyping()"
     />
+
+    <button type="button" class="chat__send" (click)="send()">
+      שלח
+    </button>
   </footer>
 </div>

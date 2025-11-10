@@ -1,5 +1,5 @@
 // src/app/components/user-details/user-details.component.ts
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
@@ -15,6 +15,7 @@ import { ToastService } from '../../services/toast.service';
 import { Subscription } from 'rxjs';
 import { PresenceService } from '../../services/presence.service';
 import { ChatWindowComponent } from '../chat-window/chat-window.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-user-details',
@@ -32,6 +33,7 @@ export class UserDetailsComponent implements OnInit {
   usersSrv = inject(UsersService);
   dialog = inject(Dialog);
   toast = inject(ToastService);
+  private destroyRef = inject(DestroyRef);
 
   apiBase = environment.apibase;
 
@@ -56,7 +58,7 @@ export class UserDetailsComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
     // Using existing GET /users and filtering client-side
-    this.usersSrv.users$.subscribe((users) => {
+    this.usersSrv.users$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((users) => {
       const found = (users || []).find(u => u.userID === id);
       if (!found) this.error.set('User not found');
       this.user.set(found);

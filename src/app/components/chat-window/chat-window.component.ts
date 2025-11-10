@@ -36,6 +36,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
 
   /** dialog data (optional) — no decorators needed */
   private dlgData = inject(DIALOG_DATA, { optional: true }) as { peerId?: number } | null;
+  private destroyRef = inject(DestroyRef);
 
   /** expose typing stream to template */
   typing$ = this.chat.typing$;
@@ -45,10 +46,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   @ViewChild('scrollArea') scrollArea!: ElementRef<HTMLElement>;
 
   get peerName() { return this.users.getName(this.peerId!); }
-
-  constructor(private destroyRef: DestroyRef) {
-
-  }
+ 
 
   async ngOnInit() {
     // Resolve peerId from @Input or dialog data

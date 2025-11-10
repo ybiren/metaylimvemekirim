@@ -1,83 +1,187 @@
-:host{
-  display:flex; flex-direction:column;
-  width:100%;
-  height:100%;                 /* full mobile height */
-  background:#e7f0ea;            /* WA chat tint */
+/* =========================================================
+   Chat Window (component styles) – RTL / Hebrew optimized
+   ========================================================= */
+
+:host {
+  --chat-bg:           #e7f0ea;
+  --chat-header-bg:    #075e54;
+  --chat-header-fg:    #fff;
+
+  --bubble-peer:       #fff;
+  --bubble-me:         #d7f8d9;
+
+  --bubble-shadow:     0 1px 0 rgba(0,0,0,.06);
+  --border-color:      #d9e4de;
+
+  --pad-x: 12px;
+  --pad-y: 10px;
+
+  display: block;
+  height: 100%;
+  min-height: 0; /* critical inside flex parents */
 }
 
-/* Header (WhatsApp green) */
-.chat__header{
-  position:sticky; top:0; z-index:2;
-  display:flex; align-items:center; gap:10px;
-  padding:10px 12px;
-  background:#075e54; color:#fff;
-}
-.chat__close{ border:0; background:transparent; color:#fff; font-size:20px; padding:6px; cursor:pointer; }
-.chat__name{ font-weight:700; }
-.chat__status{ font-size:12px; opacity:.9; }
-.chat__status.online::before{ content:'●'; color:#25d366; margin-inline-start:6px; font-size:10px; }
-
-/* Messages area */
-.chat__scroll{
-  flex:1 1 auto;
-  min-height: 0;                 /* ✅ critical so this area can scroll */
-  overflow:auto;
-  overscroll-behavior-y: contain;/* nicer scroll on mobile */
-  padding:12px;
-  display:grid; gap:10px; align-content:start;
-  background:transparent;
+/* ===== Layout ===== */
+.chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--chat-bg);
 }
 
-/* Bubbles */
-.chat__msg{ display:flex; max-width:82%; }
-.chat__msg.me{ justify-self:end; margin-inline-start:auto; }
-.chat__msg:not(.me){ justify-self:start; margin-inline-end:auto; }
+/* ===== Header ===== */
+.chat__header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
 
-.chat__bubble{
-  position:relative; padding:8px 10px 4px 10px;
-  border-radius:12px; color:#111827;
-  box-shadow:0 1px 1px rgba(0,0,0,.05);
-  background:#fff;
-}
-.chat__msg.me .chat__bubble{ background:#d9fdd3; }
+  display: flex;
+  align-items: center;
+  gap: 10px;
 
-.chat__text{ white-space:pre-wrap; word-break:break-word; }
-.chat__meta{ display:inline-flex; gap:6px; font-size:11px; color:#6b7280; margin-inline-start:8px; }
-.chat__time{ font-variant-numeric:tabular-nums; }
-.chat__ticks{ opacity:.8; }
-.chat__ticks.delivered{ opacity:.95; }
-.chat__ticks.read{ color:#53bdeb; opacity:1; }
-
-/* Typing chip */
-.chat__typing{
-  margin:4px auto 0;
-  padding:4px 10px; font-size:12px; color:#6b7280;
-  background:#fff; border-radius:10px; box-shadow:0 1px 1px rgba(0,0,0,.05);
+  padding: var(--pad-y) var(--pad-x);
+  color: var(--chat-header-fg);
+  background: var(--chat-header-bg);
+  box-shadow: var(--bubble-shadow);
 }
 
-/* Composer (WhatsApp beige) */
-.chat__composer{
-  /* was: position:sticky; bottom:0;  */
-  flex: 0 0 auto;                /* ✅ keeps footer at bottom in flex layout */
-  z-index:2;
-  display:grid; grid-template-columns:auto 1fr; gap:8px; align-items:center;
-  padding:10px 12px;
-  padding-bottom: max(10px, env(safe-area-inset-bottom)); /* ✅ iOS safe area */
-  background:#ece5dd;
-  border-top:1px solid rgba(0,0,0,.06);
-}
-.chat__send{
-  border:0; border-radius:999px; padding:10px 14px;
-  background:#25d366; color:#fff; font-weight:700; cursor:pointer;
-}
-.chat__send:active{ transform:translateY(1px); }
-.chat__input{
-  border:0; outline:none; border-radius:999px; padding:10px 14px;
-  background:#fff; font-size:14px;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+.chat__close {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 20px;
+  padding: 6px;
+  cursor: pointer;
 }
 
-/* Desktop dialog shape */
-@media (min-width:768px){
-  :host{ height:80vh; border-radius:12px; overflow:hidden; }
+.chat__name   { font-weight: 700; }
+.chat__status { font-size: 12px; opacity: .9; }
+
+/* ===== Scroll area (messages) ===== */
+.chat__scroll {
+  flex: 1 1 auto;
+  min-height: 0;                 /* key to allow scrolling child to shrink */
+  overflow: auto;
+  padding: var(--pad-y) var(--pad-x);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: calc(var(--pad-y) + env(safe-area-inset-bottom, 0px));
+}
+
+/* ===== Empty State ===== */
+.chat__empty {
+  text-align: center;
+  padding: 24px 0;
+  color: #5a6b63;
+  opacity: .9;
+}
+
+/* =========================================================
+   Message Bubbles — shrink to content (no unwanted expansion)
+   ========================================================= */
+
+.msg {
+  /* row layout inside the bubble so text + meta share one baseline */
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+
+  /* 👇 shrink-wrap to content, but cap long lines */
+  width: fit-content;
+  max-width: 85%;                /* adjust: 78–90% to taste */
+
+  margin: 6px 0;
+  border-radius: 14px;
+  background: var(--bubble-peer);
+  box-shadow: var(--bubble-shadow);
+
+  /* fix perceived extra left padding in RTL by using logical paddings */
+  padding-block: 8px;
+  padding-inline: 10px 6px;      /* right=10px, left=6px in RTL */
+
+  /* Hebrew text behavior */
+  direction: rtl;                /* RTL flow inside bubble */
+  white-space: pre-wrap;         /* keep user line breaks */
+  word-break: break-word;        /* wrap long URLs/words */
+}
+
+/* Outgoing (me) → right side in RTL */
+.msg--me {
+  background: var(--bubble-me);
+  margin-inline-start: auto;       /* push to right in RTL */
+}
+
+/* Incoming (peer) → left side in RTL */
+.msg--peer {
+  margin-inline-end: auto;     /* push to left in RTL */
+}
+
+/* ===== Text & Meta (time + ticks) on one line ===== */
+.text {
+  line-height: 1.25;
+  text-align: right;             /* Hebrew multi-line alignment */
+  margin-inline-end: 4px;        /* tiny gap before time */
+}
+
+.meta {
+  direction: ltr;                /* numbers & ✓✓ read naturally */
+  display: inline-flex;
+  align-items: center;           /* same baseline as text */
+  gap: 4px;
+  font-size: 11px;
+  opacity: .7;
+}
+
+.ticks { letter-spacing: -1px; }
+.ticks.delivered { opacity: .85; }
+.ticks.read      { opacity: 1; }
+
+/* ===== Typing indicator ===== */
+.chat__typing {
+  margin: 8px 0;
+  font-size: 12px;
+  opacity: .7;
+}
+
+/* ===== Composer ===== */
+.chat__composer {
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: var(--pad-y) var(--pad-x);
+  background: #f2f6f4;
+  border-top: 1px solid var(--border-color);
+}
+
+.chat__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 36px;
+  padding: 8px 10px;
+  border: 1px solid #c9d6cf;
+  border-radius: 999px;
+  background: #fff;
+  outline: none;
+}
+
+.chat__send {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: #24a859;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chat__send:disabled { opacity: .5; cursor: default; }
+
+/* ===== Small screens ===== */
+@media (max-width: 480px) {
+  :host { --pad-x: 10px; --pad-y: 8px; }
+  .msg { max-width: 90%; }       /* a bit wider on phones feels nicer */
 }
