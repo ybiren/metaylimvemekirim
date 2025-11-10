@@ -7,6 +7,7 @@ import { PresenceService } from '../../services/presence.service';
 import { Dialog } from '@angular/cdk/dialog';
 import { ChatWindowComponent } from '../chat-window/chat-window.component';
 import { UsersService } from '../../services/users.service';
+import { getCurrentUserId } from '../../core/current-user';
 
 @Component({
   selector: 'app-top-menu',
@@ -23,7 +24,7 @@ export class TopMenuComponent implements OnInit {
   unreadTotal = 0;
 
   private removeOutside?: () => void;
-  private users    = inject(UsersService);
+  private usersSrv    = inject(UsersService);
 
   constructor(
     private router: Router,
@@ -43,8 +44,10 @@ export class TopMenuComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const storedUser = localStorage.getItem('user');
-    this.loggedInUser = storedUser ? (JSON.parse(storedUser) as IUser) : null;
+    
+    this.usersSrv.users$.pipe().subscribe((users) => {
+      this.loggedInUser = (users || []).find(u => u.userID === getCurrentUserId());
+    }); 
 
     // close when clicking anywhere outside
     const outside = (ev: Event) => {
@@ -94,6 +97,6 @@ export class TopMenuComponent implements OnInit {
 
   nameFor(peerId: number) {
     // TODO: swap with real user lookup when ready
-    return this.users.getName(peerId);
+    return this.usersSrv.getName(peerId);
   }
 }

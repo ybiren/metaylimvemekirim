@@ -71,7 +71,7 @@
         "toUserId": 1,
         "content": "fddd",
         "sentAt": "2025-11-10T05:35:31.019518+00:00",
-        "deliveredAt": null,
+        "deliveredAt": "2025-11-10T09:02:10.997301+00:00",
         "readAt": null
       },
       {
@@ -80,7 +80,7 @@
         "toUserId": 1,
         "content": "dddd",
         "sentAt": "2025-11-10T05:35:33.429285+00:00",
-        "deliveredAt": null,
+        "deliveredAt": "2025-11-10T09:02:10.997301+00:00",
         "readAt": null
       },
       {
@@ -89,7 +89,7 @@
         "toUserId": 1,
         "content": "dfdfdf",
         "sentAt": "2025-11-10T05:35:38.405281+00:00",
-        "deliveredAt": null,
+        "deliveredAt": "2025-11-10T09:02:10.997301+00:00",
         "readAt": null
       },
       {
@@ -98,7 +98,7 @@
         "toUserId": 1,
         "content": "sd",
         "sentAt": "2025-11-10T05:46:38.690998+00:00",
-        "deliveredAt": null,
+        "deliveredAt": "2025-11-10T09:02:10.997301+00:00",
         "readAt": null
       },
       {
@@ -107,7 +107,7 @@
         "toUserId": 1,
         "content": "fdffgfg",
         "sentAt": "2025-11-10T05:46:41.838811+00:00",
-        "deliveredAt": null,
+        "deliveredAt": "2025-11-10T09:02:10.997301+00:00",
         "readAt": null
       },
       {
@@ -116,7 +116,7 @@
         "toUserId": 1,
         "content": "sdsd",
         "sentAt": "2025-11-10T05:48:05.718778+00:00",
-        "deliveredAt": null,
+        "deliveredAt": "2025-11-10T09:02:10.997301+00:00",
         "readAt": null
       },
       {
@@ -125,6 +125,74 @@
         "toUserId": 1,
         "content": "ererer",
         "sentAt": "2025-11-10T05:59:57.914456+00:00",
+        "deliveredAt": "2025-11-10T09:02:10.997301+00:00",
+        "readAt": null
+      }
+    ]
+  },
+  {
+    "roomId": "dm:3:4",
+    "fromUserId": 3,
+    "toUserId": 4,
+    "messages": [
+      {
+        "id": "92137077-3b2a-46c6-92e2-b9ba65d89cfe",
+        "fromUserId": 4,
+        "toUserId": 3,
+        "content": "היי",
+        "sentAt": "2025-11-10T09:27:11.163036+00:00",
+        "deliveredAt": null,
+        "readAt": null
+      },
+      {
+        "id": "541e5435-83f9-463b-a7c4-780468fdc778",
+        "fromUserId": 4,
+        "toUserId": 3,
+        "content": "שדשד",
+        "sentAt": "2025-11-10T09:27:15.118967+00:00",
+        "deliveredAt": null,
+        "readAt": null
+      }
+    ]
+  },
+  {
+    "roomId": "dm:1:4",
+    "fromUserId": 1,
+    "toUserId": 4,
+    "messages": [
+      {
+        "id": "63c7774b-a3ff-42ce-8e6c-9381ce35f150",
+        "fromUserId": 4,
+        "toUserId": 1,
+        "content": "sdsdsd",
+        "sentAt": "2025-11-10T09:28:48.196466+00:00",
+        "deliveredAt": null,
+        "readAt": null
+      },
+      {
+        "id": "445659cf-2375-45fe-9c0e-deb653b7514e",
+        "fromUserId": 4,
+        "toUserId": 1,
+        "content": "dddddd",
+        "sentAt": "2025-11-10T09:28:56.356229+00:00",
+        "deliveredAt": null,
+        "readAt": null
+      },
+      {
+        "id": "0e7483b8-f6f2-49d8-981c-554f79e9dc99",
+        "fromUserId": 4,
+        "toUserId": 1,
+        "content": "ggg",
+        "sentAt": "2025-11-10T09:29:38.534252+00:00",
+        "deliveredAt": null,
+        "readAt": null
+      },
+      {
+        "id": "6b52eaef-4134-4a72-b9f9-6c0dfc6fc8e2",
+        "fromUserId": 4,
+        "toUserId": 1,
+        "content": "saaaaa",
+        "sentAt": "2025-11-10T09:30:04.508092+00:00",
         "deliveredAt": null,
         "readAt": null
       }

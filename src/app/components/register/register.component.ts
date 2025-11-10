@@ -1,14 +1,18 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, Validators, AbstractControl, ValidationErrors, ReactiveFormsModule } from '@angular/forms';
 import { RegisterService } from '../../services/register.service';
 import { fileMaxSizeValidator, fileMimeTypeValidator } from '../../validators/file-validators';
 import { hebrewNameValidator, passwordMatchValidator } from '../../validators/form-validators';
-import { IOption, IRegisterPayload } from '../../interfaces';
+import { IOption, IRegisterPayload, IUser } from '../../interfaces';
 import { Router } from '@angular/router';
 import { REGIONS_TOKEN } from '../../consts/regions.consts';
 import { GENDER_TOKEN } from '../../consts/gender.consts';
 import { FAMILY_STATUS_TOKEN } from '../../consts/family-status.consts';
+import { UsersService } from '../../services/users.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { getCurrentUserId } from '../../core/current-user';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-register',
@@ -20,7 +24,12 @@ import { FAMILY_STATUS_TOKEN } from '../../consts/family-status.consts';
 export class RegisterComponent implements OnInit {
   private fb = inject(FormBuilder);
   private registerSrv = inject(RegisterService);
+  private usersSrv = inject(UsersService);
+  private destroyRef = inject(DestroyRef);
+  
   router = inject(Router);
+  user = signal<IUser | null>(null);
+    
   regions:ReadonlyArray<IOption> = inject(REGIONS_TOKEN);
   gender:ReadonlyArray<IOption> = inject(GENDER_TOKEN);  
   familyStatus:ReadonlyArray<IOption> = inject(FAMILY_STATUS_TOKEN);
@@ -68,48 +77,61 @@ export class RegisterComponent implements OnInit {
     updateOn: 'change'
   }, { validators: passwordMatchValidator });
 
+  private objectUrl?: string;                 // keep last URL to revoke
+  apiBase = environment.apibase;
   
   ngOnInit(): void {
-    this.loadFromLocalStorage();
+    this.fetchUser();
   }
   
   get f() { return this.form.controls; }
-  hasUserInStorage = !!localStorage.getItem('user');
-
+  
   onImageSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] || null;
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0] ?? null;
 
-    this.imageError = '';
-    this.imagePreviewUrl = null;
-
-    if (!file) {
-      this.f['c_image'].setValue(null);
-      //this.f['c_image'].setErrors({ required: true });
-      return;
-    }
-
-    // Validate mime type
-    if (!file.type || !file.type.startsWith('image/')) {
-      this.f['c_image'].setValue(null);
-      this.f['c_image'].setErrors({ notImage: true });
-      this.imageError = 'נא לבחור קובץ תמונה תקין';
-      return;
-    }
-
-    // Validate size ≤ 256KB
-    if (file.size > this.MAX_IMAGE_BYTES) {
-      this.f['c_image'].setValue(null);
-      this.f['c_image'].setErrors({ tooLarge: true });
-      this.imageError = 'גודל התמונה לא יכול לעלות על ‎256KB‎';
-      return;
-    }
-
-    // All good → store file in the control and show preview
-    this.f['c_image'].setErrors(null);
-    this.f['c_image'].setValue(file);
-    this.imagePreviewUrl = URL.createObjectURL(file);
+  // reset previous state
+  this.imageError = '';
+  if (this.objectUrl) {
+    URL.revokeObjectURL(this.objectUrl);
+    this.objectUrl = undefined;
   }
+  this.imagePreviewUrl = null;
+
+  // if nothing picked
+  if (!file) {
+    this.f['c_image'].setValue(null);           // keep File in the form (not bound to input)
+    this.f['c_image'].setErrors({ required: true });
+    this.f['c_image'].markAsTouched();
+    this.f['c_image'].updateValueAndValidity({ onlySelf: true, emitEvent: false });
+    return;
+  }
+
+  // Validate mime (some iOS cameras report empty type; allow common extensions as fallback if you want)
+  if (!file.type || !file.type.startsWith('image/')) {
+    this.f['c_image'].setValue(null);
+    this.f['c_image'].setErrors({ notImage: true });
+    this.imageError = 'נא לבחור קובץ תמונה תקין';
+    return;
+  }
+
+  // Validate size ≤ 256KB
+  if (file.size > this.MAX_IMAGE_BYTES) {
+    this.f['c_image'].setValue(null);
+    this.f['c_image'].setErrors({ tooLarge: true, maxBytes: this.MAX_IMAGE_BYTES });
+    this.imageError = 'גודל התמונה לא יכול לעלות על ‎256KB‎';
+    return;
+  }
+
+  // Preview (Object URL; revoke previous above)
+  this.objectUrl = URL.createObjectURL(file);
+  this.imagePreviewUrl = this.objectUrl;
+
+  // All good → store File in the form (no DOM write because input is not bound)
+  this.f['c_image'].setErrors(null);
+  this.f['c_image'].setValue(file);
+  this.f['c_image'].markAsDirty();
+}
 
   onSubmit(): void {
     this.form.markAllAsTouched();
@@ -161,10 +183,11 @@ export class RegisterComponent implements OnInit {
         this.serverMsg.set('נרשמת בהצלחה!');
         this.submitting.set(false);
         console.log('Server response:', res);
-          localStorage.setItem('user', JSON.stringify(res.user));
-          setTimeout(() => {
+        localStorage.setItem('user', JSON.stringify(res.user));
+        this.usersSrv.load();
+        setTimeout(() => {
             this.router.navigate(['/users']);
-          }, 500);
+        }, 500);
       },
       error: (err) => {
         console.error(err);
@@ -178,44 +201,32 @@ export class RegisterComponent implements OnInit {
   }
 
     /** Load partial user data from localStorage['user'] if present and valid JSON. */
-  private loadFromLocalStorage(): void {
-  const raw = localStorage.getItem('user');
+  private fetchUser() {
+        // Using existing GET /users and filtering client-side
+    this.usersSrv.users$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((users) => {
+      const found = (users || []).find(u => u.userID === getCurrentUserId());
+      this.user.set(found);
+      this.imagePreviewUrl = `${this.apiBase}/images/${this.user().userID}`;
+    });
 
-  if (!raw) {
-     // localStorage not set → image required
-     this.f['c_image'].setValidators([
-     Validators.required,
-     fileMimeTypeValidator(/^image\//),
-     fileMaxSizeValidator(this.MAX_IMAGE_BYTES),
-     ]);
-    this.f['c_image'].updateValueAndValidity({ emitEvent: false });
-    return;
-  }
-
-  try {
-  const parsed = JSON.parse(raw) as Partial<IRegisterPayload> | null;
-  if (!parsed || typeof parsed !== 'object') return;
-
-  // Patch only the fields we allow to pre-fill. Keep passwords & acceptTerms empty for security.
-  this.form.patchValue({
-    c_name: parsed.c_name ?? this.form.value.c_name,
-    c_gender: parsed.c_gender ??  this.form.value.c_gender,
-    c_birth_day: parsed.c_birth_day ? parsed.c_birth_day as number: this.form.value.c_birth_day as unknown as number,
-    c_birth_month: parsed.c_birth_month ? parsed.c_birth_month as number : this.form.value.c_birth_month as unknown as number,
-    c_birth_year: parsed.c_birth_year ? parsed.c_birth_year  as number : this.form.value.c_birth_year as unknown as number,
-    c_country: parsed.c_country ?? this.form.value.c_country,
-    c_pcell: parsed.c_pcell ?? this.form.value.c_pcell,
-    c_email: parsed.c_email ?? this.form.value.c_email,
-    c_ff: parsed.c_ff ?? this.form.value.c_ff,
-    c_details: parsed.c_details ?? this.form.value.c_details,
-    c_details1: parsed.c_details1 ?? this.form.value.c_details1,
-    password: parsed.password2 ?? this.form.value.password,
-    password2: parsed.password2 ?? this.form.value.password2,
-    }, { emitEvent: false });
-    } catch (err) {
-      console.warn('Invalid JSON in localStorage[\'user\'] — ignoring.', err);
-    }
-  }
+     // Patch only the fields we allow to pre-fill. Keep passwords & acceptTerms empty for security.
+     this.form.patchValue({
+       c_name: this.user()?.c_name ?? this.form.value.c_name,
+       c_gender: this.user()?.c_gender ??  this.form.value.c_gender,
+       c_birth_day: this.user()?.c_birth_day ? this.user().c_birth_day: this.form.value.c_birth_day as unknown as number,
+       c_birth_month: this.user()?.c_birth_month ? this.user().c_birth_month : this.form.value.c_birth_month as unknown as number,
+       c_birth_year: this.user()?.c_birth_year ? this.user().c_birth_year : this.form.value.c_birth_year as unknown as number,
+       c_country: this.user()?.c_country ?? this.form.value.c_country,
+       c_pcell: this.user()?.c_pcell ?? this.form.value.c_pcell,
+       c_email: this.user()?.c_email ?? this.form.value.c_email,
+       c_ff: this.user()?.c_ff ?? this.form.value.c_ff,
+       c_details: this.user()?.c_details ?? this.form.value.c_details,
+       c_details1: this.user()?.c_details1 ?? this.form.value.c_details1,
+       password: this.user()?.password2 ?? this.form.value.password,
+       password2: this.user()?.password2 ?? this.form.value.password2,
+       }, { emitEvent: false });
+      
+   }
 
 
   debugFormErrors() {

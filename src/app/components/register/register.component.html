@@ -169,7 +169,7 @@
   <input type="hidden" name="sessionID" [value]="sessionID()" />
    
   <button class="submit" type="submit" [disabled]="form.invalid || submitting()">
-    {{ hasUserInStorage ? 'עדכן פרטים' : 'ברוך הבא – הוספה למערכת' }}
+    {{ user() ? 'עדכן פרטים' : 'ברוך הבא – הוספה למערכת' }}
   </button>
 
   <!-- Server message -->

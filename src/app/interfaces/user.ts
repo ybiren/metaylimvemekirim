@@ -5,9 +5,9 @@ export interface IUser {
   image_path?: string;
   liked?: boolean; // local like state
   c_gender: number;
-  c_birth_day?: string;
-  c_birth_month?: string;
-  c_birth_year?: string;
+  c_birth_day?: number;
+  c_birth_month?: number;
+  c_birth_year?: number;
   c_country: number;
   c_pcell?: string;
   c_ff: number;

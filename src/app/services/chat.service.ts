@@ -9,7 +9,7 @@ export type ChatMsg = {
   fromUserId: number;
   toUserId: number;
   content: string;
-  sentAt: string;                 // ISO
+  sentAt: string;
   deliveredAt?: string | null;
   readAt?: string | null;
 };
@@ -28,100 +28,85 @@ export type ThreadRow = {
 export class ChatService {
   private ws?: WebSocket;
   private reconnectTimer?: any;
-  private reconnectDelay = 500;              // ms, exponential backoff up to 5s
+  private reconnectDelay = 500;
   private readonly maxReconnect = 5000;
 
-  private baseApi = environment.apibase;     // e.g. "http://localhost:8000"
-  private baseWs  = environment.basews || ''; // e.g. "ws://localhost:8000" or ""
+  private baseApi = environment.apibase;
+  private baseWs  = environment.basews || '';
 
-  /** current user + peer (room) */
   private me = getCurrentUserId();
   private peer = 0;
 
-  /** chat streams */
   readonly messages$    = new BehaviorSubject<ChatMsg[]>([]);
   readonly typing$      = new BehaviorSubject<boolean>(false);
-
-  /** threads + unread badge for top menu */
   readonly threads$     = new BehaviorSubject<ThreadRow[]>([]);
   readonly unreadTotal$ = new BehaviorSubject<number>(0);
-
-  /** which peer's chat window is currently open (null = none) */
   readonly activePeer$  = new BehaviorSubject<number | null>(null);
 
-  /** tiny built-in beep (data-URI); will play after first user gesture */
-  private beep: HTMLAudioElement | null = null;
+  // ==== NEW: Web Audio fallback (reliable beep) ====
+  private audioCtx?: AudioContext;
+  private audioUnlocked = false;
 
   constructor(private zone: NgZone) {
-    // prepare a tiny beep; browsers may defer until first gesture
-    this.beep = new Audio(
-      'data:audio/wav;base64,UklGRmQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYBQGZkAAAAAAAAPwAAAP8AAAB/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f38='
-    );
-    this.beep.preload = 'auto';
-
-    // light unlock attempt on first gesture
-    const unlock = () => {
-      if (!this.beep) return;
+    // Prepare/resume WebAudio on first user gesture (required by iOS/Safari)
+    const unlock = async () => {
       try {
-        this.beep.volume = 0.001;
-        this.beep.currentTime = 0;
-        this.beep.play().then(() => this.beep?.pause()).catch(() => {});
-      } catch {}
+        if (!this.audioCtx) this.audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        if (this.audioCtx.state === 'suspended') await this.audioCtx.resume();
+        this.audioUnlocked = (this.audioCtx.state === 'running');
+      } catch {
+        this.audioUnlocked = false;
+      }
       window.removeEventListener('pointerdown', unlock);
       window.removeEventListener('keydown', unlock);
+      window.removeEventListener('touchstart', unlock);
     };
     window.addEventListener('pointerdown', unlock, { passive: true });
     window.addEventListener('keydown', unlock);
+    window.addEventListener('touchstart', unlock, { passive: true });
   }
 
-  /** Public: set which peer's chat is open (used to mute beeps for the open chat) */
   setActivePeer(peerId: number | null) {
     this.activePeer$.next(peerId);
   }
 
   // ------------------- Threads (top menu) -------------------
-
   private refreshThreadsQueued = false;
   async refreshThreads() {
-    // coalesce calls that happen in quick succession
     if (this.refreshThreadsQueued) return;
     this.refreshThreadsQueued = true;
     setTimeout(async () => {
       this.refreshThreadsQueued = false;
       this.me = getCurrentUserId();
       if (!this.me) return;
+
       const r = await fetch(`${this.baseApi}/chat/threads?userId=${this.me}`);
       const j = await r.json();
       const rows = Array.isArray(j.threads) ? (j.threads as ThreadRow[]) : [];
       this.threads$.next(rows);
+
       const prevUnreadTotal = this.unreadTotal$.value;
       this.unreadTotal$.next(rows.reduce((sum, t) => sum + (t.unread || 0), 0));
-      if(this.unreadTotal$.value !== prevUnreadTotal) {
-        this.playBeep();
-      }
 
-    }, 100); // small debounce
+      if (this.unreadTotal$.value !== prevUnreadTotal) {
+        this.playBeep(); // ← uses WebAudio now
+      }
+    }, 100);
   }
 
   // ------------------- History + WebSocket -------------------
-
   async loadHistory(peerId: number, limit = 200) {
     this.me = getCurrentUserId();
     if (!this.me) return;
     const r = await fetch(`${this.baseApi}/chat/history?user1=${this.me}&user2=${peerId}&limit=${limit}`);
     const j = await r.json();
     const arr = Array.isArray(j.messages) ? (j.messages as ChatMsg[]) : [];
-    // server usually returns DESC → reverse to ASC for rendering
     this.messages$.next([...arr].reverse());
   }
 
   private buildWsUrl(peerId: number) {
     const query = `?userId=${this.me}&peerId=${peerId}`;
-    if (!this.baseWs) {
-      // same-origin relative WebSocket; browser picks ws/wss
-      return `/ws/chat${query}`;
-    }
-    // allow "ws://host:port" or "wss://host" in env; avoid double slashes
+    if (!this.baseWs) return `/ws/chat${query}`;
     const trimmed = this.baseWs.replace(/\/+$/, '');
     return `${trimmed}/ws/chat${query}`;
   }
@@ -134,18 +119,14 @@ export class ChatService {
       return;
     }
 
-    // close previous, if any
     try { this.ws?.close(); } catch {}
 
     const finalUrl = this.buildWsUrl(peerId);
     this.ws = new WebSocket(finalUrl);
 
-    this.ws.onopen = () => {
-      this.reconnectDelay = 500; // reset backoff
-    };
+    this.ws.onopen = () => { this.reconnectDelay = 500; };
 
     this.ws.onmessage = (ev) => {
-      // handle outside Angular to avoid extra CD, then re-enter only for emits
       this.zone.run(() => {
         const data = JSON.parse(ev.data);
 
@@ -153,9 +134,10 @@ export class ChatService {
           const msg = data.msg as ChatMsg;
           this.messages$.next([...this.messages$.value, msg]);
           this.refreshThreads();
+
         } else if (data.type === 'delivered') {
           const ids: string[] = data.ids || [];
-          const at: string | undefined = data.deliveredAt; // optional from server
+          const at: string | undefined = data.deliveredAt;
           const set = new Set<string>(ids);
           const list = this.messages$.value.map(m =>
             set.has(m.id) ? { ...m, deliveredAt: at ?? new Date().toISOString() } : m
@@ -164,7 +146,7 @@ export class ChatService {
 
         } else if (data.type === 'read') {
           const ids: string[] = data.ids || [];
-          const at: string | undefined = data.readAt; // optional from server
+          const at: string | undefined = data.readAt;
           const set = new Set<string>(ids);
           const list = this.messages$.value.map(m =>
             set.has(m.id) ? { ...m, readAt: at ?? new Date().toISOString() } : m
@@ -174,7 +156,6 @@ export class ChatService {
 
         } else if (data.type === 'typing') {
           this.typing$.next(true);
-          // auto-clear after 1.5s of silence
           setTimeout(() => this.zone.run(() => this.typing$.next(false)), 1500);
         }
       });
@@ -198,44 +179,32 @@ export class ChatService {
   }
 
   // ------------------- Client -> Server events -------------------
-
   send(content: string) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     const payload = { type: 'message', content };
-    try {
-      this.ws.send(JSON.stringify(payload));
-    } catch (e) {
+    try { this.ws.send(JSON.stringify(payload)); } catch (e) {
       console.error('[Chat] send error:', e);
     }
   }
 
   sendTyping() {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-    try {
-      this.ws.send(JSON.stringify({ type: 'typing' }));
-    } catch {}
+    try { this.ws.send(JSON.stringify({ type: 'typing' })); } catch {}
   }
 
   markReadUpTo(lastIso: string) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-    try {
-      this.ws.send(JSON.stringify({ type: 'readUpTo', upToIso: lastIso }));
-    } catch {}
+    try { this.ws.send(JSON.stringify({ type: 'readUpTo', upToIso: lastIso })); } catch {}
   }
 
-  /** Convenience: mark all peer messages as read up to the latest one */
   markPeerRead(peerId: number) {
     const msgs = this.messages$.value;
-    const lastPeerMsg = [...msgs]
-      .reverse()
-      .find(m => m.fromUserId === peerId && !m.readAt);
+    const lastPeerMsg = [...msgs].reverse().find(m => m.fromUserId === peerId && !m.readAt);
     if (lastPeerMsg) this.markReadUpTo(lastPeerMsg.sentAt);
   }
 
-  // ------------------- Helpers -------------------
-
+  // ------------------- Reconnect -------------------
   private scheduleReconnect() {
-    // Only reconnect if we still have a target peer (i.e., chat intended)
     if (!this.peer) return;
     if (this.reconnectTimer) return;
 
@@ -248,11 +217,41 @@ export class ChatService {
     }, delay);
   }
 
-  private playBeep() {
+  // ------------------- Beep (WebAudio) -------------------
+  /**
+   * Plays a short sine beep (~150ms). No assets, no MIME issues.
+   * Requires a prior user gesture on some browsers (we "unlock" in constructor).
+   */
+  async playBeep() {
     try {
-      this.beep.currentTime = 0;
-      void this.beep.play();
-    } catch {
+      if (!this.audioCtx) {
+        this.audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      // try to resume if needed
+      if (this.audioCtx.state === 'suspended') {
+        await this.audioCtx.resume().catch(() => {});
+      }
+
+      const ctx = this.audioCtx;
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, now); // A5
+      gain.gain.setValueAtTime(0.0, now);
+      gain.gain.linearRampToValueAtTime(0.15, now + 0.005);  // quick attack
+      gain.gain.linearRampToValueAtTime(0.0,  now + 0.15);   // short release
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.16);
+    } catch (e) {
+      // As a last resort, swallow error to avoid crashing UI
+      console.warn('[Chat] beep failed:', e);
     }
   }
 }

@@ -131,6 +131,14 @@
   cursor: not-allowed;
 }
 
+  img.avatar-preview {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #f3f4f6;
+  }
+
 /* Keep two columns even on small screens (no stacking) */
 @media (max-width: 720px) {
   .grid { grid-template-columns: max-content 1fr; }

@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { IUser } from '../interfaces';
-import { getCurrentUserId } from '../core/current-user';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -16,9 +15,8 @@ export class UsersService {
 
   async load() {
     try {
-      const me = getCurrentUserId();
       const res = await firstValueFrom(this.http.get<{ users: IUser[] }>(`${this.baseUrl}/users`));
-      this.users$.next((res.users ?? []).filter(u => u.userID !== me));
+      this.users$.next((res.users ?? []));
     } catch (err) {
       console.error('[UsersService] Failed to load users:', err);
     }
