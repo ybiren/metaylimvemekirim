@@ -47,3 +47,4 @@ Thumbs.db
 
 fastapi_server/node_modules
 fastapi_server/.venv
+fastapi_server/data
