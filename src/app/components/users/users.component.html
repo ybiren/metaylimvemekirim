@@ -1,6 +1,6 @@
 <section class="users-grid" *ngIf="!loading(); else loadingTpl">
   <div class="user-card" *ngFor="let u of users(); trackBy: trackByUserId">
-    <img [src]="imageUrl(u)" alt="user photo" class="avatar" />
+    <img [src]="imageUrl()(u)" alt="user photo" class="avatar" />
 
     <a [routerLink]="['/user', u.userID]" class="name">
       {{ u.c_name }}

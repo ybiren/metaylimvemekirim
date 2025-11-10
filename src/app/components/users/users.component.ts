@@ -35,12 +35,11 @@ export class UsersComponent implements OnInit {
   }
     
   
-
-  imageUrl(u: IUser): string {
+  imageUrl = computed(() => {
     const rand = Math.floor(Math.random() * 1_000_000);
-    return `${this.apiBase}/images/${u.userID}?id=${rand}`;
-  }
-
+    return (u: IUser) => `${this.apiBase}/images/${u.userID}?id=${rand}`;
+  });
+  
   trackByUserId(index: number, u: IUser): number {
     return u.userID;
   }

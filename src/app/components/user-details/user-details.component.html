@@ -6,8 +6,8 @@
 
   <div class="card" *ngIf="!loading() && !error() && user() as u">
     <div class="avatar">
-      <img *ngIf="imageUrl(u)" [src]="imageUrl(u)" alt="avatar" />
-      <div *ngIf="!imageUrl(u)" class="placeholder">אין תמונה</div>
+      <img *ngIf="u" [src]="imageUrl()" alt="avatar" />
+      <div *ngIf="!u" class="placeholder">אין תמונה</div>
     </div>
 
     <h2 class="name">{{ u.c_name }}</h2>

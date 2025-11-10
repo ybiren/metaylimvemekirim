@@ -29,7 +29,7 @@ export class UserDetailsComponent implements OnInit {
   regions:ReadonlyArray<IOption> = inject(REGIONS_TOKEN);
   gender:ReadonlyArray<IOption> = inject(GENDER_TOKEN);  
   familyStatus:ReadonlyArray<IOption> = inject(FAMILY_STATUS_TOKEN);
-  userSrv = inject(UsersService);
+  usersSrv = inject(UsersService);
   dialog = inject(Dialog);
   toast = inject(ToastService);
 
@@ -56,7 +56,15 @@ export class UserDetailsComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
     // Using existing GET /users and filtering client-side
-    this.http.get<{ ok: boolean; users: IUser[] }>(`${this.apiBase}/users`).subscribe({
+    this.usersSrv.users$.subscribe((users) => {
+      const found = (users || []).find(u => u.userID === id);
+      if (!found) this.error.set('User not found');
+      this.user.set(found);
+      this.loading.set(false);
+    });
+    
+    
+    /*this.http.get<{ ok: boolean; users: IUser[] }>(`${this.apiBase}/users`).subscribe({
       next: (res) => {
         const found = (res.users || []).find(u => u.userID === id) || null;
         if (!found) this.error.set('User not found');
@@ -68,16 +76,19 @@ export class UserDetailsComponent implements OnInit {
         this.error.set('Failed to load user');
         this.loading.set(false);
       }
-    });
+    });*/
 
     // If you add GET /users/{id} on the server, you can replace the above with:
     // this.http.get<User>(`${this.apiBase}/users/${id}`).subscribe({...});
   }
 
-  imageUrl(u: IUser | null): string | null {
+  
+  imageUrl = computed(() => {
     const rand = Math.floor(Math.random() * 1000000);    
-    return `${this.apiBase}/images/${u.userID}?id=${rand}`;
-  }
+    return `${this.apiBase}/images/${this.user().userID}?id=${rand}`;
+  });
+
+  
 
   textByValue(options:ReadonlyArray<IOption>, val) {
     return options.find(item=> item.val == val).txt;
@@ -86,7 +97,7 @@ export class UserDetailsComponent implements OnInit {
   // ✅ Block user function
   blockUser(blocked_userId: number) {
     const userId = this.loggedInUser().userID;
-    this.userSrv.block(userId, blocked_userId).subscribe({
+    this.usersSrv.block(userId, blocked_userId).subscribe({
       next: (res: any) => {
         this.toast.show('המשתמש נחסם / שוחרר בהצלחה ✓');
         localStorage.setItem('user', JSON.stringify({...this.loggedInUser(),"block": [...res.block_list]}));
