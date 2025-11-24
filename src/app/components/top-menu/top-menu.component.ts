@@ -8,6 +8,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { ChatWindowComponent } from '../chat-window/chat-window.component';
 import { UsersService } from '../../services/users.service';
 import { getCurrentUserId } from '../../core/current-user';
+import { SendReminderComponent } from '../send-reminder/send-reminder.component';
 
 @Component({
   selector: 'app-top-menu',
@@ -83,13 +84,27 @@ export class TopMenuComponent implements OnInit {
     const isMobile = window.innerWidth < 600;
     this.dialog.open(ChatWindowComponent, {
       data: { peerId },
-      panelClass: isMobile ? 'im-dialog-mobile' : 'im-dialog-desktop',
+      panelClass: isMobile ? 'im-dialog--mobile' : 'im-dialog--desktop',
       ...(isMobile
         ? { width: '100vw', height: '100vh' }
         : { width: 'min(420px, 95vw)', height: '80vh' })
     });
     this.open = false;
   }
+
+  openReminder(cId: string, cName: string) {
+  const isMobile = window.innerWidth < 600;
+
+  this.dialog.open(SendReminderComponent, {
+    data: { cId, cName },   // same pattern as chat
+    panelClass: isMobile ? 'im-dialog--mobile' : 'im-dialog--desktop',
+
+    ...(isMobile
+      ? { width: '100vw', height: '100vh' }
+      : { width: 'min(420px, 95vw)', height: '80vh' })
+  });
+}
+
 
   isOnline(peerId: number) {
     return this.presence.isOnline(peerId);

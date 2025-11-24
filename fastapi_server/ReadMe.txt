@@ -4,6 +4,15 @@ yossi@DESKTOP-V70AVCN:/mnt/f/yossi/angular/metaylimvemekirim/fastapi_server$ sou
 
 uvicorn main:app --reload
 
+//windows
+uvicorn main:app --host 0.0.0.0 --port 8000
+//linux
+nohup uvicorn main:app --host 0.0.0.0 --port 8000 & 
+//kill uvicorn on linux
+pkill -f uvicorn
+//for checking
+lsof -i :8000
+
 
 
 
@@ -12,5 +21,7 @@ rsync -avz --exclude ".venv/" --exclude "__pycache__/" --delete /mnt/f/yossi/ang
 
 2. copy bundles
 rsync -avz /mnt/f/yossi/angular/metaylimvemekirim/dist/metaylimvemekirim/browser/ root@194.36.90.119:/root/dist/metaylimvemekirim/browser
+
+
 
 
