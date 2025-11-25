@@ -1,23 +1,41 @@
-.invite-btn {
-  padding: 10px 18px;
-  border-radius: 999px;
-  border: none;
-  background: #24a859;
-  color: white;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s ease-in-out;
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* center the button */
+  position: relative;       /* allows absolute positioning inside */
+  height: 100px;
+  .invite-btn {
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: none;
+    background: #24a859;
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease-in-out;
 
-  &:hover {
-    background: #1e8f4d;
-    transform: translateY(-1px);
-  }
+    &:hover {
+      background: #1e8f4d;
+      transform: translateY(-1px);
+    }
 
-  &:active {
-    transform: scale(0.97);
-  }
-} 
+    &:active {
+      transform: scale(0.97);
+    }
+ } 
+  /* Logo fixed to the right side */
+ .logo-wrapper {
+   position: absolute;
+   right: 0;
+   top: 0;
+ }
+
+}
+
+
+
+
 
 
 /* ====== Top bar defaults ====== */

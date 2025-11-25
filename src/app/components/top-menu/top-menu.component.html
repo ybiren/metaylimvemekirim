@@ -1,8 +1,14 @@
 
-<div style="display: flex;justify-content: center;padding-bottom: 10px;"><button class="invite-btn" (click)="openReminder('1','aa')">הזמן חבר</button></div>
+<div class="top-bar">
+  <button class="invite-btn" (click)="openReminder('1','aa')">הזמן חבר</button>
+
+  <a routerLink="/home" class="logo-wrapper">
+    <img src="assets/images/logo.jpg" height="76" />
+  </a>
+</div>
 <div class="top-menu" dir="rtl">
   @if (loggedInUser) {
-    <div class="greeting">{{ loggedInUser.c_name }} שלום</div>
+    <div class="greeting"><a [routerLink]="['/user', loggedInUser.userID]">{{ loggedInUser.c_name }}</a> שלום</div>
   }
 
   <nav>

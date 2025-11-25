@@ -186,7 +186,7 @@ export class RegisterComponent implements OnInit {
         localStorage.setItem('user', JSON.stringify(res.user));
         this.usersSrv.load();
         setTimeout(() => {
-            this.router.navigate(['/users']);
+            this.router.navigate(['/home']);
         }, 500);
       },
       error: (err) => {

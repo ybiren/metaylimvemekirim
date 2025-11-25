@@ -48,7 +48,7 @@ export class LoginComponent {
           localStorage.setItem('user', JSON.stringify(res.user));
 
           setTimeout(() => {
-            this.router.navigate(['/users']);
+            this.router.navigate(['/home']);
           }, 500);
         } else {
           this.error = res?.message || 'שגיאה בכניסה';

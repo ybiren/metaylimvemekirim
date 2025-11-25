@@ -1,0 +1,154 @@
+:host {
+display: flex;
+gap: 10px;
+justify-content: flex-start; 
+flex-direction: row-reverse;
+padding-top: 20px;
+
+/* Outer box */
+.updates-box {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  width: 227px;      /* adjust as you like */
+  border-radius: 4px;
+  overflow: hidden;
+
+  /* Header */
+.updates-box__header {
+  background: #31adff;
+  text-align: center;
+  padding: 4px 8px;
+}
+
+/* Body background */
+.updates-box__body {
+  background: #caeaff;
+}
+
+/* Scroll viewport (height limit) */
+.updates-box__scroll {
+  height: 40vh;        /* 🔹 limit height (like <marquee height="200">) */
+  overflow: hidden;
+  position: relative;
+}
+
+/* List that actually scrolls */
+.updates-list {
+  display: grid;
+  grid-auto-rows: min-content;
+  animation: updates-marquee 25s linear infinite;
+}
+
+/* pause on hover, like old marquee onmouseover="this.stop()" */
+.updates-box__scroll:hover .updates-list {
+  animation-play-state: paused;
+}
+
+/* Each item is on its own line */
+.updates-item {
+  display: block;               /* 🔹 each link on a separate line */
+  padding: 6px 4px;
+  text-align: center;
+  font-size: 13px;
+  text-decoration: none;
+  color: #000;
+  border-bottom: 1px solid #99c7e6; /* fake /images/s1.gif separator */
+}
+
+/* promo row with star + text */
+.updates-item--promo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.updates-item--promo img {
+  width: 16px;
+  height: 16px;
+}
+
+}
+
+
+.people-box {
+  width: 100%;          /* like width="99%" */
+  max-width: 260px;     /* close to original inner table width */
+  border-collapse: collapse;
+  border-radius: 2px;
+  overflow: hidden;
+  font-size: 13px;
+
+  /* Header */
+.people-box__header {
+  background: #b7bbc1;
+  text-align: center;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.people-box__header:hover {
+  background-color: #666666;
+}
+
+.people-box__title,
+.people-box__more {
+  white-space: nowrap;
+}
+
+/* Body */
+.people-box__body {
+  background: #e5e5e5;
+  height: 150px;       /* like your <td height="150"> */
+  padding: 4px 0;
+}
+
+/* Grid of avatars */
+.people-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr); /* 6 columns like your 6 <td> per row */
+  justify-items: center;
+  align-items: center;
+  row-gap: 4px;
+}
+
+/* Each avatar cell */
+.people-grid__item {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.people-grid__item:hover {
+  background-color: #666666;
+}
+
+.people-grid__item img {
+  width: 40px;
+  height: 40px;
+  display: block;
+}
+
+
+}
+
+}
+
+/* Marquee animation: scroll upward */
+@keyframes updates-marquee {
+  0% {
+    transform: translateY(100%);
+  }
+  100% {
+    transform: translateY(-100%);
+  }
+}

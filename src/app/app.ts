@@ -46,7 +46,7 @@ export class App implements OnInit, OnDestroy{
     if (storedUser) {
        this.presenceSub = this.presence.start(25_000, (<IUser>JSON.parse(storedUser)).userID); // match HEARTBEAT_SEC
        // Navigate immediately to /users
-      this.router.navigateByUrl('/users');
+      this.router.navigateByUrl('/home');
     }
 
     // 2) Set initial value of isHome

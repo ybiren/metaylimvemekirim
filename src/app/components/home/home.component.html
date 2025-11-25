@@ -1,0 +1,60 @@
+<div class="updates-box" dir="rtl">
+  <div class="updates-box__header">
+    <span class="itemstitle">עידכונים מהאתר</span>
+  </div>
+
+  <div class="updates-box__body">
+    <div class="updates-box__scroll">
+      <div class="updates-list">
+        <div class="updates-item updates-item--promo">
+          <img src="http://www.pgoshoti.co.il/images/star.gif" alt="★" />
+          <a href="http://www.pgoshoti.co.il/site.asp" target="_blank">
+            <u><strong>בואו לנהל אתר משלכם!</strong></u>
+          </a>
+        </div>
+
+        <!-- items list -->
+        <a class="updates-item" href="msg.asp?idd=39&c_id=&c_name=">
+          חיפוש טרמפים לאירועים
+        </a>
+        <a class="updates-item" href="msg.asp?idd=37&c_id=&c_name=">
+          עובד לחברת JOBCLICK
+        </a>
+        <a class="updates-item" href="msg.asp?idd=36&c_id=&c_name=">
+          רוצים לקדם אירוע באתר?
+        </a>
+        <a class="updates-item" href="msg.asp?idd=35&c_id=&c_name=">
+          טיול לרמת הגולן
+        </a>
+        <a class="updates-item" href="msg.asp?idd=34&c_id=&c_name=">
+          בואו לנהל אתר משלכם
+        </a>
+        <!-- המשך שאר הקישורים באותו פורמט -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="people-box" dir="rtl">
+  <!-- Header -->
+  <div
+    class="people-box__header itemstitle"
+    onclick="location.href='matching.asp'"
+  >
+    <span class="people-box__title">אנשים שתשמחו לפגוש</span>
+    <span class="people-box__more">[ הצג עוד ]</span>
+  </div>
+
+  <div class="people-box__body">
+  <div class="people-grid">
+    
+    <a
+      *ngFor="let u of users(); trackBy: trackByUserId"
+      class="people-grid__item"
+      [routerLink]="['/user', u.userID]"
+    >
+      <img [src]="imageUrl()(u)" alt="user photo" />
+    </a>
+  </div>
+</div>
+
