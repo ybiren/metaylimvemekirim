@@ -6,6 +6,8 @@ import { UsersComponent } from './components/users/users.component';
 import { SearchFiltersComponent } from './components/search-filters/search-filters.component';
 import { MessagesStoreViewComponent } from './components/messages/messages.component';
 import { HomeComponent } from './components/home/home.component';
+import { AboutUsComponent } from './components/about-us/about-us.component';
+import { ContactPageComponent } from './components/contact/contact,component';
 
 export const appRoutes: Route[] = [
   { path: 'home', component: HomeComponent },
@@ -15,6 +17,7 @@ export const appRoutes: Route[] = [
   { path: 'register', component: RegisterComponent },
   { path: 'kupid', component: DragImageKupidComponent },
   { path: 'search', component: SearchFiltersComponent },
-  { path: 'messages', component: MessagesStoreViewComponent }
-
+  { path: 'messages', component: MessagesStoreViewComponent },
+  { path: 'about-us', component: AboutUsComponent },
+  { path: 'contact', component: ContactPageComponent }
 ];
