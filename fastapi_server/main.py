@@ -23,7 +23,7 @@ from ws.chat import router as chat_router
 # 👇 NEW: import helpers
 from helper import (
     ensure_image_content_type,
-    read_file_limited,
+    read_file,
     save_image_to_disk,
     find_user_image_path,
     ensure_data_file,
@@ -129,6 +129,13 @@ async def register(
     c_details: str = Form(""),
     c_details1: str = Form(""),
     c_image: Optional[UploadFile] = File(None),
+    c_height: str = Form(...),
+    c_education: str = Form(...),
+    c_work: str = Form(...),
+    c_children: str = Form(...),
+    c_smoking: str = Form(...),
+    c_url: str = Form(...),
+    c_fb: str = Form(...)
 ):
     def _has_real_file(up: Optional[UploadFile]) -> bool:
         return bool(up and getattr(up, "filename", None))
@@ -148,6 +155,13 @@ async def register(
         "sessionID": sessionID,
         "password": password,
         "password2": password2,
+        "c_height": c_height,
+        "c_education": c_education,
+        "c_work": c_work,
+        "c_children": c_children,
+        "c_smoking": c_smoking,
+        "c_url": c_url,
+        "c_fb": c_fb
     }
 
     # upsert guarded by lock
@@ -158,7 +172,7 @@ async def register(
     # optional image
     if _has_real_file(c_image):
         ensure_image_content_type(c_image)
-        image_bytes, image_size = await read_file_limited(c_image, MAX_IMAGE_BYTES)
+        image_bytes, image_size = await read_file(c_image)
         image_rel_path = save_image_to_disk(
             image_bytes=image_bytes,
             user_id=user_id,
@@ -270,6 +284,13 @@ async def search_users(payload: Dict[str, Any]):
                         ok = False
             except Exception:
                 pass
+
+        # name
+        if ok and payload.get("c_name") not in (None, 0, "0"):
+            name_db = (str(u.get("c_name")) or "").strip().lower()
+            name_payload = (str(payload.get("c_name")) or "").strip().lower()
+            if name_payload not in name_db:
+                ok = False
 
         if ok:
             results.append(u)

@@ -87,6 +87,7 @@ export class SearchFiltersComponent implements OnInit{
     c_country: [0],
     c_pic: [false],         // חברים בעלי תמונות בלבד
     c_online: [false],      // הצג חברים שבאתר כרגע
+    c_name:[''],
     updateOn: 'change'}
     , {validators: [ ageRangeValidator('c_ages1', 'c_ages2') ]});
 
@@ -130,6 +131,7 @@ export class SearchFiltersComponent implements OnInit{
       c_country: 0,
       c_pic: false,
       c_online: false,
+      c_name: ''
     });
   }
 }

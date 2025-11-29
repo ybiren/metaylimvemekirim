@@ -139,6 +139,9 @@
   opacity: .6;
   cursor: not-allowed;
 }
+.secondary {
+  margin: 0 10px;
+}
 
 /* Keep two columns even on small screens (no stacking) */
 @media (max-width: 720px) {

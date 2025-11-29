@@ -17,6 +17,12 @@ export interface IUser {
   image_content_type?: string;
   image_size?: number;
   block?: number[];
+  c_education?: number;
+  c_work?: number;
+  c_children?: number;
+  c_smoking?: number;
+  c_url?: string;
+  c_fb?: string; 
   [k: string]: any;
 }
 

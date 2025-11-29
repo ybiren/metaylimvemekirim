@@ -1,0 +1,60 @@
+// src/app/consts/work.consts.ts
+
+import { eWork } from "../enums/work.enums";
+import { InjectionToken } from "@angular/core";
+import { IOption } from "../interfaces";
+
+export const work: IOption[] = [
+  { txt: 'חשמלאות',            val: eWork.Electrician },
+  { txt: 'אדריכלות',           val: eWork.Architecture },
+  { txt: 'אופנה',              val: eWork.Fashion },
+  { txt: 'אחות',               val: eWork.Nurse },
+  { txt: 'אומנות',             val: eWork.Art },
+  { txt: 'אינטרנט',            val: eWork.Internet },
+  { txt: 'אלקטרוניקה',         val: eWork.Electronics },
+  { txt: 'ביטוח',              val: eWork.Insurance },
+  { txt: 'ביטחון',             val: eWork.Security },
+  { txt: 'בנייה',              val: eWork.Construction },
+  { txt: 'בנקאות',             val: eWork.Banking },
+  { txt: 'גינון',              val: eWork.Gardening },
+  { txt: 'גרפיקה',             val: eWork.Graphics },
+  { txt: 'דוגמנות',            val: eWork.Modeling },
+  { txt: 'הוראה',              val: eWork.Teaching },
+  { txt: 'הנהלת חשבונות',      val: eWork.Bookkeeping },
+  { txt: 'הייטק',              val: eWork.HighTech },
+  { txt: 'הנדסה',              val: eWork.Engineering },
+  { txt: 'חינוך',              val: eWork.Education },
+  { txt: 'חקלאות',             val: eWork.Agriculture },
+  { txt: 'ייבוא/ייצוא',        val: eWork.ImportExport },
+  { txt: 'יחסי ציבור',         val: eWork.PublicRelations },
+  { txt: 'ייעוץ',              val: eWork.Consulting },
+  { txt: 'כלכלה',              val: eWork.Economy },
+  { txt: 'מדע/מחקר',           val: eWork.ScienceResearch },
+  { txt: 'מוסיקה',             val: eWork.Music },
+  { txt: 'מזכיר/מזכירה',       val: eWork.Secretary },
+  { txt: 'מחשבים',             val: eWork.Computers },
+  { txt: 'מכונאות',            val: eWork.Mechanics },
+  { txt: 'מכירות',             val: eWork.Sales },
+  { txt: 'מסעדנות',            val: eWork.Restaurants },
+  { txt: 'משאבי אנוש',         val: eWork.HumanResources },
+  { txt: 'משטרה',              val: eWork.Police },
+  { txt: 'סטודנט/סטודנטית',   val: eWork.Student },
+  { txt: 'עבודה סוציאלית',     val: eWork.SocialWork },
+  { txt: 'עיצוב',              val: eWork.Design },
+  { txt: 'עצמאי',              val: eWork.SelfEmployed },
+  { txt: 'עריכת דין',          val: eWork.Law },
+  { txt: 'פרסום',              val: eWork.Advertising },
+  { txt: 'פסיכולוגיה',         val: eWork.Psychology },
+  { txt: 'צבא קבע',            val: eWork.PermanentArmy },
+  { txt: 'צילום',              val: eWork.Photography },
+  { txt: 'ראיית חשבון',        val: eWork.Accounting },
+  { txt: 'רוקחות',             val: eWork.Pharmacy },
+  { txt: 'רפואה',              val: eWork.Medicine },
+  { txt: 'רפואה אלטרנטיבית',   val: eWork.AlternativeMedicine },
+  { txt: 'שיווק',              val: eWork.Marketing },
+  { txt: 'תקשורת',             val: eWork.Communications },
+  { txt: 'תיירות',             val: eWork.Tourism },
+  { txt: 'אחר',                val: eWork.Other }
+];
+
+export const WORK_TOKEN = new InjectionToken<readonly IOption[]>("WORK_TOKEN");

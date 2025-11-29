@@ -17,6 +17,10 @@ import { LoadingInterceptor } from './interceptors/loading.interceptor';
 import { REGIONS_TOKEN, regions } from './consts/regions.consts';
 import { gender, GENDER_TOKEN } from './consts/gender.consts';
 import { FAMILY_STATUS_TOKEN, familyStatus } from './consts/family-status.consts';
+import { education, EDUCATION_TOKEN } from './consts/education.consts';
+import { work, WORK_TOKEN } from './consts/work.consts';
+import { CHILDREN_STATUS_TOKEN, childrenStatus } from './consts/children-status.consts';
+import { SMOKING_STATUS_TOKEN, smokingStatus } from './consts/smoking-status.consts';
 
 
 export const appConfig: ApplicationConfig = {
@@ -40,5 +44,9 @@ export const appConfig: ApplicationConfig = {
      { provide: REGIONS_TOKEN, useValue: regions },
      { provide: GENDER_TOKEN, useValue: gender},
      { provide: FAMILY_STATUS_TOKEN, useValue: familyStatus},
-  ],
+     { provide: EDUCATION_TOKEN, useValue: education},
+     { provide: WORK_TOKEN, useValue: work },
+     { provide: CHILDREN_STATUS_TOKEN, useValue: childrenStatus },
+     { provide: SMOKING_STATUS_TOKEN, useValue: smokingStatus }
+   ],
 };

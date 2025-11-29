@@ -16,7 +16,7 @@ def ensure_image_content_type(upload: UploadFile) -> None:
     if not upload.content_type or not upload.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Invalid file type (expecting an image).")
 
-async def read_file_limited(upload: UploadFile, max_bytes: int) -> Tuple[bytes, int]:
+async def read_file(upload: UploadFile) -> Tuple[bytes, int]:
     total = 0
     chunks: List[bytes] = []
     try:
@@ -25,15 +25,15 @@ async def read_file_limited(upload: UploadFile, max_bytes: int) -> Tuple[bytes, 
             if not chunk:
                 break
             total += len(chunk)
-            if total > max_bytes:
-                raise HTTPException(status_code=400, detail=f"Image exceeds {max_bytes // 1024}KB.")
             chunks.append(chunk)
     finally:
         await upload.close()
     return b"".join(chunks), total
 
+
 def _normalize_jpeg_ext(ext: str) -> str:
     return ".jpg" if ext.startswith(".jpe") else ext
+
 
 def save_image_to_disk(
     image_bytes: bytes,
