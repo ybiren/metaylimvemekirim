@@ -1,6 +1,7 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Subscription, interval, fromEvent } from 'rxjs';
 import { IUser } from '../../interfaces';
 import { ChatService, ThreadRow } from '../../services/chat.service';
 import { PresenceService } from '../../services/presence.service';
@@ -15,17 +16,21 @@ import { SendReminderComponent } from '../send-reminder/send-reminder.component'
   standalone: true,
   imports: [RouterLink, RouterLinkActive, CommonModule],
   templateUrl: './top-menu.component.html',
-  styleUrls: ['./top-menu.component.scss']
+  styleUrls: ['./top-menu.component.scss'],
 })
-export class TopMenuComponent implements OnInit {
+export class TopMenuComponent implements OnInit, OnDestroy {
   loggedInUser?: IUser | null = null;
 
-  open = false;
+  open = false; // inbox panel
   threads: ThreadRow[] = [];
   unreadTotal = 0;
 
-  private removeOutside?: () => void;
-  private usersSrv    = inject(UsersService);
+  // mobile nav state
+  isMenuOpen = false;
+
+  private usersSrv = inject(UsersService);
+
+  private subs: Subscription[] = [];
 
   constructor(
     private router: Router,
@@ -33,39 +38,41 @@ export class TopMenuComponent implements OnInit {
     public chat: ChatService,
     public presence: PresenceService
   ) {
-    this.chat.threads$.subscribe(t => (this.threads = t));
-    this.chat.unreadTotal$.subscribe(n => (this.unreadTotal = n));
+    // Chat threads + unread counter
+    this.subs.push(
+      this.chat.threads$.subscribe((t) => (this.threads = t)),
+      this.chat.unreadTotal$.subscribe((n) => (this.unreadTotal = n))
+    );
 
-    // initial load + occasional refresh
+    // Initial load + periodic refresh
     this.chat.refreshThreads();
-    window.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') this.chat.refreshThreads();
-    });
-    setInterval(() => this.chat.refreshThreads(), 60_000);
+    this.subs.push(
+      fromEvent(document, 'visibilitychange').subscribe(() => {
+        if (document.visibilityState === 'visible') {
+          this.chat.refreshThreads();
+        }
+      }),
+      interval(60_000).subscribe(() => this.chat.refreshThreads())
+    );
   }
 
   ngOnInit(): void {
-    
-    this.usersSrv.users$.pipe().subscribe((users) => {
-      this.loggedInUser = (users || []).find(u => u.userID === getCurrentUserId());
-    }); 
-
-    // close when clicking anywhere outside
-    const outside = (ev: Event) => {
-      if (!this.open) return;
-      // if the click bubbled from inside panel/button we already stopped it
-      this.open = false;
-    };
-    document.addEventListener('click', outside, true);
-    this.removeOutside = () => document.removeEventListener('click', outside, true);
+    this.subs.push(
+      this.usersSrv.users$.subscribe((users) => {
+        this.loggedInUser = (users || []).find(
+          (u) => u.userID === getCurrentUserId()
+        );
+      })
+    );
   }
 
   ngOnDestroy(): void {
-    this.removeOutside?.();
+    this.subs.forEach((s) => s.unsubscribe());
   }
 
   logout(): void {
     localStorage.clear();
+    this.isMenuOpen = false;
     this.router.navigateByUrl('/');
   }
 
@@ -73,6 +80,7 @@ export class TopMenuComponent implements OnInit {
     return { init: Math.floor(Math.random() * 1_000_000) };
   }
 
+  // Inbox button (chat)
   onInboxBtn(ev: MouseEvent | TouchEvent) {
     ev.stopPropagation();
     ev.preventDefault();
@@ -87,31 +95,39 @@ export class TopMenuComponent implements OnInit {
       panelClass: isMobile ? 'im-dialog--mobile' : 'im-dialog--desktop',
       ...(isMobile
         ? { width: '100vw', height: '100vh' }
-        : { width: 'min(420px, 95vw)', height: '80vh' })
+        : { width: 'min(420px, 95vw)', height: '80vh' }),
     });
     this.open = false;
+    this.isMenuOpen = false;
   }
 
   openReminder(cId: string, cName: string) {
-  const isMobile = window.innerWidth < 600;
+    const isMobile = window.innerWidth < 600;
 
-  this.dialog.open(SendReminderComponent, {
-    data: { cId, cName },   // same pattern as chat
-    panelClass: isMobile ? 'im-dialog--mobile' : 'im-dialog--desktop',
-
-    ...(isMobile
-      ? { width: '100vw', height: '100vh' }
-      : { width: 'min(420px, 95vw)', height: '80vh' })
-  });
-}
-
+    this.dialog.open(SendReminderComponent, {
+      data: { cId, cName },
+      panelClass: isMobile ? 'im-dialog--mobile' : 'im-dialog--desktop',
+      ...(isMobile
+        ? { width: '100vw', height: '100vh' }
+        : { width: 'min(420px, 95vw)', height: '80vh' }),
+    });
+  }
 
   isOnline(peerId: number) {
     return this.presence.isOnline(peerId);
   }
 
   nameFor(peerId: number) {
-    // TODO: swap with real user lookup when ready
     return this.usersSrv.getName(peerId);
+  }
+
+  // 🔽 Mobile menu helpers
+  toggleMenu() {
+    this.isMenuOpen = !this.isMenuOpen;
+  }
+
+  onNavLinkClick() {
+    // close menu after navigation on mobile
+    this.isMenuOpen = false;
   }
 }
