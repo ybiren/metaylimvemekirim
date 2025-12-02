@@ -104,6 +104,16 @@ export class ChatService {
     this.messages$.next([...arr].reverse());
   }
 
+  // ------------------- History + WebSocket -------------------
+  async markAsRead(peerId: number) {
+    this.me = getCurrentUserId();
+    if (!this.me) return;
+    const r = await fetch(`${this.baseApi}/chat/mark-read?userId=${this.me}&peerId=${peerId}`);
+    //const j = await r.json();
+    //const arr = Array.isArray(j.messages) ? (j.messages as ChatMsg[]) : [];
+    //this.messages$.next([...arr].reverse());
+  }
+
   private buildWsUrl(peerId: number) {
     const query = `?userId=${this.me}&peerId=${peerId}`;
     if (!this.baseWs) return `/ws/chat${query}`;

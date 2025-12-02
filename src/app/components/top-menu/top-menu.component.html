@@ -96,26 +96,25 @@
               <li *ngFor="let t of threads" (click)="openChat(t.peerId)">
                 <div class="row">
                   <div class="avatar">
-                    <span
-                      class="dot"
-                      [class.online]="isOnline(t.peerId)"
-                    ></span>
-                    <span class="letter">
-                      {{ nameFor(t.peerId) | slice : 0 : 1 }}
+                    <span>
+                      <img [src]="imageUrl()(t.peerId)" alt="user photo" class="avatar" />
                     </span>
                   </div>
                   <div class="meta">
                     <div class="top">
                       <span class="name">{{ nameFor(t.peerId) }}</span>
+                      <span *ngIf="isOnline(t.peerId)" class="online">כרגע באתר</span>
                       <span class="time">
-                        {{ t.lastAt | date : 'shortTime' }}
+                        <span class="preview">{{ t.lastPreview }}</span>
                       </span>
                     </div>
                     <div class="bottom">
-                      <span class="preview">{{ t.lastPreview }}</span>
+                        {{ t.lastAt | date:'dd/MM/yyyy HH:mm' }}
+                     <!--
                       <span class="unread" *ngIf="t.unread > 0">
                         {{ t.unread }}
                       </span>
+                      -->
                     </div>
                   </div>
                 </div>

@@ -1,6 +1,12 @@
 #old site
 http://metaylimvemekirim.co.il/defaultx.asp?c_id=&c_name=
 
+yaron2510@walla.com
+251058
+
+cozet12@windowslive.com
+tttt
+
 # Run with proxy (for ngrok)
 nx serve --proxy-config proxy.conf.json
 

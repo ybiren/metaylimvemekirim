@@ -234,6 +234,18 @@ nav a.logout {
 .avatar .dot.online {
   background: #22c55e;
 }
+.online {
+  color: #22c55e;
+  font-weight: bold;
+  animation: blink-animation 1s steps(2, start) infinite;
+}
+
+@keyframes blink-animation {
+  to {
+    visibility: hidden;
+  }
+}
+
 
 .meta {
   flex: 1;

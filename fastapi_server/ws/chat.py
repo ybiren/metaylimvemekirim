@@ -87,20 +87,13 @@ async def chat_history(
             msgs_sorted = msgs_sorted[:limit]
     return {"ok": True, "roomId": rid, "messages": msgs_sorted}
 
-@router.post("/chat/mark-read")
+@router.get("/chat/mark-read")
 async def mark_read(
     userId: int = Query(..., description="reader userID"),
     peerId: int = Query(..., description="peer userID"),
-    upToIso: str = Query(..., description="ISO timestamp inclusive"),
 ):
     """Mark as read all messages TO userId in this DM up to timestamp (inclusive)."""
     rid = _room_id(userId, peerId)
-    try:
-        cutoff = datetime.fromisoformat(upToIso.replace("Z", "+00:00"))
-    except Exception:
-        raise HTTPException(status_code=400, detail="bad upToIso")
-
-    now_iso = _now_iso()
     changed_ids: List[str] = []
 
     async with chat_lock:
@@ -110,13 +103,8 @@ async def mark_read(
             return {"ok": True, "updated": []}
         for m in t["messages"]:
             if m.get("toUserId") == int(userId) and not m.get("readAt"):
-                try:
-                    sent = datetime.fromisoformat(str(m.get("sentAt")).replace("Z", "+00:00"))
-                except Exception:
-                    continue
-                if sent <= cutoff:
-                    m["readAt"] = now_iso
-                    changed_ids.append(m["id"])
+                 m["readAt"] = datetime.now(timezone.utc).isoformat()
+                 changed_ids.append(m["id"])
         await _save(data)
 
     if changed_ids:

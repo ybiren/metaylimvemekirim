@@ -63,6 +63,8 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
 
     // load chat history
     await this.chat.loadHistory(this.peerId);
+    //mark as read
+    await this.chat.markAsRead(this.peerId);
 
     // **IMPORTANT**: actually open the WebSocket
     this.chat.connect(this.peerId);

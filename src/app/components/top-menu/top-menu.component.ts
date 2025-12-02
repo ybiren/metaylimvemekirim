@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, computed } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subscription, interval, fromEvent } from 'rxjs';
@@ -10,6 +10,7 @@ import { ChatWindowComponent } from '../chat-window/chat-window.component';
 import { UsersService } from '../../services/users.service';
 import { getCurrentUserId } from '../../core/current-user';
 import { SendReminderComponent } from '../send-reminder/send-reminder.component';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-top-menu',
@@ -31,6 +32,8 @@ export class TopMenuComponent implements OnInit, OnDestroy {
   private usersSrv = inject(UsersService);
 
   private subs: Subscription[] = [];
+  apiBase = environment.apibase;
+   
 
   constructor(
     private router: Router,
@@ -130,4 +133,10 @@ export class TopMenuComponent implements OnInit, OnDestroy {
     // close menu after navigation on mobile
     this.isMenuOpen = false;
   }
+
+  imageUrl = computed(() => {
+    const rand = Math.floor(Math.random() * 1_000_000);
+    return (userID) => `${this.apiBase}/images/${userID}?id=${rand}`;
+  });
+
 }

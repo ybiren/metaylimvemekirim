@@ -10,6 +10,7 @@ import { PresenceService } from './services/presence.service';
 import { Subscription } from 'rxjs';
 import { IUser } from './interfaces';
 import { UsersService } from './services/users.service';
+import { getCurrentUserId } from './core/current-user';
 
 @Component({
   selector: 'app-root',
@@ -42,9 +43,9 @@ export class App implements OnInit, OnDestroy{
 
   constructor() {
     // 🚀 1) Check if user already logged in
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-       this.presenceSub = this.presence.start(25_000, (<IUser>JSON.parse(storedUser)).userID); // match HEARTBEAT_SEC
+    const userID = getCurrentUserId();
+    if (userID) {
+      this.presenceSub = this.presence.start(25_000, userID); // match HEARTBEAT_SEC
        // Navigate immediately to /users
       this.router.navigateByUrl('/home');
     }
