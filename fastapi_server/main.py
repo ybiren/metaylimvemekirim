@@ -135,7 +135,12 @@ async def register(
     c_children: str = Form(...),
     c_smoking: str = Form(...),
     c_url: str = Form(...),
-    c_fb: str = Form(...)
+    c_fb: str = Form(...),
+    filter_height_min: str = Form(...),
+    filter_height_max: str = Form(...),
+    filter_age_min: str = Form(...),
+    filter_age_max: str = Form(...),
+    filter_family_status: str = Form(...)    
 ):
     def _has_real_file(up: Optional[UploadFile]) -> bool:
         return bool(up and getattr(up, "filename", None))
@@ -161,7 +166,12 @@ async def register(
         "c_children": c_children,
         "c_smoking": c_smoking,
         "c_url": c_url,
-        "c_fb": c_fb
+        "c_fb": c_fb,
+        "filter_height_min": filter_height_min,
+        "filter_height_max": filter_height_max,
+        "filter_age_min": filter_age_min,
+        "filter_age_max": filter_age_max,
+        "filter_family_status": filter_family_status
     }
 
     # upsert guarded by lock

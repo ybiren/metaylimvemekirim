@@ -12,7 +12,7 @@
     "c_ff": "1",
     "c_details": "אא חחגגג\r\nעע ךלךלךל",
     "c_details1": "טטטטוו\r\nללללל יעעעעככ",
-    "sessionID": "e9eb7a3405d64a37a26b4e6b6db169d7",
+    "sessionID": "517959709",
     "password": "abcd1234",
     "password2": "abcd1234",
     "image_filename": "by me.jpg",
@@ -23,10 +23,15 @@
     "c_height": "175",
     "c_education": "4",
     "c_work": "17",
-    "c_children": "0",
+    "c_children": "4",
     "c_smoking": "0",
     "c_url": "",
-    "c_fb": ""
+    "c_fb": "",
+    "filter_height_min": "10",
+    "filter_height_max": "20",
+    "filter_age_min": "11",
+    "filter_age_max": "12",
+    "filter_family_status": "2"
   },
   {
     "userID": 2,

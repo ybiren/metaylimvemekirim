@@ -9,9 +9,9 @@
       ההרשמה והשימוש באתר הינם <strong>חינם</strong>.
     </p>
     <p class="muted"><a href="feedback.asp">אם אינך מצליח להרשם לחץ כאן לעזרה</a></p>
-   } @else{
-     <h1 class="title">עדכון פרטים</h1>
-   } 
+    } @else{
+    <h1 class="title">עדכון פרטים</h1>
+    }
   </section>
 
   <!-- Section header -->
@@ -31,108 +31,87 @@
     @if(user()) {
     <label class="label" for="c_name">גובה</label>
     <div class="field">
-      <div><input id="c_height" type="number" formControlName="c_height" placeholder="0" />&nbsp;בסנטימטרים</div>
-    </div> 
+      <div>
+        <input id="c_height" type="number" formControlName="c_height" placeholder="0" />&nbsp;בסנטימטרים
+      </div>
+    </div>
     }
 
     <label class="label" for="c_gender">מין*</label>
     <div class="field">
       <select id="c_gender" formControlName="c_gender">
-        <option value=0>בחר</option>
+        <option value="0">בחר</option>
         <option *ngFor="let r of gender" [value]="r.val">{{ r.txt }}</option>
       </select>
-      <div class="errors" *ngIf="f.c_gender.touched && (f.c_gender.value===0)">
-        <small>בחר/י אפשרות</small>
+      <div class="errors" *ngIf="f.c_gender.touched && (f.c_gender.invalid)">
+        <small *ngIf="f.c_gender.errors?.required">שדה חובה</small>
       </div>
     </div>
 
-    @if(user()) {
-    <label class="label" for="c_gender">השכלה</label>
-    <div  class="field">
-      <select id="c_education" formControlName="c_education">
-        <option value=0>בחר</option>
-        <option *ngFor="let e of education" [value]="e.val">{{ e.txt }}</option>
-      </select>
-    </div>
-    }
- 
     <label class="label">תאריך לידה*</label>
-    <div class="field date-row">
-      <select formControlName="c_birth_day" aria-label="יום">
-        <option [ngValue]="0">יום</option>
+    <div class="field field-row">
+      <select formControlName="c_birth_day">
+        <option value="0">יום</option>
         <option *ngFor="let d of days" [value]="d">{{ d }}</option>
       </select>
-      <select formControlName="c_birth_month" aria-label="חודש">
-        <option [ngValue]="0">חודש</option>
+      <select formControlName="c_birth_month">
+        <option value="0">חודש</option>
         <option *ngFor="let m of months" [value]="m">{{ m }}</option>
       </select>
-      <select formControlName="c_birth_year" aria-label="שנה">
-        <option [ngValue]="0">שנה</option>
+      <select formControlName="c_birth_year">
+        <option value="0">שנה</option>
         <option *ngFor="let y of years" [value]="y">{{ y }}</option>
       </select>
-      <div class="errors" *ngIf="(f.c_birth_day.touched && f.c_birth_day.invalid) ||
-                                  (f.c_birth_month.touched && f.c_birth_month.invalid) ||
-                                  (f.c_birth_year.touched && f.c_birth_year.invalid)">
-        <small>יש לבחור יום, חודש ושנה</small>
+      <div class="errors" *ngIf="(f.c_birth_day.touched || f.c_birth_month.touched || f.c_birth_year.touched) &&
+                                  (f.c_birth_day.invalid || f.c_birth_month.invalid || f.c_birth_year.invalid)">
+        <small *ngIf="f.c_birth_day.errors?.required || f.c_birth_month.errors?.required || f.c_birth_year.errors?.required">
+          חובה לבחור תאריך מלא
+        </small>
       </div>
     </div>
 
-    <label class="label" for="c_country">איזור בארץ</label>
+    <label class="label" for="c_country">אזור מגורים*</label>
     <div class="field">
-      <select id="c_country" formControlName="c_country" dir="rtl">
+      <select id="c_country" formControlName="c_country">
+        <option value="0">בחר</option>
         <option *ngFor="let r of regions" [value]="r.val">{{ r.txt }}</option>
       </select>
+      <div class="errors" *ngIf="f.c_country.touched && f.c_country.invalid">
+        <small *ngIf="f.c_country.errors?.required">שדה חובה</small>
+      </div>
     </div>
 
     <label class="label" for="c_pcell">טלפון נייד</label>
     <div class="field">
-      <input id="c_pcell" type="text" formControlName="c_pcell" maxlength="13" placeholder="למשל: 050-1234567" />
+      <input id="c_pcell" type="text" formControlName="c_pcell" maxlength="13" placeholder="טלפון נייד" />
       <div class="errors" *ngIf="f.c_pcell.touched && f.c_pcell.invalid">
-        <small>ספרות, רווחים, + או - בלבד (עד 13 תווים)</small>
+        <small *ngIf="f.c_pcell.errors?.maxlength">עד 13 תווים</small>
+        <small *ngIf="f.c_pcell.errors?.pattern">ספרות, רווחים, + ו־- בלבד</small>
       </div>
     </div>
 
-    @if(user()) {
-    <label class="label" for="c_work">עיסוק</label>
+    <label class="label" for="c_email">כתובת מייל*</label>
     <div class="field">
-      <select id="c_work" formControlName="c_work">
-        <option value=0>בחר</option>
-        <option *ngFor="let w of work" [value]="w.val">{{ w.txt }}</option>
-      </select>
-    </div>
-    }
-
-    <label class="label" for="c_email">דואר אלקטרוני*</label>
-    <div class="field">
-      <input id="c_email" type="email" formControlName="c_email" placeholder="you@example.com" />
+      <input id="c_email" type="email" formControlName="c_email" placeholder="name@example.com" />
       <div class="errors" *ngIf="f.c_email.touched && f.c_email.invalid">
         <small *ngIf="f.c_email.errors?.required">שדה חובה</small>
-        <small *ngIf="f.c_email.errors?.email">דוא&quot;ל לא תקין</small>
+        <small *ngIf="f.c_email.errors?.email">כתובת מייל לא תקינה</small>
       </div>
     </div>
 
-    @if(user()) {
-    <label class="label" for="c_url">כתובת אתר אינטרנט</label>
+    <label class="label" for="c_education">השכלה</label>
     <div class="field">
-      <input id="c_url" type="url" formControlName="c_url" placeholder="http://myurl" dir="ltr"/>
-      <div class="errors" *ngIf="f.c_url.touched && f.c_url.invalid">
-        <small>כתובת לא תקינה</small>
-      </div> 
+      <select id="c_education" formControlName="c_education" dir="rtl">
+        <option value="0">בחר</option>
+        <option *ngFor="let e of education" [value]="e.val">{{ e.txt }}</option>
+      </select>
     </div>
-    }
 
-    @if(user()) {
-    <label class="label" for="c_fb">כתובת פרופיל פייסבוק</label>
+    <label class="label" for="c_work">תחום עיסוק</label>
     <div class="field">
-      <input id="c_fb" type="url" formControlName="c_fb" placeholder="" dir="ltr"/>
-    </div>
-    }
-
-    <label class="label" for="c_ff">מצב משפחתי</label>
-    <div class="field">
-      <select id="c_ff" formControlName="c_ff" dir="rtl">
-        <option value=0>בחר</option>
-        <option *ngFor="let r of familyStatus" [value]="r.val">{{ r.txt }}</option>
+      <select id="c_work" formControlName="c_work" dir="rtl">
+        <option value="0">בחר</option>
+        <option *ngFor="let w of work" [value]="w.val">{{ w.txt }}</option>
       </select>
     </div>
 
@@ -140,21 +119,21 @@
     <label class="label" for="c_children">מספר ילדים</label>
     <div class="field">
       <select id="c_children" formControlName="c_children" dir="rtl">
-        <option value=0>בחר</option>
+        <option value="0">בחר</option>
         <option *ngFor="let c of childrenStatus" [value]="c.val">{{ c.txt }}</option>
       </select>
     </div>
     }
 
     @if(user()) {
-    <label class="label" for="c_children">הרגלי עישון</label>
+    <label class="label" for="c_smoking">הרגלי עישון</label>
     <div class="field">
       <select id="c_smoking" formControlName="c_smoking" dir="rtl">
-        <option value=0>בחר</option>
+        <option value="0">בחר</option>
         <option *ngFor="let s of smokingStatus" [value]="s.val">{{ s.txt }}</option>
       </select>
     </div>
-   }
+    }
 
     <!-- Image upload -->
     <label class="label" for="c_image">תמונת פרופיל</label>
@@ -211,8 +190,61 @@
 
     <label class="label" for="c_details1">תחומי העניין שלי</label>
     <div class="field">
-      <textarea id="c_details1" formControlName="c_details1" rows="5"
-        placeholder="ספרים, סרטים ותחומים נוספים שמעניינים אותך"></textarea>
+      <textarea
+        id="c_details1"
+        formControlName="c_details1"
+        rows="5"
+        placeholder="ספרים, סרטים ותחומים נוספים שמעניינים אותך"
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- 🔽 NEW SECTION: filters for incoming contacts -->
+  <h2 class="section-header">סינון פניות מחברים באתר</h2>
+  <div class="grid card">
+    <!-- 1) Height range -->
+    <label class="label" for="filter_height_min">מגובה עד גובה</label>
+    <div class="field range-row">
+      <input
+        id="filter_height_min"
+        type="number"
+        formControlName="filter_height_min"
+        placeholder="מגובה (ס&quot;מ)"
+      />
+      <span class="range-separator">עד</span>
+      <input
+        id="filter_height_max"
+        type="number"
+        formControlName="filter_height_max"
+        placeholder="עד גובה (ס&quot;מ)"
+      />
+    </div>
+
+    <!-- 2) Age range -->
+    <label class="label" for="filter_age_min">מגיל עד גיל</label>
+    <div class="field range-row">
+      <input
+        id="filter_age_min"
+        type="number"
+        formControlName="filter_age_min"
+        placeholder="מגיל"
+      />
+      <span class="range-separator">עד</span>
+      <input
+        id="filter_age_max"
+        type="number"
+        formControlName="filter_age_max"
+        placeholder="עד גיל"
+      />
+    </div>
+
+    <!-- 3) Family status -->
+    <label class="label" for="filter_family_status">סטטוס</label>
+    <div class="field">
+      <select id="filter_family_status" formControlName="filter_family_status" dir="rtl">
+        <option value="0">ללא סינון</option>
+        <option *ngFor="let s of familyStatus" [value]="s.val">{{ s.txt }}</option>
+      </select>
     </div>
   </div>
 
@@ -221,7 +253,7 @@
     <summary>&laquo; לתנאי השימוש באתר</summary>
     <div class="terms-body">
       <p><strong>תנאי השימוש באתר פגוש אותי</strong></p>
-      <p>השימוש באתר הינו באחריותו המלאה של המשתמש... (קיצור)</p>
+      <p>השימוש באתר הינו באחריותו המלאה של המשתמש. (קיצור)</p>
     </div>
   </details>
 
@@ -230,16 +262,12 @@
     אני מאשר/ת שקראתי את תנאי השימוש
   </label>
   <div class="errors" *ngIf="f.acceptTerms.touched && f.acceptTerms.invalid">
-    <small>יש לאשר את תנאי השימוש</small>
+    <small>חובה לאשר את תנאי השימוש</small>
   </div>
 
-  <!-- Hidden session id -->
-  <input type="hidden" name="sessionID" [value]="sessionID()" />
-   
-  <button class="submit" type="submit" [disabled]="form.invalid || submitting()">
-    {{ user() ? 'עדכן פרטים' : 'ברוך הבא – הוספה למערכת' }}
+  <button class="submit-btn" type="submit" [disabled]="submitting()">
+    @if (submitting()) { שומר... } @else { שמירה }
   </button>
 
-  <!-- Server message -->
   <p class="server-msg" *ngIf="serverMsg()">{{ serverMsg() }}</p>
 </form>

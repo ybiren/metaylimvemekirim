@@ -23,6 +23,11 @@ export interface IUser {
   c_smoking?: number;
   c_url?: string;
   c_fb?: string; 
+  filter_height_min?: number;
+  filter_height_max: number;
+  filter_age_min: number;
+  filter_age_max: number;
+  filter_family_status: number;
   [k: string]: any;
 }
 

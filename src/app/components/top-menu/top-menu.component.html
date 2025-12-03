@@ -35,6 +35,19 @@
     }
 
     <nav [class.open]="isMenuOpen">
+      <a
+        routerLink="/about-us"
+        routerLinkActive="active"
+        (click)="onNavLinkClick()"
+        >אודותינו</a
+      >
+
+      <a
+        routerLink="/contact"
+        routerLinkActive="active"
+        (click)="onNavLinkClick()"
+        >צור קשר</a
+      >
       @if (loggedInUser) {
         <a
           routerLink="/register"
@@ -64,12 +77,12 @@
             type="button"
             class="inbox-btn"
             (click)="onInboxBtn($event)"
-            aria-label="פתיחת שיחות"
+            aria-label="פתיחת הודעות"
             [attr.aria-expanded]="open"
             aria-haspopup="dialog"
           >
             <span class="icon">💬</span>
-            <span class="label">שיחות</span>
+            <span class="label">הודעות</span>
             <span class="badge" *ngIf="unreadTotal > 0">
               {{ unreadTotal }}
             </span>
@@ -78,7 +91,7 @@
           <!-- Panel -->
           <div class="panel" *ngIf="open" (click)="$event.stopPropagation()">
             <header class="panel-head">
-              <strong>שיחות</strong>
+              <strong>הודעות</strong>
               <button
                 type="button"
                 class="close"
@@ -88,7 +101,7 @@
                 ✕
               </button>
               <span class="muted" *ngIf="threads.length === 0">
-                אין שיחות
+                אין הודעות
               </span>
             </header>
 
@@ -123,21 +136,7 @@
           </div>
         </div>
       }
-
-      <a
-        routerLink="/about-us"
-        routerLinkActive="active"
-        (click)="onNavLinkClick()"
-        >אודותינו</a
-      >
-
-      <a
-        routerLink="/contact"
-        routerLinkActive="active"
-        (click)="onNavLinkClick()"
-        >צור קשר</a
-      >
-
+      
       <a *ngIf="loggedInUser" (click)="logout()" class="logout">יציאה</a>
     </nav>
   </div>
