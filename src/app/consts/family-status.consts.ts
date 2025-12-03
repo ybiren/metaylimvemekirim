@@ -6,8 +6,7 @@ export const familyStatus:IOption[] = [
     {"txt" : 'רווק\\רווקה',"val": eFamilyStatus.Bachelor},
     {"txt": 'גרוש\\גרושה', "val": eFamilyStatus.Divorced},
     {"txt": 'פרוד\\פרודה', "val": eFamilyStatus.Seperated},
-    {"txt": 'אלמן\\אלמנה', "val": eFamilyStatus.Widow},
-    {"txt": 'נשוי\\נשואה', "val": eFamilyStatus.Married}    
+    {"txt": 'אלמן\\אלמנה', "val": eFamilyStatus.Widow}
 ];
 
   export const FAMILY_STATUS_TOKEN = new InjectionToken<readonly IOption[]>(
