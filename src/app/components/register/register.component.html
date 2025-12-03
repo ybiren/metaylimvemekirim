@@ -115,6 +115,41 @@
       </select>
     </div>
 
+   <label class="label" for="c_email">דואר אלקטרוני*</label>
+    <div class="field">
+      <input id="c_email" type="email" formControlName="c_email" placeholder="you@example.com" />
+      <div class="errors" *ngIf="f.c_email.touched && f.c_email.invalid">
+        <small *ngIf="f.c_email.errors?.required">שדה חובה</small>
+        <small *ngIf="f.c_email.errors?.email">דוא&quot;ל לא תקין</small>
+      </div>
+    </div>
+
+    @if(user()) {
+    <label class="label" for="c_url">כתובת אתר אינטרנט</label>
+    <div class="field">
+      <input id="c_url" type="url" formControlName="c_url" placeholder="http://myurl" dir="ltr"/>
+      <div class="errors" *ngIf="f.c_url.touched && f.c_url.invalid">
+        <small>כתובת לא תקינה</small>
+      </div> 
+    </div>
+    }
+
+    @if(user()) {
+    <label class="label" for="c_fb">כתובת פרופיל פייסבוק</label>
+    <div class="field">
+      <input id="c_fb" type="url" formControlName="c_fb" placeholder="" dir="ltr"/>
+    </div>
+    }
+
+    <label class="label" for="c_ff">מצב משפחתי</label>
+    <div class="field">
+      <select id="c_ff" formControlName="c_ff" dir="rtl">
+        <option value=0>בחר</option>
+        <option *ngFor="let r of familyStatus" [value]="r.val">{{ r.txt }}</option>
+      </select>
+    </div>
+
+
     @if(user()) {
     <label class="label" for="c_children">מספר ילדים</label>
     <div class="field">
