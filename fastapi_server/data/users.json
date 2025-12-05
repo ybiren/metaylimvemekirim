@@ -12,7 +12,7 @@
     "c_ff": "2",
     "c_details": "אא חחגגג\r\nעע ךלךלךל",
     "c_details1": "טטטטוו\r\nללללל יעעעעככ",
-    "sessionID": "798091003",
+    "sessionID": "199423960",
     "password": "abcd1234",
     "password2": "abcd1234",
     "image_filename": "by me.jpg",
@@ -31,7 +31,7 @@
     "filter_height_max": "20",
     "filter_age_min": "11",
     "filter_age_max": "12",
-    "filter_family_status": "3"
+    "filter_family_status": "1,5"
   },
   {
     "userID": 2,

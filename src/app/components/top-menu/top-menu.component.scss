@@ -18,7 +18,7 @@
 .top-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 0.75rem;
 }
 
@@ -88,6 +88,9 @@
 .greeting a {
   font-weight: 600;
   margin-inline-start: 0.25rem;
+  &::before {
+    content: "הפרופיל שלי";
+  }
 }
 
 /* Nav links */
@@ -315,7 +318,6 @@ nav a.logout {
 
   nav a,
   .inbox-btn {
-    width: 100%;
     justify-content: center;
   }
 

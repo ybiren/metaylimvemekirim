@@ -1,29 +1,107 @@
-<section class="users-grid" *ngIf="!loading(); else loadingTpl">
-  <div class="user-card" *ngFor="let u of users(); trackBy: trackByUserId">
-    <img [src]="imageUrl()(u)" alt="user photo" class="avatar" />
+<section *ngIf="!loading(); else loadingTpl">
 
-    <a [routerLink]="['/user', u.userID]" class="name">
-      {{ u.c_name }}
-    </a>
+  <!-- MOBILE / TABLET: single full-width swipeable card -->
+  <ng-container *ngIf="isMobileOrTablet(); else desktopUsers">
+    <div
+      class="single-user-wrapper"
+      (touchstart)="onTouchStart($event)"
+      (touchmove)="onTouchMove($event)"
+      (touchend)="onTouchEnd($event)"
+    >
+      <ng-container *ngIf="currentUser() as u; else noUsers">
+        <div class="user-card user-card--single">
+          <div
+            class="user-card__inner"
+            [ngClass]="{
+              'slide-left': swipeDirection() === 'left',
+              'slide-right': swipeDirection() === 'right'
+            }"
+          >
+            <img
+              [src]="imageUrl()(u)"
+              alt="user photo"
+              class="avatar"
+            />
 
-    <!-- Like area -->
-    <div class="actions">
-      <button
-        class="like-btn"
-        type="button"
-        (click)="toggleLike(u)"
-        [attr.aria-pressed]="u.liked ? 'true' : 'false'"
-        aria-label="Like"
-        title="Like"
-      >
-        <span class="heart" [class.liked]="u.liked">❤</span>
-      </button>
-      <span class="like-label">{{ u.liked ? 'Liked' : 'Like' }}</span>
+            <a [routerLink]="['/user', u.userID]" class="name">
+              {{ u.c_name }}
+            </a>
+
+            <div class="actions">
+              <button
+                class="like-btn"
+                type="button"
+                (click)="toggleLike(u)"
+                [attr.aria-pressed]="u.liked ? 'true' : 'false'"
+                aria-label="Like"
+                title="Like"
+              >
+                <span class="heart" [class.liked]="u.liked">❤</span>
+              </button>
+              <span class="like-label">
+                {{ u.liked ? 'Liked' : 'Like' }}
+              </span>
+            </div>
+
+            @if (isOnline()(u.userID)) {
+              <div class="blink">כרגע באתר</div>
+            }
+
+            <div class="user-index-indicator">
+              {{ currentIndex() + 1 }} / {{ users().length }}
+            </div>
+          </div>
+        </div>
+      </ng-container>
     </div>
-    @if(isOnline()(u.userID)) {
-    <div class="blink">כרגע באתר</div>
-    }
-  </div>
+
+    <ng-template #noUsers>
+      <p class="no-users">אין משתמשים להצגה.</p>
+    </ng-template>
+  </ng-container>
+
+  <!-- DESKTOP: grid of users -->
+  <ng-template #desktopUsers>
+    <section class="users-grid">
+      <div
+        class="user-card"
+        *ngFor="let u of users(); trackBy: trackByUserId"
+      >
+        <div class="user-card__inner">
+          <img
+            [src]="imageUrl()(u)"
+            alt="user photo"
+            class="avatar"
+          />
+
+          <a [routerLink]="['/user', u.userID]" class="name">
+            {{ u.c_name }}
+          </a>
+
+          <div class="actions">
+            <button
+              class="like-btn"
+              type="button"
+              (click)="toggleLike(u)"
+              [attr.aria-pressed]="u.liked ? 'true' : 'false'"
+              aria-label="Like"
+              title="Like"
+            >
+              <span class="heart" [class.liked]="u.liked">❤</span>
+            </button>
+            <span class="like-label">
+              {{ u.liked ? 'Liked' : 'Like' }}
+            </span>
+          </div>
+
+          @if (isOnline()(u.userID)) {
+            <div class="blink">כרגע באתר</div>
+          }
+        </div>
+      </div>
+    </section>
+  </ng-template>
+
 </section>
 
 <ng-template #loadingTpl>

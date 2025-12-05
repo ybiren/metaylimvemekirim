@@ -27,7 +27,7 @@ export interface IUser {
   filter_height_max: number;
   filter_age_min: number;
   filter_age_max: number;
-  filter_family_status: number;
+  filter_family_status: number[];
   [k: string]: any;
 }
 

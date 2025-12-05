@@ -3,5 +3,5 @@ export enum eFamilyStatus {
     Divorced,
     Seperated,
     Widow,
-    Married
+    Partnership
 }

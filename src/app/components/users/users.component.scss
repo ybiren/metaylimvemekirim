@@ -1,108 +1,163 @@
 :host {
-direction: rtl;  
+  display: block;
+  direction: rtl;
+  padding: 0 8px 24px;
+}
+
+/* ========== DESKTOP GRID ========== */
+
 .users-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 16px;
 }
 
-/* Card */
+/* Base card style used in both desktop and mobile */
 .user-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 14px;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-  }
+  align-items: stretch;
 }
 
-/* Avatar */
+/* Inner box of the card (white rounded rect) */
+.user-card__inner {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 16px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+/* Avatar (image) */
 .avatar {
-  width: 104px;
-  height: 104px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
   object-fit: cover;
-  background: #f2f2f2;
+  display: block;
+  margin: 0 auto 8px;
 }
 
 /* Name link */
 .name {
-  margin-top: 10px;
+  display: block;
+  margin-bottom: 8px;
   font-weight: 600;
-  font-size: 1.05rem;
   text-decoration: none;
   color: #222;
-
-  &:hover {
-    text-decoration: underline;
-  }
 }
 
-/* Like section */
+/* Like / actions area */
 .actions {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 4px;
+  margin-top: 4px;
 }
 
 .like-btn {
-  background: none;
   border: none;
-  padding: 6px;
+  background: none;
   cursor: pointer;
-  border-radius: 999px;
-  transition: transform 0.2s ease, background-color 0.2s ease;
-
-  &:hover {
-    transform: scale(1.1);
-    background-color: rgba(230, 57, 70, 0.06);
-  }
-
-  &:focus-visible {
-    outline: 2px solid #e63946;
-    outline-offset: 2px;
-  }
+  padding: 0;
 }
 
 .heart {
-  font-size: 1.4rem;
-  line-height: 1;
-  color: #9aa0a6; /* gray */
-  transition: color 0.2s ease, text-shadow 0.2s ease;
+  font-size: 20px;
+  opacity: 0.4;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
 
-  &.liked {
-    color: #e63946; /* red */
-    text-shadow: 0 0 6px rgba(230, 57, 70, 0.4);
-  }
+.heart.liked {
+  opacity: 1;
+  transform: scale(1.1);
 }
 
 .like-label {
   font-size: 0.9rem;
-  color: #555;
 }
 
-/* Loading text */
-.loading {
+/* Online indicator */
+.blink {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: #0a7a0a;
+  animation: blinkAnimation 1.2s infinite;
+}
+
+/* Index indicator (5 / 1 etc.) */
+.user-index-indicator {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+/* Loading / empty states */
+.loading,
+.no-users {
   text-align: center;
-  color: #666;
   padding: 24px 0;
 }
 
+/* ========== MOBILE / TABLET FULL-WIDTH ========== */
 
-.blink {
-  animation: blinkAnimation 1.2s infinite;
+.single-user-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  touch-action: none;
+  padding: 0;
+  overflow: hidden; /* so animation doesn't overflow */
 }
+
+.user-card--single {
+  width: 100%;
+  max-width: 100%;
 }
 
+/* allow white card to be a nice centered box */
+.user-card--single .user-card__inner {
+  max-width: 420px;
+}
 
+/* ========== SWAP ANIMATION ========== */
+
+.slide-left {
+  animation: slideInFromRight 0.25s ease;
+}
+
+.slide-right {
+  animation: slideInFromLeft 0.25s ease;
+}
+
+@keyframes slideInFromRight {
+  0% {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromLeft {
+  0% {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Blink keyframes */
 @keyframes blinkAnimation {
   0% { opacity: 1; }
   50% { opacity: 0; }

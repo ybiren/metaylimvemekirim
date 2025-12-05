@@ -276,10 +276,18 @@
     <!-- 3) Family status -->
     <label class="label" for="filter_family_status">סטטוס</label>
     <div class="field">
-      <select id="filter_family_status" formControlName="filter_family_status" dir="rtl">
-        <option value="0">ללא סינון</option>
-        <option *ngFor="let s of familyStatus" [value]="s.val">{{ s.txt }}</option>
-      </select>
+      <div formArrayName="filter_family_status">
+       <div *ngFor="let s of familyStatus; let i = index">
+        <label>
+        <input 
+          type="checkbox"
+          [formControlName]="i"
+          dir="rtl"
+        />
+        {{ s.txt }}
+        </label>
+       </div>
+     </div>
     </div>
   </div>
 

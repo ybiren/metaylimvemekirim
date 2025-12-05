@@ -6,8 +6,7 @@ import json
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Set
-
+from typing import Dict, List, Optional, Set, Tuple
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
 
 router = APIRouter()
@@ -111,6 +110,7 @@ async def mark_read(
         await _broadcast(rid, {"type": "read", "ids": changed_ids, "reader": int(userId), "roomId": rid})
     return {"ok": True, "updated": changed_ids}
 
+
 def _thread_stats_for(user_id: int, t: Dict) -> Optional[Tuple[int, Dict]]:
     """
     Given a unified DM thread doc, return (peerId, stats) for user_id, or None if not part of it.
@@ -121,7 +121,11 @@ def _thread_stats_for(user_id: int, t: Dict) -> Optional[Tuple[int, Dict]]:
         "toUserId":   <b>,
         "messages": [ { id, fromUserId, toUserId, content, sentAt, deliveredAt, readAt }, ... ]
       }
+
+    NOTE: lastAt / lastPreview / lastFromUserId are based ONLY on the
+    last message sent by the peer (not the current user).
     """
+
     rid = t.get("roomId", "")
     if not isinstance(rid, str) or not rid.startswith("dm:"):
         return None
@@ -135,17 +139,30 @@ def _thread_stats_for(user_id: int, t: Dict) -> Optional[Tuple[int, Dict]]:
         return None
 
     peer = b if user_id == a else a
-    msgs: List[Dict] = t.get("messages", [])
+    msgs: List[Dict] = t.get("messages", []) or []
 
-    # last message by sentAt (ISO string)
-    last = max(msgs, key=lambda m: m.get("sentAt", ""), default=None)
-    last_at = last.get("sentAt", "") if last else ""
-    last_from = int(last.get("fromUserId")) if last and last.get("fromUserId") is not None else None
-    last_preview = (last.get("content", "") if last else "")[:120]
+    # ----- last message from PEER only -----
+    peer_msgs = [
+        m for m in msgs
+        if int(m.get("fromUserId", -1)) == peer
+    ]
+
+    last_peer = max(peer_msgs, key=lambda m: m.get("sentAt", ""), default=None)
+
+    if last_peer:
+        last_at = last_peer.get("sentAt", "") or ""
+        last_from = peer  # by definition it's the peer
+        last_preview = (last_peer.get("content", "") or "")[:120]
+    else:
+        # peer never sent a message in this thread
+        last_at = ""
+        last_from = None
+        last_preview = ""
 
     # unread for this user (messages addressed to me, not yet read)
     unread = sum(
-        1 for m in msgs
+        1
+        for m in msgs
         if int(m.get("toUserId", -1)) == user_id and not m.get("readAt")
     )
 

@@ -1,14 +1,12 @@
 <div class="top-shell" dir="rtl">
   <!-- Top bar: invite + logo + burger -->
   <div class="top-bar">
-    <button class="invite-btn" (click)="openReminder('1', 'aa')">
-      הזמן חבר
-    </button>
-
     <a routerLink="/home" class="logo-wrapper">
       <img src="assets/images/logo.jpg" alt="metaylimvemekirim" />
     </a>
-
+    <button class="invite-btn" (click)="openReminder('1', 'aa')">
+      הזמן חבר
+    </button>
     <!-- Hamburger visible on mobile -->
     <button
       type="button"
@@ -28,9 +26,8 @@
     @if (loggedInUser) {
       <div class="greeting">
         <a [routerLink]="['/user', loggedInUser.userID]">
-          {{ loggedInUser.c_name }}
+          ({{ loggedInUser.c_name }})
         </a>
-        שלום
       </div>
     }
 
@@ -49,28 +46,7 @@
         >צור קשר</a
       >
       @if (loggedInUser) {
-        <a
-          routerLink="/register"
-          routerLinkActive="active"
-          (click)="onNavLinkClick()"
-          >עדכון פרטים</a
-        >
-
-        <a
-          routerLink="/search"
-          [queryParams]="randomInit()"
-          routerLinkActive="active"
-          (click)="onNavLinkClick()"
-          >חפש חברים</a
-        >
-
-        <a
-          routerLink="/users"
-          routerLinkActive="active"
-          (click)="onNavLinkClick()"
-          >כל החברים</a
-        >
-
+        
         <!-- Inbox dropdown -->
         <div class="inbox" [class.open]="open">
           <button
@@ -135,6 +111,28 @@
             </ul>
           </div>
         </div>
+        <a
+          routerLink="/register"
+          routerLinkActive="active"
+          (click)="onNavLinkClick()"
+          >עדכון פרטים</a
+        >
+
+        <a
+          routerLink="/search"
+          [queryParams]="randomInit()"
+          routerLinkActive="active"
+          (click)="onNavLinkClick()"
+          >חפש חברים</a
+        >
+
+        <a
+          routerLink="/users"
+          routerLinkActive="active"
+          (click)="onNavLinkClick()"
+          >כל החברים</a
+        >
+                
       }
       
       <a *ngIf="loggedInUser" (click)="logout()" class="logout">יציאה</a>
