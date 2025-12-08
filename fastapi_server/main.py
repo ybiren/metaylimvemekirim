@@ -140,7 +140,8 @@ async def register(
     filter_height_max: str = Form(...),
     filter_age_min: str = Form(...),
     filter_age_max: str = Form(...),
-    filter_family_status: str = Form(...)    
+    filter_family_status: str = Form(...),
+    filter_smoking_status: str = Form(...)    
 ):
     def _has_real_file(up: Optional[UploadFile]) -> bool:
         return bool(up and getattr(up, "filename", None))
@@ -171,7 +172,8 @@ async def register(
         "filter_height_max": filter_height_max,
         "filter_age_min": filter_age_min,
         "filter_age_max": filter_age_max,
-        "filter_family_status": filter_family_status
+        "filter_family_status": filter_family_status,
+        "filter_smoking_status": filter_smoking_status
     }
 
     # upsert guarded by lock
@@ -416,6 +418,30 @@ async def get_messages(
 
     return {"ok": True, "count": len(res), "messages": res}
 
+
+
+@app.post("/is_blocked_by_peer")
+async def is_blocked(payload: dict = Body(...)):
+    userId = payload["userId"]
+    peerId = payload["peerId"]
+
+    ensure_data_file(DATA_DIR, USERS_PATH)
+    users = await load_users(USERS_PATH)
+
+    useridx = find_user_index_by_userid(users, userId)
+    if useridx is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    peeridx = find_user_index_by_userid(users, peerId)
+    if peeridx is None:
+        raise HTTPException(status_code=404, detail="Peer not found")
+
+    peer = users[peeridx]
+
+    is_blocked = peer.get("block") and userId in peer["block"]
+
+    return {"is_blocked": bool(is_blocked)}
+    
 
 # ---------------------------------------------------------------------
 # SPA + static (mount LAST)

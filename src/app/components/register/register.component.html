@@ -8,7 +8,9 @@
       כאן תוכלו ליצור ולחפש אירועים מעניינים, ליצור קשרים חברתיים חדשים ולהצטרף לקהילות מעניינות.
       ההרשמה והשימוש באתר הינם <strong>חינם</strong>.
     </p>
-    <p class="muted"><a href="feedback.asp">אם אינך מצליח להרשם לחץ כאן לעזרה</a></p>
+    <p class="muted">
+      <a href="feedback.asp">אם אינך מצליח להרשם לחץ כאן לעזרה</a>
+    </p>
     } @else{
     <h1 class="title">עדכון פרטים</h1>
     }
@@ -29,7 +31,7 @@
     </div>
 
     @if(user()) {
-    <label class="label" for="c_name">גובה</label>
+    <label class="label" for="c_height">גובה</label>
     <div class="field">
       <div>
         <input id="c_height" type="number" formControlName="c_height" placeholder="0" />&nbsp;בסנטימטרים
@@ -43,7 +45,7 @@
         <option value="0">בחר</option>
         <option *ngFor="let r of gender" [value]="r.val">{{ r.txt }}</option>
       </select>
-      <div class="errors" *ngIf="f.c_gender.touched && (f.c_gender.invalid)">
+      <div class="errors" *ngIf="f.c_gender.touched && f.c_gender.invalid">
         <small *ngIf="f.c_gender.errors?.required">שדה חובה</small>
       </div>
     </div>
@@ -62,9 +64,14 @@
         <option value="0">שנה</option>
         <option *ngFor="let y of years" [value]="y">{{ y }}</option>
       </select>
-      <div class="errors" *ngIf="(f.c_birth_day.touched || f.c_birth_month.touched || f.c_birth_year.touched) &&
-                                  (f.c_birth_day.invalid || f.c_birth_month.invalid || f.c_birth_year.invalid)">
-        <small *ngIf="f.c_birth_day.errors?.required || f.c_birth_month.errors?.required || f.c_birth_year.errors?.required">
+      <div
+        class="errors"
+        *ngIf="(f.c_birth_day.touched || f.c_birth_month.touched || f.c_birth_year.touched) &&
+               (f.c_birth_day.invalid || f.c_birth_month.invalid || f.c_birth_year.invalid)"
+      >
+        <small
+          *ngIf="f.c_birth_day.errors?.required || f.c_birth_month.errors?.required || f.c_birth_year.errors?.required"
+        >
           חובה לבחור תאריך מלא
         </small>
       </div>
@@ -115,9 +122,9 @@
       </select>
     </div>
 
-   <label class="label" for="c_email">דואר אלקטרוני*</label>
+    <label class="label" for="c_email2">דואר אלקטרוני*</label>
     <div class="field">
-      <input id="c_email" type="email" formControlName="c_email" placeholder="you@example.com" />
+      <input id="c_email2" type="email" formControlName="c_email" placeholder="you@example.com" />
       <div class="errors" *ngIf="f.c_email.touched && f.c_email.invalid">
         <small *ngIf="f.c_email.errors?.required">שדה חובה</small>
         <small *ngIf="f.c_email.errors?.email">דוא&quot;ל לא תקין</small>
@@ -127,28 +134,27 @@
     @if(user()) {
     <label class="label" for="c_url">כתובת אתר אינטרנט</label>
     <div class="field">
-      <input id="c_url" type="url" formControlName="c_url" placeholder="http://myurl" dir="ltr"/>
+      <input id="c_url" type="url" formControlName="c_url" placeholder="http://myurl" dir="ltr" />
       <div class="errors" *ngIf="f.c_url.touched && f.c_url.invalid">
         <small>כתובת לא תקינה</small>
-      </div> 
+      </div>
     </div>
     }
 
     @if(user()) {
     <label class="label" for="c_fb">כתובת פרופיל פייסבוק</label>
     <div class="field">
-      <input id="c_fb" type="url" formControlName="c_fb" placeholder="" dir="ltr"/>
+      <input id="c_fb" type="url" formControlName="c_fb" placeholder="" dir="ltr" />
     </div>
     }
 
     <label class="label" for="c_ff">מצב משפחתי</label>
     <div class="field">
       <select id="c_ff" formControlName="c_ff" dir="rtl">
-        <option value=0>בחר</option>
+        <option value="0">בחר</option>
         <option *ngFor="let r of familyStatus" [value]="r.val">{{ r.txt }}</option>
       </select>
     </div>
-
 
     @if(user()) {
     <label class="label" for="c_children">מספר ילדים</label>
@@ -273,23 +279,32 @@
       />
     </div>
 
-    <!-- 3) Family status -->
+    <!-- 3) Family status (multi-select via checkboxes) -->
     <label class="label" for="filter_family_status">סטטוס</label>
     <div class="field">
       <div formArrayName="filter_family_status">
-       <div *ngFor="let s of familyStatus; let i = index">
-        <label>
-        <input 
-          type="checkbox"
-          [formControlName]="i"
-          dir="rtl"
-        />
-        {{ s.txt }}
-        </label>
-       </div>
-     </div>
+        <div *ngFor="let s of familyStatus; let i = index">
+          <label>
+            <input
+              type="checkbox"
+              [formControlName]="i"
+              dir="rtl"
+            />
+            {{ s.txt }}
+          </label>
+        </div>
+      </div>
     </div>
   </div>
+
+  <label class="label" for="c_smoking">הרגלי עישון</label>
+    <div class="field">
+      <select id="c_smoking" formControlName="filter_smoking_status" dir="rtl">
+        <option value="0">הכל</option>
+        <option [value]="smokingStatus[0].val">{{ smokingStatus[0].txt }}</option>
+        <option [value]="smokingStatus[1].val">{{ smokingStatus[1].txt }}</option>
+      </select>
+    </div>
 
   <!-- Terms -->
   <details class="card terms">

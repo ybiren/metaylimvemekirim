@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular
 import { environment } from '../../environments/environment';
 import { IUser } from '../interfaces';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Injectable({ providedIn: 'root' })
 
@@ -24,12 +25,19 @@ export class UsersService {
     
   
   block(userId: number, blocked_userid: number) {
-    const fd = new FormData();
+    //const fd = new FormData();
     //fd.append('userId', String(userId));
     //fd.append('blocked_userid', String(blocked_userId));
     return this.http.patch(`${this.baseUrl}/block`, {userId, blocked_userid});
   }
 
+  is_blockedByPeerSignal(userId: number, peerId: number) {
+    return toSignal(
+      this.http.post<{ is_blocked: boolean }>(`${this.baseUrl}/is_blocked_by_peer`, { userId, peerId }),
+      { initialValue: null }
+    );
+  }  
+  
   getName(userId: number): string {
     return this.users$.value.find(u => u.userID === userId)?.c_name ?? `משתמש #${userId}`;
   }

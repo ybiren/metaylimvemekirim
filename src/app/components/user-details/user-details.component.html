@@ -30,6 +30,8 @@
 
     <!-- ✅ Block Button -->
     <button class="btn block-btn" [ngClass]="{'unblock-btn' : isBlocked() }" (click)="blockUser(u.userID)"></button>
+    @if(!isLoggedIUserBlockedByPeer()?.is_blocked) {
     <button class="btn msg-btn" (click)="openCompose()">הודעה</button>
+    }
   </div>
 </section>

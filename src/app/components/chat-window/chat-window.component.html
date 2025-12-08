@@ -38,6 +38,7 @@
   </main>
 
   <!-- Composer -->
+  @if(!isLoggedIUserBlockedByPeer()?.is_blocked) {
   <footer class="chat__composer">
     <input
       #input
@@ -54,4 +55,5 @@
       שלח
     </button>
   </footer>
+  }
 </div>

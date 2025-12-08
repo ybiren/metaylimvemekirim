@@ -28,6 +28,7 @@ export interface IUser {
   filter_age_min: number;
   filter_age_max: number;
   filter_family_status: number[];
+  filter_smoking_status: number;
   [k: string]: any;
 }
 

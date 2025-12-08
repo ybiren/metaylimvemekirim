@@ -12,14 +12,16 @@
     "c_ff": "2",
     "c_details": "אא חחגגג\r\nעע ךלךלךל",
     "c_details1": "טטטטוו\r\nללללל יעעעעככ",
-    "sessionID": "199423960",
+    "sessionID": "241403793",
     "password": "abcd1234",
     "password2": "abcd1234",
     "image_filename": "by me.jpg",
     "image_content_type": "image/jpeg",
     "image_size": 68972,
     "image_path": "data\\images\\1.jpg",
-    "block": [],
+    "block": [
+      3
+    ],
     "c_height": "175",
     "c_education": "4",
     "c_work": "17",
@@ -31,7 +33,8 @@
     "filter_height_max": "20",
     "filter_age_min": "11",
     "filter_age_max": "12",
-    "filter_family_status": "1,5"
+    "filter_family_status": "1,2,6",
+    "filter_smoking_status": "1"
   },
   {
     "userID": 2,
@@ -69,7 +72,7 @@
     "c_ff": "1",
     "c_details": "שלום שלום\r\nאחד שתיים",
     "c_details1": "שלום שלום\r\nאחד שתיים שלוש",
-    "sessionID": "18479f5d27154b188e670d7dcdbf03a9",
+    "sessionID": "3fdd6b778556480b8532c7bc940da2f2",
     "password": "abcd1234",
     "password2": "abcd1234",
     "image_path": "data\\images\\3.jpg",

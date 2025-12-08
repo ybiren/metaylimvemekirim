@@ -1,5 +1,5 @@
 // src/app/components/user-details/user-details.component.ts
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, Signal, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
@@ -41,8 +41,10 @@ export class UserDetailsComponent implements OnInit {
   error = signal<string>('');
   user = signal<IUser | null>(null);
   loggedInUser = signal<IUser | null>(null);
-  
-  ngOnInit(): void {
+  isLoggedIUserBlockedByPeer: Signal<{is_blocked:boolean}>;
+
+  constructor() {
+
     this.loggedInUser.set(JSON.parse(localStorage.getItem('user')) as IUser)
     const idParam = this.route.snapshot.paramMap.get('userID') || this.route.snapshot.paramMap.get('id');
     const id = Number(idParam);
@@ -51,7 +53,10 @@ export class UserDetailsComponent implements OnInit {
       return;
     }
     this.fetchUser(id);
+    this.isLoggedIUserBlockedByPeer = this.usersSrv.is_blockedByPeerSignal(this.loggedInUser().userID, id);
+  }
   
+  ngOnInit(): void {
   }
 
   fetchUser(id: number) {

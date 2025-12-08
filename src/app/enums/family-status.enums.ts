@@ -1,6 +1,7 @@
 export enum eFamilyStatus {
     Bachelor = 1,
-    Divorced,
+    DivorcedWith,
+    DivorcedWithout,
     Seperated,
     Widow,
     Partnership

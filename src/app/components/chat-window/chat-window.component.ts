@@ -1,7 +1,8 @@
 import {
   Component, OnInit, OnDestroy, ViewChild, ElementRef,
   Input, inject,
-  DestroyRef
+  DestroyRef,
+  Signal
 } from '@angular/core';
 import { NgIf, NgFor, DatePipe, NgClass, NgStyle, AsyncPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -46,12 +47,16 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   @ViewChild('scrollArea') scrollArea!: ElementRef<HTMLElement>;
 
   get peerName() { return this.users.getName(this.peerId!); }
+  isLoggedIUserBlockedByPeer: Signal<{is_blocked:boolean}>;
  
-
-  async ngOnInit() {
+  constructor() {
     // Resolve peerId from @Input or dialog data
     if (this.peerId == null) this.peerId = this.dlgData?.peerId;
+    this.isLoggedIUserBlockedByPeer = this.users.is_blockedByPeerSignal(this.me, this.peerId);
+  }
 
+  async ngOnInit() {
+    
     if (this.peerId == null) {
       console.error('[ChatWindow] Missing peerId. Open dialog with { data: { peerId } } or bind [peerId].');
       this.close();

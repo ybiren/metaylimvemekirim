@@ -105,6 +105,7 @@ export class RegisterComponent implements OnInit {
       filter_age_min: [null],
       filter_age_max: [null],
       filter_family_status: this.buildFilterFamilyStatusArray(),
+      filter_smoking_status:[0] 
     },
     {
       validators: passwordMatchValidator,
@@ -236,7 +237,7 @@ export class RegisterComponent implements OnInit {
     // take the selected family-status values (array of numbers) and send as comma-separated string
     const selectedStatuses = this.selectedFamilyStatus(); // e.g. [1,4,5]
     fd.append('filter_family_status', selectedStatuses.join(',')); // "1,4,5"
-
+    fd.append('filter_smoking_status', String(this.f['filter_smoking_status'].value ?? ''));
     this.submitting.set(true);
     this.serverMsg.set('');
 
@@ -304,6 +305,7 @@ export class RegisterComponent implements OnInit {
           filter_height_max: current?.filter_height_max ?? this.form.value.filter_height_max,
           filter_age_min: current?.filter_age_min ?? this.form.value.filter_age_min,
           filter_age_max: current?.filter_age_max ?? this.form.value.filter_age_max,
+          filter_smoking_status: current?.filter_smoking_status ?? this.form.value.filter_smoking_status
         });
 
         // build the FormArray from saved values (if any)
