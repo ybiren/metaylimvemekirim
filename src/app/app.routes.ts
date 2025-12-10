@@ -8,6 +8,7 @@ import { MessagesStoreViewComponent } from './components/messages/messages.compo
 import { HomeComponent } from './components/home/home.component';
 import { AboutUsComponent } from './components/about-us/about-us.component';
 import { ContactPageComponent } from './components/contact/contact,component';
+import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 
 export const appRoutes: Route[] = [
   { path: 'home', component: HomeComponent },
@@ -19,5 +20,6 @@ export const appRoutes: Route[] = [
   { path: 'search', component: SearchFiltersComponent },
   { path: 'messages', component: MessagesStoreViewComponent },
   { path: 'about-us', component: AboutUsComponent },
-  { path: 'contact', component: ContactPageComponent }
+  { path: 'contact', component: ContactPageComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent }
 ];

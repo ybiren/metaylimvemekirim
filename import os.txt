@@ -1,0 +1,14 @@
+import os
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+
+message = Mail(
+    from_email='from@example.com',
+    to_emails='to@example.com',
+    subject='Hello from SendGrid',
+    html_content='<strong>Hello Yossi!</strong>',
+)
+
+sg = SendGridAPIClient(os.environ.get("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"))
+response = sg.send(message)
+print(response.status_code)

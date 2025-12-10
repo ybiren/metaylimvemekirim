@@ -38,6 +38,8 @@ from helper import (
     save_messages
 )
 
+from sendgrid_test.send_mail import send_mail
+
 # ---------------------------------------------------------------------
 # Config & Logging
 # ---------------------------------------------------------------------
@@ -239,7 +241,24 @@ async def login(
     image_url = f"/images/{user_id}" if user_id else None
     return JSONResponse({"ok": True, "message": "Login successful.", "user": user_sanitized, "image_url": image_url})
 
-
+@app.post("/forgotPass")
+async def login(
+    c_email: str = Form(...),
+):
+     email = (c_email or "").strip().lower()
+     print("email is")
+     print(email)
+     async with users_lock:
+       user, idx, users = await get_user_and_index_by_email(USERS_PATH, email)
+     if not user:
+       return JSONResponse({"ok": False, "message": "Invalid email."}, status_code=401)
+     pswd = user.get("password")
+     status_code = send_mail(email,pswd)
+     if 200 <= status_code < 300:
+       return JSONResponse({"ok": True})
+     else:
+       return JSONResponse({"ok": False, "message": "Mail Sending Failed."})
+     
 
 @app.post("/search")
 async def search_users(payload: Dict[str, Any]):
