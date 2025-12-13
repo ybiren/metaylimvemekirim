@@ -74,3 +74,10 @@ systemctl status crond
 
 If not running:
 systemctl enable --now crond
+
+
+ conect to remote from local (terminal 1):
+ ssh -L 15433:127.0.0.1:5433 root@194.36.90.119
+ 
+ bash (terminal 2)
+ psql 'postgresql://postgres:StrongPass123!@127.0.0.1:15433/metaylim'

@@ -1,26 +1,25 @@
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
   Validators,
-  AbstractControl,
-  ValidationErrors,
   ReactiveFormsModule,
   FormArray,
   FormControl,
 } from '@angular/forms';
+import { Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { RegisterService } from '../../services/register.service';
-import { fileMaxSizeValidator, fileMimeTypeValidator } from '../../validators/file-validators';
+import { UsersService } from '../../services/users.service';
 import { hebrewNameValidator, passwordMatchValidator } from '../../validators/form-validators';
 import { IOption, IUser } from '../../interfaces';
-import { Router } from '@angular/router';
+import { getCurrentUserId } from '../../core/current-user';
+import { environment } from '../../../environments/environment';
+
 import { REGIONS_TOKEN } from '../../consts/regions.consts';
 import { GENDER_TOKEN } from '../../consts/gender.consts';
 import { FAMILY_STATUS_TOKEN } from '../../consts/family-status.consts';
-import { UsersService } from '../../services/users.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { getCurrentUserId } from '../../core/current-user';
-import { environment } from '../../../environments/environment';
 import { EDUCATION_TOKEN } from '../../consts/education.consts';
 import { WORK_TOKEN } from '../../consts/work.consts';
 import { CHILDREN_STATUS_TOKEN } from '../../consts/children-status.consts';
@@ -33,13 +32,13 @@ import { SMOKING_STATUS_TOKEN } from '../../consts/smoking-status.consts';
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss'],
 })
-export class RegisterComponent implements OnInit {
+export class RegisterComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private registerSrv = inject(RegisterService);
   private usersSrv = inject(UsersService);
   private destroyRef = inject(DestroyRef);
-
   router = inject(Router);
+
   user = signal<IUser | null>(null);
 
   regions: ReadonlyArray<IOption> = inject(REGIONS_TOKEN);
@@ -51,6 +50,7 @@ export class RegisterComponent implements OnInit {
   smokingStatus: ReadonlyArray<IOption> = inject(SMOKING_STATUS_TOKEN);
 
   readonly MAX_IMAGE_BYTES = 256 * 1024; // 256KB
+  readonly MAX_EXTRA_IMAGES = 5;
 
   days = Array.from({ length: 31 }, (_, i) => i + 1);
   months = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -62,15 +62,20 @@ export class RegisterComponent implements OnInit {
     1994, 1995,
   ];
 
-  // mimic the original hidden field
   sessionID = signal<string>(Math.floor(Math.random() * 1_000_000_000).toString());
-
   submitting = signal<boolean>(false);
   serverMsg = signal<string>('');
 
-  // Preview + error helpers for image
+  // Profile image preview + errors
   imagePreviewUrl: string | null = null;
   imageError = '';
+  private profileObjectUrl?: string;
+
+  // Extra images previews + errors
+  extraPreviewUrls: string[] = [];
+  extraImagesError = '';
+
+  apiBase = environment.apibase;
 
   form = this.fb.group(
     {
@@ -91,21 +96,24 @@ export class RegisterComponent implements OnInit {
       password2: ['', [Validators.required, Validators.maxLength(9)]],
       acceptTerms: [false, Validators.requiredTrue],
 
-      // image + profile extras
+      // images
       c_image: this.fb.control<File | null>(null, []),
+      c_extra_images: this.fb.array<FormControl<File | null>>([]),
+
+      // profile fields
       c_height: [0],
       c_education: [0],
       c_work: [0],
       c_children: [0],
       c_smoking: [0],
 
-      // 🔽 NEW: filters for incoming contacts
+      // filters
       filter_height_min: [null],
       filter_height_max: [null],
       filter_age_min: [null],
       filter_age_max: [null],
       filter_family_status: this.buildFilterFamilyStatusArray(),
-      filter_smoking_status:[0] 
+      filter_smoking_status: [0],
     },
     {
       validators: passwordMatchValidator,
@@ -113,11 +121,13 @@ export class RegisterComponent implements OnInit {
     }
   );
 
-  private objectUrl?: string;
-  apiBase = environment.apibase;
-
   ngOnInit(): void {
     this.fetchUser();
+  }
+
+  ngOnDestroy(): void {
+    if (this.profileObjectUrl) URL.revokeObjectURL(this.profileObjectUrl);
+    this.extraPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
   }
 
   get f() {
@@ -128,78 +138,119 @@ export class RegisterComponent implements OnInit {
     return this.form.get('filter_family_status') as FormArray;
   }
 
+  get extraImages(): FormArray<FormControl<File | null>> {
+    return this.form.get('c_extra_images') as FormArray<FormControl<File | null>>;
+  }
+
   private buildFilterFamilyStatusArray(selectedVals: number[] = []): FormArray {
-    const controls = this.familyStatus.map((s) =>
-      this.fb.control(selectedVals.includes(s.val))
-    );
+    const controls = this.familyStatus.map((s) => this.fb.control(selectedVals.includes(s.val)));
     return this.fb.array(controls);
   }
 
+  // --------------------
+  // Profile image (single)
+  // --------------------
   onImageSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
 
-    // reset previous state
     this.imageError = '';
-    if (this.objectUrl) {
-      URL.revokeObjectURL(this.objectUrl);
-      this.objectUrl = undefined;
+
+    if (this.profileObjectUrl) {
+      URL.revokeObjectURL(this.profileObjectUrl);
+      this.profileObjectUrl = undefined;
     }
     this.imagePreviewUrl = null;
 
-    // if nothing picked
     if (!file) {
       this.f['c_image'].setValue(null);
       this.f['c_image'].setErrors({ required: true });
       this.f['c_image'].markAsTouched();
-      this.f['c_image'].updateValueAndValidity({ onlySelf: true, emitEvent: false });
       return;
     }
 
-    // mime type validation (you can also use fileMimeTypeValidator if you want on control)
     if (!file.type || !file.type.startsWith('image/')) {
       this.f['c_image'].setValue(null);
       this.f['c_image'].setErrors({ notImage: true });
       this.imageError = 'נא לבחור קובץ תמונה תקין';
+      input.value = '';
       return;
     }
 
-    // size validation (if you want it here as well)
     if (file.size > this.MAX_IMAGE_BYTES) {
       this.f['c_image'].setValue(null);
       this.f['c_image'].setErrors({ tooLarge: true });
       this.imageError = 'גודל התמונה לא יכול לעלות על ‎256KB‎';
+      input.value = '';
       return;
     }
 
-    // Preview
-    this.objectUrl = URL.createObjectURL(file);
-    this.imagePreviewUrl = this.objectUrl;
+    this.profileObjectUrl = URL.createObjectURL(file);
+    this.imagePreviewUrl = this.profileObjectUrl;
 
-    // All good
     this.f['c_image'].setErrors(null);
     this.f['c_image'].setValue(file);
     this.f['c_image'].markAsDirty();
+
+    input.value = '';
   }
 
+  // --------------------
+  // Extra images (up to 5)
+  // --------------------
+  onExtraImagesSelected(event: Event): void {
+    this.extraImagesError = '';
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    if (!files.length) return;
+
+    const available = this.MAX_EXTRA_IMAGES - this.extraImages.length;
+    if (available <= 0) {
+      this.extraImagesError = 'ניתן להעלות עד 5 תמונות נוספות';
+      input.value = '';
+      return;
+    }
+
+    const toAdd = files.slice(0, available);
+
+    for (const file of toAdd) {
+      if (!file.type || !file.type.startsWith('image/')) {
+        this.extraImagesError = 'נא לבחור קבצי תמונה בלבד';
+        continue;
+      }
+      this.extraImages.push(this.fb.control<File | null>(file));
+      this.extraPreviewUrls.push(URL.createObjectURL(file));
+    }
+
+    if (files.length > available) {
+      this.extraImagesError = `אפשר עד ${this.MAX_EXTRA_IMAGES} תמונות. נוספו רק ${available}.`;
+    }
+
+    input.value = '';
+  }
+
+  removeExtraImage(i: number): void {
+    const url = this.extraPreviewUrls[i];
+    if (url) URL.revokeObjectURL(url);
+
+    this.extraImages.removeAt(i);
+    this.extraPreviewUrls.splice(i, 1);
+  }
+
+  // --------------------
+  // Submit
+  // --------------------
   onSubmit(): void {
     this.form.markAllAsTouched();
     this.debugFormErrors();
-    if (this.form.invalid) return;
 
     // validate selects which have "0" default
-    if (
-      this.f['c_gender'].value === 0 ||
-      !this.f['c_birth_day'].value ||
-      !this.f['c_birth_month'].value ||
-      !this.f['c_birth_year'].value
-    ) {
-      if (this.f['c_gender'].value === 0) this.f['c_gender'].setErrors({ required: true });
-      if (!this.f['c_birth_day'].value) this.f['c_birth_day'].setErrors({ required: true });
-      if (!this.f['c_birth_month'].value) this.f['c_birth_month'].setErrors({ required: true });
-      if (!this.f['c_birth_year'].value) this.f['c_birth_year'].setErrors({ required: true });
-      return;
-    }
+    if (this.f['c_gender'].value === 0) this.f['c_gender'].setErrors({ required: true });
+    if (!this.f['c_birth_day'].value) this.f['c_birth_day'].setErrors({ required: true });
+    if (!this.f['c_birth_month'].value) this.f['c_birth_month'].setErrors({ required: true });
+    if (!this.f['c_birth_year'].value) this.f['c_birth_year'].setErrors({ required: true });
+
+    if (this.form.invalid) return;
 
     const fd = new FormData();
     fd.append('c_name', String(this.f['c_name'].value ?? ''));
@@ -218,9 +269,14 @@ export class RegisterComponent implements OnInit {
     fd.append('sessionID', this.sessionID());
 
     const imageFile = this.f['c_image'].value as File | null;
-    if (imageFile) {
-      fd.append('c_image', imageFile);
-    }
+    if (imageFile) fd.append('c_image', imageFile);
+
+    // Append extras as repeated key: c_extra_images
+    this.extraImages.controls.forEach((ctrl) => {
+      const f = ctrl.value;
+      if (f) fd.append('c_extra_images', f);
+    });
+
     fd.append('c_height', String(this.f['c_height'].value ?? ''));
     fd.append('c_education', String(this.f['c_education'].value ?? ''));
     fd.append('c_work', String(this.f['c_work'].value ?? ''));
@@ -234,10 +290,10 @@ export class RegisterComponent implements OnInit {
     fd.append('filter_age_min', String(this.f['filter_age_min'].value ?? ''));
     fd.append('filter_age_max', String(this.f['filter_age_max'].value ?? ''));
 
-    // take the selected family-status values (array of numbers) and send as comma-separated string
-    const selectedStatuses = this.selectedFamilyStatus(); // e.g. [1,4,5]
-    fd.append('filter_family_status', selectedStatuses.join(',')); // "1,4,5"
+    const selectedStatuses = this.selectedFamilyStatus();
+    fd.append('filter_family_status', selectedStatuses.join(','));
     fd.append('filter_smoking_status', String(this.f['filter_smoking_status'].value ?? ''));
+
     this.submitting.set(true);
     this.serverMsg.set('');
 
@@ -245,12 +301,9 @@ export class RegisterComponent implements OnInit {
       next: (res) => {
         this.serverMsg.set('נרשמת בהצלחה!');
         this.submitting.set(false);
-        console.log('Server response:', res);
         localStorage.setItem('user', JSON.stringify(res.user));
         this.usersSrv.load();
-        setTimeout(() => {
-          this.router.navigate(['/home']);
-        }, 500);
+        setTimeout(() => this.router.navigate(['/home']), 500);
       },
       error: (err) => {
         console.error(err);
@@ -260,7 +313,9 @@ export class RegisterComponent implements OnInit {
     });
   }
 
-  /** Load partial user data */
+  // --------------------
+  // Load user data
+  // --------------------
   private fetchUser() {
     this.usersSrv.users$
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -277,15 +332,9 @@ export class RegisterComponent implements OnInit {
         this.form.patchValue({
           c_name: current?.c_name ?? this.form.value.c_name,
           c_gender: current?.c_gender ?? this.form.value.c_gender,
-          c_birth_day: current?.c_birth_day
-            ? current.c_birth_day
-            : (this.form.value.c_birth_day as unknown as number),
-          c_birth_month: current?.c_birth_month
-            ? current.c_birth_month
-            : (this.form.value.c_birth_month as unknown as number),
-          c_birth_year: current?.c_birth_year
-            ? current.c_birth_year
-            : (this.form.value.c_birth_year as unknown as number),
+          c_birth_day: current?.c_birth_day ? current.c_birth_day : (this.form.value.c_birth_day as unknown as number),
+          c_birth_month: current?.c_birth_month ? current.c_birth_month : (this.form.value.c_birth_month as unknown as number),
+          c_birth_year: current?.c_birth_year ? current.c_birth_year : (this.form.value.c_birth_year as unknown as number),
           c_country: current?.c_country ?? this.form.value.c_country,
           c_pcell: current?.c_pcell ?? this.form.value.c_pcell,
           c_email: current?.c_email ?? this.form.value.c_email,
@@ -305,12 +354,14 @@ export class RegisterComponent implements OnInit {
           filter_height_max: current?.filter_height_max ?? this.form.value.filter_height_max,
           filter_age_min: current?.filter_age_min ?? this.form.value.filter_age_min,
           filter_age_max: current?.filter_age_max ?? this.form.value.filter_age_max,
-          filter_smoking_status: current?.filter_smoking_status ?? this.form.value.filter_smoking_status
+          filter_smoking_status: current?.filter_smoking_status ?? this.form.value.filter_smoking_status,
         });
 
-        // build the FormArray from saved values (if any)
         const saved = (current?.filter_family_status ?? []) as number[];
         this.form.setControl('filter_family_status', this.buildFilterFamilyStatusArray(saved));
+
+        // NOTE: If later you store extra images server-side and want to show them here,
+        // you can pre-fill previews (URLs) + keep the FormArray empty until user chooses new files.
       });
   }
 
@@ -326,9 +377,7 @@ export class RegisterComponent implements OnInit {
     if (!this.form.invalid) return;
     console.group('Register form errors');
     Object.entries(this.form.controls).forEach(([key, ctrl]) => {
-      if (ctrl.invalid) {
-        console.log(key, ctrl.errors);
-      }
+      if (ctrl.invalid) console.log(key, ctrl.errors);
     });
     console.groupEnd();
   }

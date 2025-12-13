@@ -2,17 +2,17 @@
   <!-- Intro block -->
   <section class="intro card">
     @if(!user()) {
-    <h1 class="title">הרשמה לפגוש אותי</h1>
-    <p>
-      ברוכים הבאים לרשת החברתית פגוש אותי<br>
-      כאן תוכלו ליצור ולחפש אירועים מעניינים, ליצור קשרים חברתיים חדשים ולהצטרף לקהילות מעניינות.
-      ההרשמה והשימוש באתר הינם <strong>חינם</strong>.
-    </p>
-    <p class="muted">
-      <a href="feedback.asp">אם אינך מצליח להרשם לחץ כאן לעזרה</a>
-    </p>
+      <h1 class="title">הרשמה לפגוש אותי</h1>
+      <p>
+        ברוכים הבאים לרשת החברתית פגוש אותי<br />
+        כאן תוכלו ליצור ולחפש אירועים מעניינים, ליצור קשרים חברתיים חדשים ולהצטרף לקהילות מעניינות.
+        ההרשמה והשימוש באתר הינם <strong>חינם</strong>.
+      </p>
+      <p class="muted">
+        <a href="feedback.asp">אם אינך מצליח להרשם לחץ כאן לעזרה</a>
+      </p>
     } @else{
-    <h1 class="title">עדכון פרטים</h1>
+      <h1 class="title">עדכון פרטים</h1>
     }
   </section>
 
@@ -31,12 +31,12 @@
     </div>
 
     @if(user()) {
-    <label class="label" for="c_height">גובה</label>
-    <div class="field">
-      <div>
-        <input id="c_height" type="number" formControlName="c_height" placeholder="0" />&nbsp;בסנטימטרים
+      <label class="label" for="c_height">גובה</label>
+      <div class="field">
+        <div class="inline-note">
+          <input id="c_height" type="number" formControlName="c_height" placeholder="0" />&nbsp;בסנטימטרים
+        </div>
       </div>
-    </div>
     }
 
     <label class="label" for="c_gender">מין*</label>
@@ -64,6 +64,7 @@
         <option value="0">שנה</option>
         <option *ngFor="let y of years" [value]="y">{{ y }}</option>
       </select>
+
       <div
         class="errors"
         *ngIf="(f.c_birth_day.touched || f.c_birth_month.touched || f.c_birth_year.touched) &&
@@ -122,30 +123,21 @@
       </select>
     </div>
 
-    <label class="label" for="c_email2">דואר אלקטרוני*</label>
-    <div class="field">
-      <input id="c_email2" type="email" formControlName="c_email" placeholder="you@example.com" />
-      <div class="errors" *ngIf="f.c_email.touched && f.c_email.invalid">
-        <small *ngIf="f.c_email.errors?.required">שדה חובה</small>
-        <small *ngIf="f.c_email.errors?.email">דוא&quot;ל לא תקין</small>
-      </div>
-    </div>
-
     @if(user()) {
-    <label class="label" for="c_url">כתובת אתר אינטרנט</label>
-    <div class="field">
-      <input id="c_url" type="url" formControlName="c_url" placeholder="http://myurl" dir="ltr" />
-      <div class="errors" *ngIf="f.c_url.touched && f.c_url.invalid">
-        <small>כתובת לא תקינה</small>
+      <label class="label" for="c_url">כתובת אתר אינטרנט</label>
+      <div class="field">
+        <input id="c_url" type="url" formControlName="c_url" placeholder="http://myurl" dir="ltr" />
+        <div class="errors" *ngIf="f.c_url.touched && f.c_url.invalid">
+          <small>כתובת לא תקינה</small>
+        </div>
       </div>
-    </div>
     }
 
     @if(user()) {
-    <label class="label" for="c_fb">כתובת פרופיל פייסבוק</label>
-    <div class="field">
-      <input id="c_fb" type="url" formControlName="c_fb" placeholder="" dir="ltr" />
-    </div>
+      <label class="label" for="c_fb">כתובת פרופיל פייסבוק</label>
+      <div class="field">
+        <input id="c_fb" type="url" formControlName="c_fb" placeholder="" dir="ltr" />
+      </div>
     }
 
     <label class="label" for="c_ff">מצב משפחתי</label>
@@ -157,26 +149,26 @@
     </div>
 
     @if(user()) {
-    <label class="label" for="c_children">מספר ילדים</label>
-    <div class="field">
-      <select id="c_children" formControlName="c_children" dir="rtl">
-        <option value="0">בחר</option>
-        <option *ngFor="let c of childrenStatus" [value]="c.val">{{ c.txt }}</option>
-      </select>
-    </div>
+      <label class="label" for="c_children">מספר ילדים</label>
+      <div class="field">
+        <select id="c_children" formControlName="c_children" dir="rtl">
+          <option value="0">בחר</option>
+          <option *ngFor="let c of childrenStatus" [value]="c.val">{{ c.txt }}</option>
+        </select>
+      </div>
     }
 
     @if(user()) {
-    <label class="label" for="c_smoking">הרגלי עישון</label>
-    <div class="field">
-      <select id="c_smoking" formControlName="c_smoking" dir="rtl">
-        <option value="0">בחר</option>
-        <option *ngFor="let s of smokingStatus" [value]="s.val">{{ s.txt }}</option>
-      </select>
-    </div>
+      <label class="label" for="c_smoking">הרגלי עישון</label>
+      <div class="field">
+        <select id="c_smoking" formControlName="c_smoking" dir="rtl">
+          <option value="0">בחר</option>
+          <option *ngFor="let s of smokingStatus" [value]="s.val">{{ s.txt }}</option>
+        </select>
+      </div>
     }
 
-    <!-- Image upload -->
+    <!-- Profile image upload -->
     <label class="label" for="c_image">תמונת פרופיל</label>
     <div class="field">
       <input
@@ -186,15 +178,44 @@
         (change)="onImageSelected($event)"
         formControlName="c_image"
       />
+
       <div class="preview-row" *ngIf="imagePreviewUrl">
         <img [src]="imagePreviewUrl" alt="תצוגה מקדימה" class="avatar-preview" />
         <small class="muted">תצוגה מקדימה</small>
       </div>
+
       <div class="errors" *ngIf="(f.c_image.touched && f.c_image.invalid) || imageError">
         <small *ngIf="f.c_image.errors?.required">שדה חובה</small>
-        <small *ngIf="f.c_image.errors?.tooLarge">גודל התמונה לא יכול לעלות על ‎256KB‎</small>
         <small *ngIf="f.c_image.errors?.notImage">נא לבחור קובץ תמונה תקין</small>
+        <small *ngIf="f.c_image.errors?.tooLarge">גודל התמונה לא יכול לעלות על ‎256KB‎</small>
         <small *ngIf="imageError">{{ imageError }}</small>
+      </div>
+    </div>
+
+    <!-- Extra images upload (up to 5) -->
+    <label class="label" for="c_extra_images">תמונות נוספות (עד 5)</label>
+    <div class="field">
+      <div class="extra-upload-row">
+        <input
+          id="c_extra_images"
+          type="file"
+          accept="image/*"
+          multiple
+          (change)="onExtraImagesSelected($event)"
+          [disabled]="extraImages.length >= MAX_EXTRA_IMAGES"
+        />
+        <small class="muted counter">{{ extraImages.length }} / {{ MAX_EXTRA_IMAGES }}</small>
+      </div>
+
+      <div class="preview-grid" *ngIf="extraPreviewUrls.length">
+        <div class="preview-card" *ngFor="let url of extraPreviewUrls; let i = index">
+          <img [src]="url" alt="תמונה נוספת" class="extra-preview" />
+          <button type="button" class="remove-btn" (click)="removeExtraImage(i)">הסר</button>
+        </div>
+      </div>
+
+      <div class="errors" *ngIf="extraImagesError">
+        <small>{{ extraImagesError }}</small>
       </div>
     </div>
   </div>
@@ -240,71 +261,44 @@
     </div>
   </div>
 
-  <!-- 🔽 NEW SECTION: filters for incoming contacts -->
+  <!-- Filters -->
   <h2 class="section-header">מי אני רוצה שיפנה אלי?</h2>
   <div class="grid card">
-    <!-- 1) Height range -->
     <label class="label" for="filter_height_min">מגובה עד גובה</label>
     <div class="field range-row">
-      <input
-        id="filter_height_min"
-        type="number"
-        formControlName="filter_height_min"
-        placeholder="מגובה (ס&quot;מ)"
-      />
+      <input id="filter_height_min" type="number" formControlName="filter_height_min" placeholder='מגובה (ס"מ)' />
       <span class="range-separator">עד</span>
-      <input
-        id="filter_height_max"
-        type="number"
-        formControlName="filter_height_max"
-        placeholder="עד גובה (ס&quot;מ)"
-      />
+      <input id="filter_height_max" type="number" formControlName="filter_height_max" placeholder='עד גובה (ס"מ)' />
     </div>
 
-    <!-- 2) Age range -->
     <label class="label" for="filter_age_min">מגיל עד גיל</label>
     <div class="field range-row">
-      <input
-        id="filter_age_min"
-        type="number"
-        formControlName="filter_age_min"
-        placeholder="מגיל"
-      />
+      <input id="filter_age_min" type="number" formControlName="filter_age_min" placeholder="מגיל" />
       <span class="range-separator">עד</span>
-      <input
-        id="filter_age_max"
-        type="number"
-        formControlName="filter_age_max"
-        placeholder="עד גיל"
-      />
+      <input id="filter_age_max" type="number" formControlName="filter_age_max" placeholder="עד גיל" />
     </div>
 
-    <!-- 3) Family status (multi-select via checkboxes) -->
     <label class="label" for="filter_family_status">סטטוס</label>
     <div class="field">
-      <div formArrayName="filter_family_status">
-        <div *ngFor="let s of familyStatus; let i = index">
+      <div formArrayName="filter_family_status" class="checkbox-list">
+        <div *ngFor="let s of familyStatus; let i = index" class="checkbox-item">
           <label>
-            <input
-              type="checkbox"
-              [formControlName]="i"
-              dir="rtl"
-            />
+            <input type="checkbox" [formControlName]="i" dir="rtl" />
             {{ s.txt }}
           </label>
         </div>
       </div>
     </div>
-  </div>
 
-  <label class="label" for="c_smoking">הרגלי עישון</label>
+    <label class="label" for="filter_smoking_status">הרגלי עישון</label>
     <div class="field">
-      <select id="c_smoking" formControlName="filter_smoking_status" dir="rtl">
+      <select id="filter_smoking_status" formControlName="filter_smoking_status" dir="rtl">
         <option value="0">הכל</option>
         <option [value]="smokingStatus[0].val">{{ smokingStatus[0].txt }}</option>
         <option [value]="smokingStatus[1].val">{{ smokingStatus[1].txt }}</option>
       </select>
     </div>
+  </div>
 
   <!-- Terms -->
   <details class="card terms">
@@ -323,7 +317,7 @@
     <small>חובה לאשר את תנאי השימוש</small>
   </div>
 
-  <button class="submit-btn" type="submit" [disabled]="submitting()">
+  <button class="submit-btn" type="submit" [disabled]="submitting() || form.invalid">
     @if (submitting()) { שומר... } @else { שמירה }
   </button>
 
