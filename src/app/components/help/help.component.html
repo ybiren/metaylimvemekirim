@@ -1,0 +1,49 @@
+<div class="help-page" dir="rtl">
+  <div class="columns">
+    <!-- LEFT -->
+    <section class="panel">
+      <h2 class="panel-title">{{ leftTitle }}</h2>
+
+      <ul class="links">
+        <li class="link-row" *ngFor="let l of leftLinks">
+          <span class="bullet" aria-hidden="true"></span>
+
+          <!-- פנימי -->
+          <a *ngIf="!l.external" class="link" [routerLink]="l.href">{{ l.text }}</a>
+
+          <!-- חיצוני -->
+          <a *ngIf="l.external" class="link" [href]="l.href" target="_blank" rel="noopener">{{ l.text }}</a>
+        </li>
+      </ul>
+    </section>
+
+    <div class="divider" aria-hidden="true"></div>
+
+    <!-- RIGHT -->
+    <section class="panel">
+      <h2 class="panel-title">{{ rightTitle }}</h2>
+
+      <ul class="links compact">
+        <li class="link-row" *ngFor="let l of rightTopLinks">
+          <span class="bullet" aria-hidden="true"></span>
+          <a class="link" [routerLink]="l.href">{{ l.text }}</a>
+        </li>
+      </ul>
+
+      <p class="notice">
+        {{ rightNotice }}
+      </p>
+
+      <div class="preview">
+        <img class="preview-img" [src]="previewImageUrl" alt="תצוגה מקדימה" />
+      </div>
+
+      <ul class="links compact bottom">
+        <li class="link-row" *ngFor="let l of rightBottomLinks">
+          <span class="bullet" aria-hidden="true"></span>
+          <a class="link" [routerLink]="l.href">{{ l.text }}</a>
+        </li>
+      </ul>
+    </section>
+  </div>
+</div>

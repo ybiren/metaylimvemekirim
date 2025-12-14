@@ -1,0 +1,51 @@
+<section class="album card">
+  <header class="topbar">
+    <div class="titles">
+      <h2 class="title">אלבום תמונות</h2>
+      <div class="sub" *ngIf="hasImages()">
+        {{ index() + 1 }} / {{ count() }}
+      </div>
+    </div>
+
+    <button type="button" class="btn" (click)="refresh()" [disabled]="loading()">
+      רענן
+    </button>
+  </header>
+
+  <div class="state" *ngIf="loading()">טוען...</div>
+  <div class="state error" *ngIf="!loading() && errorMsg()">{{ errorMsg() }}</div>
+
+  <div class="state empty" *ngIf="!loading() && !errorMsg() && !hasImages()">
+    אין תמונות נוספות עדיין
+  </div>
+
+  <ng-container *ngIf="!loading() && !errorMsg() && current() as img">
+    <div class="viewer">
+      <button type="button" class="nav" (click)="prev()" [disabled]="count() <= 1" aria-label="הקודם">
+        ‹
+      </button>
+
+      <div class="stage">
+        <!-- NATURAL SIZE: no width/height attributes, no forced sizing -->
+        <img class="photo" [src]="img.absoluteUrl" [alt]="img.filename || 'תמונה'" />
+        <div class="caption" *ngIf="img.filename">{{ img.filename }}</div>
+      </div>
+
+      <button type="button" class="nav" (click)="next()" [disabled]="count() <= 1" aria-label="הבא">
+        ›
+      </button>
+    </div>
+
+    <!-- Optional dots navigation -->
+    <div class="dots" *ngIf="count() > 1">
+      <button
+        type="button"
+        class="dot"
+        *ngFor="let _ of images(); let i = index"
+        [class.active]="i === index()"
+        (click)="goTo(i)"
+        [attr.aria-label]="'לתמונה ' + (i + 1)"
+      ></button>
+    </div>
+  </ng-container>
+</section>

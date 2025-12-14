@@ -135,6 +135,60 @@ async def get_user_extra_image(user_id: int, filename: str):
     return FileResponse(path, media_type=media_type)
 
 
+@app.get("/images/{user_id}/extra")
+async def list_user_extra_images(user_id: int):
+    async with users_lock:
+        users = await load_users(USERS_PATH)
+        idx = find_user_index_by_userid(users, user_id)
+        if idx is None:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        extras = users[idx].get("extra_images") or []
+        urls: List[str] = []
+        for x in extras:
+            fn = x.get("filename")
+            if fn:
+                urls.append(f"/images/{user_id}/extra/{fn}")
+
+    return {"ok": True, "count": len(urls), "items": extras, "urls": urls}
+
+
+@app.delete("/images/{user_id}/extra/{filename}")
+async def delete_user_extra_image(user_id: int, filename: str):
+    async with users_lock:
+        users = await load_users(USERS_PATH)
+        idx = find_user_index_by_userid(users, user_id)
+        if idx is None:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user = users[idx]
+        extras = user.get("extra_images") or []
+
+        # ensure exists in metadata
+        if not any(x.get("filename") == filename for x in extras):
+            raise HTTPException(status_code=404, detail="Extra image not found")
+
+        # delete file from disk (best-effort)
+        path = find_user_extra_image_path(
+            user_id=user_id,
+            filename=filename,
+            images_dir=IMAGES_DIR,
+        )
+        if path and path.exists():
+            try:
+                path.unlink()
+            except Exception as e:
+                log.warning("Failed to unlink extra image: %s (%s)", path, e)
+
+        # remove metadata
+        user["extra_images"] = [x for x in extras if x.get("filename") != filename]
+        users[idx] = user
+        await save_users(USERS_PATH, users)
+
+    log.info("Deleted extra image: userID=%s file=%s", user_id, filename)
+    return {"ok": True, "deleted": filename, "remaining": len(user["extra_images"])}
+
+
 @app.post("/register")
 async def register(
     c_name: str = Form(...),
@@ -152,7 +206,7 @@ async def register(
     c_details: str = Form(""),
     c_details1: str = Form(""),
     c_image: Optional[UploadFile] = File(None),
-    c_extra_images: Optional[List[UploadFile]] = File(None),  # ✅ NEW
+    c_extra_images: Optional[List[UploadFile]] = File(None),  # extras as repeated key
     c_height: str = Form(...),
     c_education: str = Form(...),
     c_work: str = Form(...),
@@ -205,7 +259,9 @@ async def register(
         stored_user = await upsert_user(USERS_PATH, user_fields)
     user_id = stored_user["userID"]
 
+    # -------------------------
     # optional profile image
+    # -------------------------
     if _has_real_file(c_image):
         ensure_image_content_type(c_image)
         image_bytes, image_size = await read_file(c_image)
@@ -229,53 +285,66 @@ async def register(
         async with users_lock:
             await upsert_user(USERS_PATH, stored_user)
 
-        log.info("Upserted user (with image): email=%s userID=%s image=%s",
+        log.info("Upserted user (with profile image): email=%s userID=%s image=%s",
                  stored_user.get("c_email"), user_id, image_rel_path)
     else:
-        log.info("Upserted user (no image change): email=%s userID=%s",
+        log.info("Upserted user (no profile image change): email=%s userID=%s",
                  stored_user.get("c_email"), user_id)
 
-    # optional extra images (up to 5)
-    if c_extra_images:
-        real_files = [f for f in c_extra_images if f and getattr(f, "filename", None)]
-        if len(real_files) > MAX_EXTRA_IMAGES:
-            raise HTTPException(status_code=400, detail=f"Max {MAX_EXTRA_IMAGES} extra images allowed")
+    # -------------------------
+    # optional extra images (APPEND, up to 5 total)
+    # -------------------------
+    if c_extra_images is not None:
+        real_files = [f for f in (c_extra_images or []) if f and getattr(f, "filename", None)]
 
-        extra_meta: List[Dict[str, Any]] = []
-        for idx, up in enumerate(real_files, start=1):
-            ensure_image_content_type(up)
-            bts, size = await read_file(up)
-            if size > MAX_IMAGE_BYTES:
-                raise HTTPException(status_code=400, detail="Each extra image must be <= 256KB")
+        # אם המשתמש לא העלה extras חדשים - לא נוגעים ברשימה הקיימת
+        if real_files:
+            existing: List[Dict[str, Any]] = list(stored_user.get("extra_images") or [])
 
-            rel_path = save_extra_image_to_disk(
-                image_bytes=bts,
-                user_id=user_id,
-                mime_type=up.content_type,
-                images_dir=IMAGES_DIR,
-                base_dir_for_rel=BASE_DIR,
-                index=idx,
-            )
+            if len(existing) + len(real_files) > MAX_EXTRA_IMAGES:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Max {MAX_EXTRA_IMAGES} extra images allowed (already have {len(existing)}).",
+                )
 
-            extra_meta.append({
-                "path": rel_path,
-                "content_type": up.content_type,
-                "size": size,
-                "filename": Path(rel_path).name,
-            })
+            new_meta: List[Dict[str, Any]] = []
+            for up in real_files:
+                ensure_image_content_type(up)
+                bts, size = await read_file(up)
+                if size > MAX_IMAGE_BYTES:
+                    raise HTTPException(status_code=400, detail="Each extra image must be <= 256KB")
 
-        stored_user["extra_images"] = extra_meta
-        async with users_lock:
-            await upsert_user(USERS_PATH, stored_user)
+                guid = uuid.uuid4().hex
+                rel_path = save_extra_image_to_disk(
+                    image_bytes=bts,
+                    user_id=user_id,
+                    mime_type=up.content_type,
+                    images_dir=IMAGES_DIR,
+                    base_dir_for_rel=BASE_DIR,
+                    guid=guid,
+                )
+                fn = Path(rel_path).name
+                new_meta.append({
+                    "path": rel_path,
+                    "content_type": up.content_type,
+                    "size": size,
+                    "filename": fn,
+                })
 
-        log.info("Upserted user (with %d extra images): email=%s userID=%s",
-                 len(extra_meta), stored_user.get("c_email"), user_id)
+            stored_user["extra_images"] = existing + new_meta
+            async with users_lock:
+                await upsert_user(USERS_PATH, stored_user)
 
+            log.info("Appended %d extra images (total=%d): email=%s userID=%s",
+                     len(new_meta), len(stored_user["extra_images"]),
+                     stored_user.get("c_email"), user_id)
+
+    # response urls
     image_url = f"/images/{user_id}" if stored_user.get("image_path") else None
 
     extra_urls: List[str] = []
     for x in (stored_user.get("extra_images") or []):
-        fn = x.get("filename") or Path(x.get("path", "")).name
+        fn = x.get("filename")
         if fn:
             extra_urls.append(f"/images/{user_id}/extra/{fn}")
 

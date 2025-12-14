@@ -62,11 +62,11 @@ def save_extra_image_to_disk(
     mime_type: str,
     images_dir: Path,
     base_dir_for_rel: Path,
-    index: int,
+    guid: str,
 ) -> str:
     """
     Save an *extra* image as:
-      data/images/<user_id>/extra/extra_001.<ext>
+      data/images/<user_id>/extra/<guid>.<ext>
     Returns relative path from base_dir_for_rel.
     """
     ext = mimetypes.guess_extension(mime_type) or ".bin"
@@ -75,7 +75,7 @@ def save_extra_image_to_disk(
     user_extra_dir = images_dir / str(user_id) / "extra"
     user_extra_dir.mkdir(parents=True, exist_ok=True)
 
-    filename = f"extra_{index:03d}{ext}"
+    filename = f"{guid}{ext}"
     path = user_extra_dir / filename
     path.write_bytes(image_bytes)
     return str(path.resolve().relative_to(base_dir_for_rel))

@@ -9,6 +9,8 @@ import { HomeComponent } from './components/home/home.component';
 import { AboutUsComponent } from './components/about-us/about-us.component';
 import { ContactPageComponent } from './components/contact/contact,component';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
+import { AlbumComponent } from './components/album/album.component';
+import { HelpComponent } from './components/help/help.component';
 
 export const appRoutes: Route[] = [
   { path: 'home', component: HomeComponent },
@@ -21,5 +23,7 @@ export const appRoutes: Route[] = [
   { path: 'messages', component: MessagesStoreViewComponent },
   { path: 'about-us', component: AboutUsComponent },
   { path: 'contact', component: ContactPageComponent },
-  { path: 'forgot-password', component: ForgotPasswordComponent }
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'album', component: AlbumComponent },
+  { path: 'help', component: HelpComponent }
 ];

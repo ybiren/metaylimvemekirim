@@ -11,6 +11,8 @@ import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { RegisterService } from '../../services/register.service';
+import { AlbumService } from '../../services/album.service';
+
 import { UsersService } from '../../services/users.service';
 import { hebrewNameValidator, passwordMatchValidator } from '../../validators/form-validators';
 import { IOption, IUser } from '../../interfaces';
@@ -25,6 +27,11 @@ import { WORK_TOKEN } from '../../consts/work.consts';
 import { CHILDREN_STATUS_TOKEN } from '../../consts/children-status.consts';
 import { SMOKING_STATUS_TOKEN } from '../../consts/smoking-status.consts';
 
+type ServerExtraItem = {
+  id: string;         // GUID
+  filename?: string;  // GUID.ext (optional)
+};
+
 @Component({
   selector: 'app-register',
   standalone: true,
@@ -36,6 +43,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private registerSrv = inject(RegisterService);
   private usersSrv = inject(UsersService);
+  private albumSrv = inject(AlbumService);
   private destroyRef = inject(DestroyRef);
   router = inject(Router);
 
@@ -66,16 +74,21 @@ export class RegisterComponent implements OnInit, OnDestroy {
   submitting = signal<boolean>(false);
   serverMsg = signal<string>('');
 
+  apiBase = environment.apibase;
+
   // Profile image preview + errors
   imagePreviewUrl: string | null = null;
   imageError = '';
   private profileObjectUrl?: string;
 
-  // Extra images previews + errors
+  // Local extra images (new files) previews + errors
   extraPreviewUrls: string[] = [];
   extraImagesError = '';
 
-  apiBase = environment.apibase;
+  // Server extra images (already uploaded)
+  serverExtraItems: ServerExtraItem[] = [];
+  serverExtraPreviewUrls: string[] = [];
+  deletingExtraId = signal<string | null>(null);
 
   form = this.fb.group(
     {
@@ -196,7 +209,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   }
 
   // --------------------
-  // Extra images (up to 5)
+  // Extra images (local new files, up to 5 minus server count)
   // --------------------
   onExtraImagesSelected(event: Event): void {
     this.extraImagesError = '';
@@ -204,9 +217,13 @@ export class RegisterComponent implements OnInit, OnDestroy {
     const files = Array.from(input.files ?? []);
     if (!files.length) return;
 
-    const available = this.MAX_EXTRA_IMAGES - this.extraImages.length;
+    // total limit across server + local
+    const alreadyOnServer = this.serverExtraItems.length;
+    const totalNow = alreadyOnServer + this.extraImages.length;
+    const available = this.MAX_EXTRA_IMAGES - totalNow;
+
     if (available <= 0) {
-      this.extraImagesError = 'ניתן להעלות עד 5 תמונות נוספות';
+      this.extraImagesError = 'ניתן להעלות עד 5 תמונות נוספות (כולל תמונות שכבר קיימות בשרת)';
       input.value = '';
       return;
     }
@@ -238,19 +255,79 @@ export class RegisterComponent implements OnInit, OnDestroy {
   }
 
   // --------------------
+  // Server extra images
+  // --------------------
+  private loadServerExtraImages(userId: number): void {
+    this.albumSrv.listExtraImages(userId).subscribe({
+      next: (res: any) => {
+        if (!res?.ok) {
+          this.serverExtraItems = [];
+          this.serverExtraPreviewUrls = [];
+          return;
+        }
+
+        this.serverExtraItems = (res.items ?? []) as ServerExtraItem[];
+        this.serverExtraPreviewUrls = (res.urls ?? []).map((u: string) => `${this.apiBase}${u}`);
+      },
+      error: (err: any) => {
+        console.error(err);
+        this.serverExtraItems = [];
+        this.serverExtraPreviewUrls = [];
+      },
+    });
+  }
+
+  deleteServerExtraImage(index: number): void {
+    const uid = getCurrentUserId();
+    if (!uid) return;
+    
+    const item = this.serverExtraItems[index];
+    const filename = item?.filename;
+    if (!filename) return;
+     
+    this.deletingExtraId.set(filename);
+    this.extraImagesError = '';
+    
+    this.albumSrv.deleteExtraImage(uid, filename).subscribe({
+      next: () => {
+        // remove from lists
+        this.serverExtraItems.splice(index, 1);
+        this.serverExtraPreviewUrls.splice(index, 1);
+
+        // force change detection on arrays
+        this.serverExtraItems = [...this.serverExtraItems];
+        this.serverExtraPreviewUrls = [...this.serverExtraPreviewUrls];
+
+        this.deletingExtraId.set(null);
+      },
+      error: (err: any) => {
+        console.error(err);
+        this.deletingExtraId.set(null);
+        this.extraImagesError = 'מחיקת תמונה מהשרת נכשלה';
+      },
+    });
+  }
+
+  // --------------------
   // Submit
   // --------------------
   onSubmit(): void {
     this.form.markAllAsTouched();
     this.debugFormErrors();
 
-    // validate selects which have "0" default
     if (this.f['c_gender'].value === 0) this.f['c_gender'].setErrors({ required: true });
     if (!this.f['c_birth_day'].value) this.f['c_birth_day'].setErrors({ required: true });
     if (!this.f['c_birth_month'].value) this.f['c_birth_month'].setErrors({ required: true });
     if (!this.f['c_birth_year'].value) this.f['c_birth_year'].setErrors({ required: true });
 
     if (this.form.invalid) return;
+
+    // Enforce total extras <= 5
+    const totalExtras = this.serverExtraItems.length + this.extraImages.length;
+    if (totalExtras > this.MAX_EXTRA_IMAGES) {
+      this.extraImagesError = `אפשר עד ${this.MAX_EXTRA_IMAGES} תמונות נוספות (כולל קיימות).`;
+      return;
+    }
 
     const fd = new FormData();
     fd.append('c_name', String(this.f['c_name'].value ?? ''));
@@ -271,7 +348,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     const imageFile = this.f['c_image'].value as File | null;
     if (imageFile) fd.append('c_image', imageFile);
 
-    // Append extras as repeated key: c_extra_images
+    // Append NEW extras only (server extras already exist)
     this.extraImages.controls.forEach((ctrl) => {
       const f = ctrl.value;
       if (f) fd.append('c_extra_images', f);
@@ -324,7 +401,16 @@ export class RegisterComponent implements OnInit, OnDestroy {
         this.user.set(found);
 
         if (this.user()) {
-          this.imagePreviewUrl = `${this.apiBase}/images/${this.user()!.userID}`;
+          const uid = this.user()!.userID;
+
+          // profile image preview
+          this.imagePreviewUrl = `${this.apiBase}/images/${uid}`;
+
+          // server extras
+          this.loadServerExtraImages(uid);
+        } else {
+          this.serverExtraItems = [];
+          this.serverExtraPreviewUrls = [];
         }
 
         const current = this.user();
@@ -359,9 +445,6 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
         const saved = (current?.filter_family_status ?? []) as number[];
         this.form.setControl('filter_family_status', this.buildFilterFamilyStatusArray(saved));
-
-        // NOTE: If later you store extra images server-side and want to show them here,
-        // you can pre-fill previews (URLs) + keep the FormArray empty until user chooses new files.
       });
   }
 

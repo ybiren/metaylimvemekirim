@@ -30,7 +30,6 @@
         </a>
       </div>
     }
-
     <nav [class.open]="isMenuOpen">
       <a
         routerLink="/about-us"
@@ -132,7 +131,21 @@
           (click)="onNavLinkClick()"
           >כל החברים</a
         >
-                
+              
+        <a
+          routerLink="/album"
+          routerLinkActive="active"
+          (click)="onNavLinkClick()"
+        >אלבומים</a
+      >
+
+      <a
+          routerLink="/help"
+          routerLinkActive="active"
+          (click)="onNavLinkClick()"
+        >עזרה</a
+      >
+
       }
       
       <a *ngIf="loggedInUser" (click)="logout()" class="logout">יציאה</a>

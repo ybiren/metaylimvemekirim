@@ -1,0 +1,148 @@
+:host {
+  display: block;
+}
+
+/* Page */
+.help-page {
+  background: #cfd2a5; /* ירקרק-בז' */
+  min-height: 100vh;
+  padding: 18px 16px;
+  color: #111;
+  font-family: Arial, sans-serif;
+
+  /* RTL is essential for correct alignment */
+  direction: rtl;
+}
+
+/* Main layout wrapper */
+.columns {
+  max-width: 980px;
+
+  /* Anchor the whole block to the RIGHT (RTL) */
+  margin-left: auto;
+  margin-right: 24px;
+}
+
+/* Center divider */
+.divider {
+  width: 10px;
+  background: linear-gradient(to left, #b7b98c, #ffffff, #b7b98c);
+  border-left: 1px solid rgba(0, 0, 0, 0.15);
+  border-right: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.panel {
+  padding: 8px 22px 18px;
+
+  &-title {
+    margin: 0 0 14px;
+    font-weight: 700;
+    font-size: 22px;
+    text-align: right;
+  }
+}
+
+/* Links list */
+.links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+
+  &.compact {
+    gap: 8px;
+  }
+}
+
+.link-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* ב-RTL = ימין */
+  gap: 10px;
+  width: 100%;
+}
+
+/* Link */
+.link {
+  display: block;
+  text-align: right;
+  direction: rtl;
+  &:hover {
+    filter: brightness(0.85);
+  }
+}
+
+/* Small “bullet” icon (square + arrow) */
+.bullet {
+  width: 14px;
+  height: 14px;
+  background: #e6d98c;
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  position: relative;
+  flex: 0 0 14px;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    right: 3px; /* stays on the right in RTL */
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-right: 6px solid rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* Middle notice text */
+.notice {
+  white-space: pre-line;
+  text-align: right;
+  margin: 18px 0 14px;
+  font-size: 14px;
+  color: #222;
+}
+
+/* Preview image area */
+.preview {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0 14px;
+
+  &-img {
+    max-width: 420px;
+    width: 100%;
+    height: auto;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    background: #fff;
+  }
+}
+
+.bottom {
+  margin-top: 8px;
+}
+
+/* Responsive */
+@media (max-width: 820px) {
+  .columns {
+    /* If .columns is a grid in your HTML, keep this.
+       If not, it won't hurt, but we can remove it. */
+    grid-template-columns: 1fr;
+    gap: 14px;
+
+    /* On mobile: align nicely with padding */
+    margin-right: 0;
+    margin-left: 0;
+  }
+
+  .divider {
+    display: none;
+  }
+
+  .panel {
+    padding: 10px 14px 16px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
