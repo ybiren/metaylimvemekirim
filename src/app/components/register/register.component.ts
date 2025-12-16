@@ -57,7 +57,6 @@ export class RegisterComponent implements OnInit, OnDestroy {
   childrenStatus: ReadonlyArray<IOption> = inject(CHILDREN_STATUS_TOKEN);
   smokingStatus: ReadonlyArray<IOption> = inject(SMOKING_STATUS_TOKEN);
 
-  readonly MAX_IMAGE_BYTES = 256 * 1024; // 256KB
   readonly MAX_EXTRA_IMAGES = 5;
 
   days = Array.from({ length: 31 }, (_, i) => i + 1);
@@ -189,14 +188,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
       input.value = '';
       return;
     }
-
-    if (file.size > this.MAX_IMAGE_BYTES) {
-      this.f['c_image'].setValue(null);
-      this.f['c_image'].setErrors({ tooLarge: true });
-      this.imageError = 'גודל התמונה לא יכול לעלות על ‎256KB‎';
-      input.value = '';
-      return;
-    }
+    
 
     this.profileObjectUrl = URL.createObjectURL(file);
     this.imagePreviewUrl = this.profileObjectUrl;

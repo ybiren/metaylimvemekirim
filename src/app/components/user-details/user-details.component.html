@@ -1,8 +1,23 @@
 <section class="wrap" dir="rtl">
-  <a class="back" [routerLink]="'/users'">← חזרה לרשימת המשתמשים</a>
+  <div class="fb-tabs">
+    <a
+      class="fb-tab"
+      [class.active]="isShowProfile()"
+      (click)="showProfile(true)">
+      פרופיל
+    </a>
 
+    <a
+      class="fb-tab"
+      [class.active]="!isShowProfile()"
+      (click)="showProfile(false)">
+      תמונות
+    </a>
+  </div>
+  @if(isShowProfile()) {
   <div class="status" *ngIf="loading()">טוען...</div>
   <div class="status error" *ngIf="!loading() && error()">{{ error() }}</div>
+
 
   <div class="card" *ngIf="!loading() && !error() && user() as u">
     <div class="avatar">
@@ -34,4 +49,7 @@
     <button class="btn msg-btn" (click)="openCompose()">הודעה</button>
     }
   </div>
+  } @else {
+    <app-album [userId]="user().userID"></app-album>    
+  }
 </section>

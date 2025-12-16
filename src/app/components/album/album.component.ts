@@ -20,13 +20,13 @@ type UiImage = {
 export class AlbumComponent implements OnInit {
   private albumSrv = inject(AlbumService);
   private destroyRef = inject(DestroyRef);
-
-  userId = getCurrentUserId()
-
+  userId = input<number>(getCurrentUserId());
+  
   loading = signal(false);
   errorMsg = signal('');
   images = signal<UiImage[]>([]);
   index = signal(0);
+
 
   count = computed(() => this.images().length);
   hasImages = computed(() => this.count() > 0);
@@ -47,7 +47,7 @@ export class AlbumComponent implements OnInit {
     this.loading.set(true);
     this.errorMsg.set('');
 
-    const id = Number(this.userId);
+    const id = Number(this.userId());
     if (!Number.isFinite(id) || id <= 0) {
       this.loading.set(false);
       this.errorMsg.set('UserId לא תקין');

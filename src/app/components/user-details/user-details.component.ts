@@ -16,11 +16,12 @@ import { Subscription } from 'rxjs';
 import { PresenceService } from '../../services/presence.service';
 import { ChatWindowComponent } from '../chat-window/chat-window.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AlbumComponent } from '../album/album.component';
 
 @Component({
   selector: 'app-user-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, HttpClientModule, DialogModule],
+  imports: [CommonModule, RouterModule, HttpClientModule, DialogModule, AlbumComponent],
   templateUrl: './user-details.component.html',
   styleUrls: ['./user-details.component.scss'],
 })
@@ -42,7 +43,8 @@ export class UserDetailsComponent implements OnInit {
   user = signal<IUser | null>(null);
   loggedInUser = signal<IUser | null>(null);
   isLoggedIUserBlockedByPeer: Signal<{is_blocked:boolean}>;
-
+  isShowProfile = signal<boolean>(true);
+  
   constructor() {
 
     this.loggedInUser.set(JSON.parse(localStorage.getItem('user')) as IUser)
@@ -133,5 +135,9 @@ export class UserDetailsComponent implements OnInit {
       panelClass: isMobile ? 'im-dialog-mobile' : 'im-dialog-desktop',
       ...(isMobile ? { width: '100vw', height: '100vh' } : { width: 'min(420px, 95vw)', height:'80vh' }),
     });
+  }
+
+  showProfile(isShowProfile: boolean) {
+    this.isShowProfile.set(isShowProfile);
   }
 }

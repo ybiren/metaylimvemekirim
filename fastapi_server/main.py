@@ -46,7 +46,6 @@ from sendgrid_test.send_mail import send_mail
 # ---------------------------------------------------------------------
 # Config & Logging
 # ---------------------------------------------------------------------
-MAX_IMAGE_BYTES = 256 * 1024  # 256KB
 MAX_EXTRA_IMAGES = 5
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -265,9 +264,7 @@ async def register(
     if _has_real_file(c_image):
         ensure_image_content_type(c_image)
         image_bytes, image_size = await read_file(c_image)
-        if image_size > MAX_IMAGE_BYTES:
-            raise HTTPException(status_code=400, detail="Profile image must be <= 256KB")
-
+        
         image_rel_path = save_image_to_disk(
             image_bytes=image_bytes,
             user_id=user_id,
@@ -311,9 +308,7 @@ async def register(
             for up in real_files:
                 ensure_image_content_type(up)
                 bts, size = await read_file(up)
-                if size > MAX_IMAGE_BYTES:
-                    raise HTTPException(status_code=400, detail="Each extra image must be <= 256KB")
-
+                
                 guid = uuid.uuid4().hex
                 rel_path = save_extra_image_to_disk(
                     image_bytes=bts,
