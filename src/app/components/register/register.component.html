@@ -1,4 +1,4 @@
-<form class="form" [formGroup]="form" (ngSubmit)="onSubmit()" dir="rtl">
+<form class="form" [formGroup]="form" (ngSubmit)="onSubmit()" dir="rtl" novalidate>
   <section class="intro card">
     @if(!user()) {
       <h1 class="title">הרשמה לפגוש אותי</h1>
@@ -48,19 +48,21 @@
     </div>
 
     <label class="label">תאריך לידה*</label>
-    <div class="field field-row">
-      <select formControlName="c_birth_day">
-        <option value="0">יום</option>
-        <option *ngFor="let d of days" [value]="d">{{ d }}</option>
-      </select>
-      <select formControlName="c_birth_month">
-        <option value="0">חודש</option>
-        <option *ngFor="let m of months" [value]="m">{{ m }}</option>
-      </select>
-      <select formControlName="c_birth_year">
-        <option value="0">שנה</option>
-        <option *ngFor="let y of years" [value]="y">{{ y }}</option>
-      </select>
+    <div class="field">
+      <div class="field-row">
+        <select formControlName="c_birth_day">
+          <option value="0">יום</option>
+          <option *ngFor="let d of days" [value]="d">{{ d }}</option>
+        </select>
+        <select formControlName="c_birth_month">
+          <option value="0">חודש</option>
+          <option *ngFor="let m of months" [value]="m">{{ m }}</option>
+        </select>
+        <select formControlName="c_birth_year">
+          <option value="0">שנה</option>
+          <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+        </select>
+      </div>
 
       <div
         class="errors"
@@ -165,7 +167,6 @@
       </div>
     }
 
-    <!-- Profile image upload -->
     <label class="label" for="c_image">תמונת פרופיל</label>
     <div class="field">
       <input
@@ -189,7 +190,6 @@
       </div>
     </div>
 
-    <!-- Extra images -->
     <label class="label" for="c_extra_images">תמונות נוספות (עד 5)</label>
     <div class="field">
       <div class="extra-upload-row">
@@ -206,12 +206,10 @@
         </small>
       </div>
 
-      <!-- Existing server images -->
       <div class="preview-grid" *ngIf="serverExtraPreviewUrls.length">
         <div class="preview-card" *ngFor="let url of serverExtraPreviewUrls; let i = index">
           <img [src]="url" alt="תמונה נוספת (שרת)" class="extra-preview" />
           <div class="preview-actions">
-            <!--<small class="muted">קיים בשרת</small>-->
             <button
               type="button"
               class="remove-btn danger"
@@ -224,12 +222,10 @@
         </div>
       </div>
 
-      <!-- New local images (not uploaded yet) -->
       <div class="preview-grid" *ngIf="extraPreviewUrls.length">
         <div class="preview-card" *ngFor="let url of extraPreviewUrls; let i = index">
           <img [src]="url" alt="תמונה נוספת" class="extra-preview" />
           <div class="preview-actions">
-          <!--<small class="muted">חדש (טרם נשלח)</small>-->
             <button type="button" class="remove-btn" (click)="removeExtraImage(i)">הסר</button>
           </div>
         </div>
@@ -340,6 +336,9 @@
   <button class="submit-btn" type="submit" [disabled]="submitting() || form.invalid">
     @if (submitting()) { שומר... } @else { שמירה }
   </button>
-
   <p class="server-msg" *ngIf="serverMsg()">{{ serverMsg() }}</p>
 </form>
+ <div style="visibility: hidden;">filler</div> 
+ <br>
+ <div style="visibility: hidden;">filler</div> 
+ <br>
