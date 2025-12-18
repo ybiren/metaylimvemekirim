@@ -39,6 +39,7 @@ from helper import (
     find_user_index_by_userid,
     load_messages,
     save_messages,
+    pass_filter
 )
 
 from sendgrid_test.send_mail import send_mail
@@ -343,21 +344,33 @@ async def register(
         if fn:
             extra_urls.append(f"/images/{user_id}/extra/{fn}")
 
+    async with users_lock:
+        users = await load_users(USERS_PATH)
+        filtered_users = [u for u in users if u.get("userID") != stored_user.get("userID") and pass_filter(u, stored_user)]
+    
+    
+
     return JSONResponse({
         "ok": True,
         "message": "User saved.",
         "user": stored_user,
         "image_url": image_url,
         "extra_image_urls": extra_urls,
+        "users": filtered_users
     })
 
 
-@app.get("/users")
-async def get_users() -> JSONResponse:
+@app.post("/users")
+async def get_users(payload: dict = Body(...)) -> JSONResponse:
     ensure_data_file(DATA_DIR, USERS_PATH)
     async with users_lock:
         users = await load_users(USERS_PATH)
-    return JSONResponse({"ok": True, "count": len(users), "users": users})
+        user_id = payload["userId"]
+        idx = find_user_index_by_userid(users, user_id)
+        user = users[idx]
+        filtered_users = [u for u in users if u.get("userID") != user.get("userID") and pass_filter(u, user)]
+       
+    return JSONResponse({"ok": True, "count": len(filtered_users), "users": filtered_users})
 
 
 @app.post("/login")
@@ -368,7 +381,7 @@ async def login(
     email = (c_email or "").strip().lower()
     async with users_lock:
         user, idx, users = await get_user_and_index_by_email(USERS_PATH, email)
-
+    
     if not user or not verify_password(password, user):
         return JSONResponse({"ok": False, "message": "Invalid email or password."}, status_code=401)
 
@@ -377,10 +390,12 @@ async def login(
         users[idx] = user
         await save_users(USERS_PATH, users)
 
+    filtered_users = [u for u in users if u.get("userID") != user.get("userID") and pass_filter(u, user)]
+    
     user_sanitized = sanitize_user_for_response(user)
     user_id = user_sanitized.get("userID")
     image_url = f"/images/{user_id}" if user_id else None
-    return JSONResponse({"ok": True, "message": "Login successful.", "user": user_sanitized, "image_url": image_url})
+    return JSONResponse({"ok": True, "message": "Login successful.", "user": user_sanitized, "image_url": image_url, "users": filtered_users})
 
 
 @app.post("/forgotPass")
@@ -451,7 +466,11 @@ async def search_users(payload: Dict[str, Any]):
             if name_payload not in name_db:
                 ok = False
 
-        if ok:
+        loggedin_user_idx = find_user_index_by_userid(users, payload.get("userId"))
+        if loggedin_user_idx is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        if ok and pass_filter(u, users[loggedin_user_idx]):
             results.append(u)
 
     return {"ok": True, "count": len(results), "users": results}

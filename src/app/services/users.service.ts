@@ -4,6 +4,7 @@ import { environment } from '../../environments/environment';
 import { IUser } from '../interfaces';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { getCurrentUserId } from '../core/current-user';
 
 @Injectable({ providedIn: 'root' })
 
@@ -15,13 +16,17 @@ export class UsersService {
   constructor(private http: HttpClient) {}
 
   async load() {
-    try {
-      const res = await firstValueFrom(this.http.get<{ users: IUser[] }>(`${this.baseUrl}/users`));
-      this.users$.next((res.users ?? []));
-    } catch (err) {
-      console.error('[UsersService] Failed to load users:', err);
+    if(getCurrentUserId()) {
+      try {
+        const res = await firstValueFrom(this.http.post<{ users: IUser[] }>(`${this.baseUrl}/users`,{userId: getCurrentUserId()}));
+        this.users$.next((res.users ?? []));
+      } catch (err) {
+        console.error('[UsersService] Failed to load users:', err);
+      }
     }
   }
+  
+  
     
   
   block(userId: number, blocked_userid: number) {

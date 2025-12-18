@@ -60,17 +60,15 @@ export class TopMenuComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.subs.push(
-      this.usersSrv.users$.subscribe((users) => {
-        this.loggedInUser = (users || []).find(
-          (u) => u.userID === getCurrentUserId()
-        );
-      })
-    );
+    this.usersSrv.users$.subscribe(() => {
+      this.loggedInUser = localStorage.getItem('user') ?  JSON.parse(localStorage.getItem('user')) : null;
+    }); 
+    
   }
 
   ngOnDestroy(): void {
     this.subs.forEach((s) => s.unsubscribe());
+    //this.usersSrv.users$.unsubscribe();
   }
 
   logout(): void {

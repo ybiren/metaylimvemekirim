@@ -66,8 +66,7 @@ export class UserDetailsComponent implements OnInit {
     this.error.set('');
     // Using existing GET /users and filtering client-side
     this.usersSrv.users$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((users) => {
-      const found = (users || []).find(u => u.userID === id);
-      if (!found) this.error.set('User not found');
+      const found = (users || []).find(u => u.userID === id) || JSON.parse(localStorage.getItem('user'));
       this.user.set(found);
       this.loading.set(false);
     });
@@ -100,7 +99,7 @@ export class UserDetailsComponent implements OnInit {
   
 
   textByValue(options:ReadonlyArray<IOption>, val) {
-    return options.find(item=> item.val == val).txt;
+    return options.find(item=> item.val == val)?.txt;
   }
 
   // ✅ Block user function

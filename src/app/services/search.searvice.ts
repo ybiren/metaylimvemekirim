@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
+import { getCurrentUserId } from '../core/current-user';
 
 @Injectable({ providedIn: 'root' })
 export class SearchService {
@@ -10,6 +11,10 @@ export class SearchService {
   private baseUrl = environment.apibase;
 
   search(filters: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/search`, filters);
+    const payload = {
+    ...filters,
+    userId: getCurrentUserId()
+  };
+    return this.http.post(`${this.baseUrl}/search`, payload);
   }
 }

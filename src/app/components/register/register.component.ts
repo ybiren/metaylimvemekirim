@@ -371,7 +371,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
         this.serverMsg.set('נרשמת בהצלחה!');
         this.submitting.set(false);
         localStorage.setItem('user', JSON.stringify(res.user));
-        this.usersSrv.load();
+        this.usersSrv.users$.next(res.users);
         setTimeout(() => this.router.navigate(['/home']), 500);
       },
       error: (err) => {
@@ -389,7 +389,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.usersSrv.users$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((users) => {
-        const found = (users || []).find((u) => u.userID === getCurrentUserId());
+        const found = JSON.parse(localStorage.getItem('user')) as IUser;
         this.user.set(found);
 
         if (this.user()) {

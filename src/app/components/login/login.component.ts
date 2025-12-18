@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { RouterModule } from '@angular/router';
+import { UsersService } from '../../services/users.service';
 
 @Component({
   selector: 'app-login',
@@ -21,6 +22,7 @@ export class LoginComponent {
 
   http = inject(HttpClient);
   router = inject(Router);
+  usersSvc = inject(UsersService);
 
   constructor() {}
 
@@ -44,10 +46,9 @@ export class LoginComponent {
         if (res && res.ok) {
           this.success = 'ברוך הבא!';
           console.log('Login success:', res);
-
           // Save user in localStorage
           localStorage.setItem('user', JSON.stringify(res.user));
-
+          this.usersSvc.users$.next((res.users ?? []));
           setTimeout(() => {
             this.router.navigate(['/home']);
           }, 500);

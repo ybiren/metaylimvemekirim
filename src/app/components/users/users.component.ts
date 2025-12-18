@@ -108,6 +108,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   });
 
   imageUrl = computed(() => {
+    console.log(this.users());
     const rand = Math.floor(Math.random() * 1_000_000);
     return (u: IUser) => `${this.apiBase}/images/${u.userID}?id=${rand}`;
   });

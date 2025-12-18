@@ -5,8 +5,8 @@ import json
 import mimetypes
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-
 from fastapi import HTTPException, UploadFile
+from datetime import date
 import bcrypt
 
 # -----------------------------
@@ -88,27 +88,12 @@ async def find_user_image_path(
     users_path: Path,
     allowed_exts: set[str] | None = None,
 ) -> Optional[Path]:
-    """
-    Resolve the profile image path for user_id:
-      1) Prefer users.json -> image_path
-      2) Fallback to scanning images_dir/<userID>.<ext>
-    """
     allowed_exts = allowed_exts or {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"}
-    try:
-        users = await load_users(users_path)
-        idx = user_id - 1
-        if 0 <= idx < len(users):
-            p = users[idx].get("image_path")
-            if p:
-                path = (base_dir / p).resolve()
-                if path.exists():
-                    return path
-    except Exception:
-        pass
-
+    
     for ext in allowed_exts:
         cand = (images_dir / f"{user_id}{ext}").resolve()
         if cand.exists():
+            print(cand)
             return cand
     return None
 
@@ -235,6 +220,79 @@ def sanitize_user_for_response(u: Dict[str, Any]) -> Dict[str, Any]:
     redacted.pop("password_hash", None)
     return redacted
 
+
+def calc_age(day, month, year, today: date | None = None) -> int | None:
+    if today is None:
+        today = date.today()
+
+    try:
+        if day is None or month is None or year is None:
+            return None
+
+        d = int(day)
+        m = int(month)
+        y = int(year)
+
+        # אצלך ב-select יש "0" כברירת מחדל
+        if d <= 0 or m <= 0 or y <= 0:
+            return None
+
+        born = date(y, m, d)
+    except (ValueError, TypeError):
+        return None
+
+    age = today.year - born.year
+    # אם עוד לא עבר יום הולדת השנה - מורידים 1
+    if (today.month, today.day) < (born.month, born.day):
+        age -= 1
+
+    return age
+
+def to_int(v):
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return None
+
+
+def pass_filter(loggedin_user: dict, checked_user: dict) -> bool:
+    # --- Height filter ---
+    h = to_int(checked_user.get("c_height"))
+    hmin = to_int(loggedin_user.get("filter_height_min"))
+    hmax = to_int(loggedin_user.get("filter_height_max"))
+    if h is not None and hmin is not None and hmax is not None:
+        if not (hmin <= h <= hmax):
+            return False
+
+    # --- Age filter ---
+    amin = to_int(loggedin_user.get("filter_age_min"))
+    amax = to_int(loggedin_user.get("filter_age_max"))
+    if amin is not None and amax is not None:
+        age = calc_age(
+            checked_user.get("c_birth_day"),
+            checked_user.get("c_birth_month"),
+            checked_user.get("c_birth_year"),
+        )
+        # אם אין תאריך לידה תקין - לא עובר פילטר גיל
+        if age is None or not (amin <= age <= amax):
+            return False
+
+    # --- Family status filter ---
+    fam_filter = loggedin_user.get("filter_family_status")
+    fam_value = checked_user.get("c_ff")
+    if fam_filter is not None and fam_value is not None:
+       if fam_value not in fam_filter:
+         return False
+
+    # --- Smoking filter ---
+    smoke_filter = loggedin_user.get("filter_smoking_status")
+    smoke_value = checked_user.get("c_smoking")
+    if smoke_filter is not None and smoke_value is not None and smoke_filter!="0":
+        if smoke_filter != smoke_value:
+            return False
+
+    return True
+ 
 
 # -----------------------------
 # Messages helpers
