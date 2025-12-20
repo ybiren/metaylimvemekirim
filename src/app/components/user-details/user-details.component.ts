@@ -9,11 +9,8 @@ import { GENDER_TOKEN } from '../../consts/gender.consts';
 import { REGIONS_TOKEN } from '../../consts/regions.consts';
 import { IOption, IUser } from '../../interfaces';
 import { UsersService } from '../../services/users.service';
-import { MessageComposeComponent } from '../message-compose/messaege-compose.component';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { ToastService } from '../../services/toast.service';
-import { Subscription } from 'rxjs';
-import { PresenceService } from '../../services/presence.service';
 import { ChatWindowComponent } from '../chat-window/chat-window.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlbumComponent } from '../album/album.component';
@@ -26,7 +23,6 @@ import { AlbumComponent } from '../album/album.component';
   styleUrls: ['./user-details.component.scss'],
 })
 export class UserDetailsComponent implements OnInit {
-  private http = inject(HttpClient);
   private route = inject(ActivatedRoute);
   regions:ReadonlyArray<IOption> = inject(REGIONS_TOKEN);
   gender:ReadonlyArray<IOption> = inject(GENDER_TOKEN);  
@@ -45,6 +41,7 @@ export class UserDetailsComponent implements OnInit {
   isLoggedIUserBlockedByPeer: Signal<{is_blocked:boolean}>;
   isShowProfile = signal<boolean>(true);
   
+
   constructor() {
 
     this.loggedInUser.set(JSON.parse(localStorage.getItem('user')) as IUser)

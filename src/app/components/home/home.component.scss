@@ -1,61 +1,63 @@
-:host {
-display: flex;
-gap: 10px;
-justify-content: flex-end; 
-flex-direction: column;
-padding-top: 20px;
+/* =========================
+   LAYOUT
+   ========================= */
 
-/* Outer box */
+:host {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 20px;
+}
+
+/* =========================
+   UPDATES BOX (marquee)
+   ========================= */
+
 .updates-box {
   display: grid;
   grid-template-rows: auto 1fr;
-  width: 227px;      /* adjust as you like */
+  width: 227px;
   border-radius: 4px;
   overflow: hidden;
+}
 
-  /* Header */
 .updates-box__header {
   background: #31adff;
   text-align: center;
   padding: 4px 8px;
 }
 
-/* Body background */
 .updates-box__body {
   background: #caeaff;
 }
 
-/* Scroll viewport (height limit) */
 .updates-box__scroll {
-  height: 40vh;        /* 🔹 limit height (like <marquee height="200">) */
+  height: 40vh;
   overflow: hidden;
   position: relative;
 }
 
-/* List that actually scrolls */
 .updates-list {
   display: grid;
   grid-auto-rows: min-content;
   animation: updates-marquee 25s linear infinite;
 }
 
-/* pause on hover, like old marquee onmouseover="this.stop()" */
 .updates-box__scroll:hover .updates-list {
   animation-play-state: paused;
 }
 
-/* Each item is on its own line */
 .updates-item {
-  display: block;               /* 🔹 each link on a separate line */
+  display: block;
   padding: 6px 4px;
   text-align: center;
   font-size: 13px;
   text-decoration: none;
   color: #000;
-  border-bottom: 1px solid #99c7e6; /* fake /images/s1.gif separator */
+  border-bottom: 1px solid #99c7e6;
 }
 
-/* promo row with star + text */
 .updates-item--promo {
   display: flex;
   align-items: center;
@@ -68,18 +70,21 @@ padding-top: 20px;
   height: 16px;
 }
 
-}
-
+/* =========================
+   PEOPLE BOX
+   ========================= */
 
 .people-box {
-  width: 100%;          /* like width="99%" */
-  max-width: 260px;     /* close to original inner table width */
-  border-collapse: collapse;
+  width: 100%;
+  max-width: 260px;
   border-radius: 2px;
-  overflow: hidden;
+  overflow: visible;     /* ✅ allow tooltip to escape */
   font-size: 13px;
 
-  /* Header */
+  position: relative;    /* ✅ stacking context support */
+  z-index: 10;
+}
+
 .people-box__header {
   background: #b7bbc1;
   text-align: center;
@@ -101,20 +106,24 @@ padding-top: 20px;
   white-space: nowrap;
 }
 
-/* Body */
 .people-box__body {
   background: #e5e5e5;
-  height: 150px;       /* like your <td height="150"> */
+  height: 150px;
   padding: 4px 0;
+
+  overflow: visible;     /* ✅ allow tooltip to escape */
+  position: relative;
+  z-index: 10;
 }
 
 /* Grid of avatars */
 .people-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr); /* 6 columns like your 6 <td> per row */
+  grid-template-columns: repeat(6, 1fr);
   justify-items: center;
   align-items: center;
   row-gap: 4px;
+  column-gap: 0;
 }
 
 /* Each avatar cell */
@@ -126,6 +135,10 @@ padding-top: 20px;
   justify-content: center;
   cursor: pointer;
   transition: background-color 0.2s;
+
+  position: relative;    /* ✅ tooltip anchor */
+  overflow: visible;     /* ✅ tooltip not clipped */
+  z-index: 20;
 }
 
 .people-grid__item:hover {
@@ -138,12 +151,63 @@ padding-top: 20px;
   display: block;
 }
 
+/* =========================
+   TOOLTIP (ONE LINE, UNDER IMAGE)
+   White bg + black text
+   ========================= */
 
+.people-grid__item .tooltip__content {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+
+  background: #ffffff;       /* ✅ white */
+  color: #000000;            /* ✅ black */
+
+  padding: 10px 6px;         /* ✅ reduced horizontal padding */
+  border-radius: 8px;
+
+  border: 1px solid #cfcfcf; /* ✅ helps on light backgrounds */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+
+  font-size: 13px;
+  line-height: 1.2;
+  text-align: center;
+
+  white-space: nowrap;       /* ✅ one line */
+  max-width: none;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transition: opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease;
+  z-index: 9999;
 }
 
+.people-grid__item:hover .tooltip__content {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(2px);
 }
 
-/* Marquee animation: scroll upward */
+/* arrow */
+.people-grid__item .tooltip__content::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent #ffffff transparent; /* ✅ white arrow */
+}
+
+/* =========================
+   Marquee animation
+   ========================= */
+
 @keyframes updates-marquee {
   0% {
     transform: translateY(100%);

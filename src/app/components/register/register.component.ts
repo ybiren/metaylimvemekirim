@@ -14,7 +14,7 @@ import { RegisterService } from '../../services/register.service';
 import { AlbumService } from '../../services/album.service';
 
 import { UsersService } from '../../services/users.service';
-import { hebrewNameValidator, passwordMatchValidator } from '../../validators/form-validators';
+import { rangeValidator, hebrewNameValidator, passwordMatchValidator } from '../../validators/form-validators';
 import { IOption, IUser } from '../../interfaces';
 import { getCurrentUserId } from '../../core/current-user';
 import { environment } from '../../../environments/environment';
@@ -120,15 +120,15 @@ export class RegisterComponent implements OnInit, OnDestroy {
       c_smoking: [0],
 
       // filters
-      filter_height_min: [null],
-      filter_height_max: [null],
+      filter_height_min: [145],
+      filter_height_max: [145],
       filter_age_min: [null],
       filter_age_max: [null],
       filter_family_status: this.buildFilterFamilyStatusArray(),
       filter_smoking_status: [0],
     },
     {
-      validators: passwordMatchValidator,
+      validators: [passwordMatchValidator,rangeValidator('filter_age_min', 'filter_age_max'), rangeValidator('filter_height_min', 'filter_height_max')],
       updateOn: 'change',
     }
   );

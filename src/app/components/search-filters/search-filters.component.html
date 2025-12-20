@@ -3,7 +3,7 @@
     <form class="form" [formGroup]="form" (ngSubmit)="submit()" dir="rtl">
       <!-- Title/intro to match Register look -->
       <section class="intro card">
-        <h1 class="title">חיפוש חברים</h1>
+        <h1 class="title">אנשים שתשמחו לפגוש</h1>
         <p class="muted">סנן תוצאות לפי מין, גיל, אזור, עישון ועוד.</p>
       </section>
 
@@ -51,8 +51,8 @@
             <option *ngFor="let a of ages" [value]="a">{{ a }}</option>
           </select>
           <div *ngIf="form.errors?.ageRangeInvalid && (form.touched || form.dirty)">
-          <span class="errors">טווח גילאים לא תקין (מגיל גדול מ"עד גיל").</span>
-        </div>
+            <span class="errors">טווח גילאים לא תקין (מגיל גדול מ"עד גיל").</span>
+          </div>
         </div>
         
         

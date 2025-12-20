@@ -9,7 +9,7 @@ import { GENDER_TOKEN } from '../../consts/gender.consts';
 import { FAMILY_STATUS_TOKEN } from '../../consts/family-status.consts';
 import { IOption, IUser } from '../../interfaces';
 import { SearchService } from '../../services/search.searvice';
-import { ageRangeValidator } from '../../validators/form-validators';
+import { rangeValidator } from '../../validators/form-validators';
 import { UsersComponent } from '../users/users.component';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -89,7 +89,7 @@ export class SearchFiltersComponent implements OnInit{
     c_online: [false],      // הצג חברים שבאתר כרגע
     c_name:[''],
     updateOn: 'change'}
-    , {validators: [ ageRangeValidator('c_ages1', 'c_ages2') ]});
+    , {validators: [ rangeValidator('c_ages1', 'c_ages2') ]});
 
   get f() { return this.form.controls; }
 

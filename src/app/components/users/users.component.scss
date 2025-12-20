@@ -2,37 +2,67 @@
   display: block;
   direction: rtl;
   padding: 0 8px 24px;
+  background: #f0f2f5; /* FB-like page background */
 }
 
-/* ========== DESKTOP GRID ========== */
+/* ========== DESKTOP GRID (MAX 3 PER ROW) ========== */
 
 .users-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(3, 1fr); /* ✅ max 3 */
   gap: 16px;
+  align-items: start;
+
+  /* keep grid compact and centered on wide screens */
+  max-width: 980px;
+  margin: 0 auto;
 }
 
-/* Base card style used in both desktop and mobile */
+/* ========== CARD WRAPPER ========== */
+
 .user-card {
   display: flex;
-  flex-direction: column;
   align-items: stretch;
 }
 
-/* Inner box of the card (white rounded rect) */
+/* ========== CARD INNER (FB-LIKE) ========== */
+
 .user-card__inner {
   width: 100%;
-  max-width: 420px;
+  max-width: 420px; /* used for single/mobile */
   margin: 0 auto;
   padding: 16px;
-  border-radius: 16px;
+
   background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+
+  /* visible border (helps on mobile) */
+  border: 1.5px solid #d0d3d8;
+
+  /* outset shadow */
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.12),
+    0 6px 18px rgba(0, 0, 0, 0.08);
+
   text-align: center;
-  transition: transform 0.25s ease, opacity 0.25s ease;
+  transition: transform 0.25s ease, opacity 0.25s ease, box-shadow 0.25s ease;
 }
 
-/* Avatar (image) */
+/* ✅ Smaller card width on desktop */
+@media (min-width: 900px) {
+  .user-card__inner {
+    max-width: 260px;
+    padding: 14px;
+  }
+
+  .avatar {
+    width: 84px;
+    height: 84px;
+  }
+}
+
+/* ========== AVATAR ========== */
+
 .avatar {
   width: 96px;
   height: 96px;
@@ -42,22 +72,24 @@
   margin: 0 auto 8px;
 }
 
-/* Name link */
+/* ========== NAME ========== */
+
 .name {
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
-  text-decoration: none;
   color: #222;
+  text-decoration: none;
 }
 
-/* Like / actions area */
+/* ========== ACTIONS ========== */
+
 .actions {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .like-btn {
@@ -76,13 +108,15 @@
 .heart.liked {
   opacity: 1;
   transform: scale(1.1);
+  color: red;
 }
 
 .like-label {
   font-size: 0.9rem;
 }
 
-/* Online indicator */
+/* ========== ONLINE / META ========== */
+
 .blink {
   margin-top: 8px;
   font-size: 0.8rem;
@@ -90,21 +124,44 @@
   animation: blinkAnimation 1.2s infinite;
 }
 
-/* Index indicator (5 / 1 etc.) */
 .user-index-indicator {
   margin-top: 8px;
   font-size: 0.8rem;
   opacity: 0.7;
 }
 
-/* Loading / empty states */
+/* ========== LOADING / EMPTY ========== */
+
 .loading,
 .no-users {
   text-align: center;
   padding: 24px 0;
 }
 
-/* ========== MOBILE / TABLET FULL-WIDTH ========== */
+/* ========== MOBILE/TABLET: RESPONSIVE GRID ========== */
+
+@media (max-width: 1024px) {
+  .users-grid {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 720px;
+  }
+}
+
+@media (max-width: 600px) {
+  .users-grid {
+    grid-template-columns: 1fr;
+    max-width: 420px;
+  }
+
+  .user-card__inner {
+    border-width: 2px;
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.14),
+      0 10px 26px rgba(0, 0, 0, 0.12);
+  }
+}
+
+/* ========== SINGLE USER (SWIPE MODE) ========== */
 
 .single-user-wrapper {
   width: 100%;
@@ -112,7 +169,7 @@
   justify-content: center;
   touch-action: none;
   padding: 0;
-  overflow: hidden; /* so animation doesn't overflow */
+  overflow: hidden; /* prevent animation overflow */
 }
 
 .user-card--single {
@@ -120,9 +177,10 @@
   max-width: 100%;
 }
 
-/* allow white card to be a nice centered box */
+/* centered white card box */
 .user-card--single .user-card__inner {
   max-width: 420px;
+  padding: 16px;
 }
 
 /* ========== SWAP ANIMATION ========== */
@@ -136,28 +194,29 @@
 }
 
 @keyframes slideInFromRight {
-  0% {
+  from {
     transform: translateX(40px);
     opacity: 0;
   }
-  100% {
+  to {
     transform: translateX(0);
     opacity: 1;
   }
 }
 
 @keyframes slideInFromLeft {
-  0% {
+  from {
     transform: translateX(-40px);
     opacity: 0;
   }
-  100% {
+  to {
     transform: translateX(0);
     opacity: 1;
   }
 }
 
-/* Blink keyframes */
+/* ========== BLINK ========== */
+
 @keyframes blinkAnimation {
   0% { opacity: 1; }
   50% { opacity: 0; }

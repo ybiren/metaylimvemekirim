@@ -32,15 +32,16 @@
                 class="like-btn"
                 type="button"
                 (click)="toggleLike(u)"
-                [attr.aria-pressed]="u.liked ? 'true' : 'false'"
+                [attr.aria-pressed]="isLiked()(u.userID) ? 'true' : 'false'"
                 aria-label="Like"
                 title="Like"
               >
-                <span class="heart" [class.liked]="u.liked">❤</span>
+                <span class="heart" [class.liked]="isLiked()(u.userID)">❤</span>
               </button>
               <span class="like-label">
-                {{ u.liked ? 'Liked' : 'Like' }}
+                {{ isLiked()(u.userID) ? 'Liked' : 'Like' }}
               </span>
+            
             </div>
 
             @if (isOnline()(u.userID)) {
@@ -83,14 +84,14 @@
               class="like-btn"
               type="button"
               (click)="toggleLike(u)"
-              [attr.aria-pressed]="u.liked ? 'true' : 'false'"
+              [attr.aria-pressed]="isLiked()(u.userID) ? 'true' : 'false'"
               aria-label="Like"
               title="Like"
             >
-              <span class="heart" [class.liked]="u.liked">❤</span>
+              <span class="heart" [class.liked]="isLiked()(u.userID)">❤</span>
             </button>
             <span class="like-label">
-              {{ u.liked ? 'Liked' : 'Like' }}
+              {{ isLiked()(u.userID) ? 'Liked' : 'Like' }}
             </span>
           </div>
 

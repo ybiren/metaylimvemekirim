@@ -17,6 +17,8 @@ import { PresenceService } from '../../services/presence.service';
 import { getCurrentUserId } from '../../core/current-user';
 import { UsersService } from '../../services/users.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
+import { ToastService } from '../../services/toast.service';
+
 
 @Component({
   selector: 'app-users',
@@ -45,15 +47,20 @@ export class UsersComponent implements OnInit, OnDestroy {
   private presence = inject(PresenceService);
   private usersSvc = inject(UsersService);
   private device = inject(DeviceDetectorService);
+  private toast = inject(ToastService);
 
   apiBase = environment.apibase;
   private me = getCurrentUserId();
+  loggedInUser = signal<IUser | null>(null);
+  
+
 
   private resizeHandler = () => {
     this.screenWidth.set(window.innerWidth);
   };
 
   constructor() {
+    this.loggedInUser.set(JSON.parse(localStorage.getItem('user')) as IUser)
     window.addEventListener('resize', this.resizeHandler);
   }
 
@@ -117,6 +124,11 @@ export class UsersComponent implements OnInit, OnDestroy {
     return (userId: number) => this.presence.isOnline(userId);
   });
 
+  isLiked = computed(() => {
+    return (userId: number) => this.loggedInUser().like?.includes(userId);
+  });
+
+
   // -------- utils / actions --------
 
   trackByUserId(index: number, u: IUser): number {
@@ -124,7 +136,15 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   toggleLike(u: IUser) {
-    // your like logic here
+    const userId = this.loggedInUser().userID;
+    this.usersSvc.like(userId, u.userID).subscribe({
+      next: (res: any) => {
+        this.toast.show('הוספת like ✓');
+        localStorage.setItem('user', JSON.stringify({...this.loggedInUser(),"like": [...res.like_list]}));
+        this.loggedInUser.set(JSON.parse(localStorage.getItem('user')) as IUser);
+      } ,
+      error: () => alert("שגיאה בעת חסימת המשתמש")
+    });
   }
 
   // -------- swipe logic --------

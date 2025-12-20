@@ -18,14 +18,17 @@ export function passwordMatchValidator(group: AbstractControl): ValidationErrors
  * Ensures that if both min and max ages are provided,
  * then min <= max. Expects controls named 'c_ages1' & 'c_ages2'.
  */
-export function ageRangeValidator(minCtl: string = 'c_ages1', maxCtl: string = 'c_ages2'): ValidatorFn {
+export function rangeValidator(minCtl: string = 'c_ages1', maxCtl: string = 'c_ages2'): ValidatorFn {
   return (group: AbstractControl): ValidationErrors | null => {
     const min = group.get(minCtl)?.value ?? 0;
     const max = group.get(maxCtl)?.value ?? 0;
 
     // If both non-zero and min > max → invalid
     if (min && max && min > max) {
-      return { ageRangeInvalid: true };
+      if(minCtl.indexOf("age")!==-1 && maxCtl.indexOf("age")!==-1)
+        return { ageRangeInvalid: true };
+      else
+        return { heightRangeInvalid: true }; 
     }
     return null;
   };

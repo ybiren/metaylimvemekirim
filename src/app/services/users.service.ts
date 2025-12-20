@@ -48,6 +48,12 @@ export class UsersService {
   }
   
   
+  like(userId: number, liked_userid: number) {
+    //const fd = new FormData();
+    //fd.append('userId', String(userId));
+    //fd.append('blocked_userid', String(blocked_userId));
+    return this.http.patch(`${this.baseUrl}/like`, {userId, liked_userid});
+  }
 
 
 

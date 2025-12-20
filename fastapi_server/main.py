@@ -99,6 +99,39 @@ messages_lock = asyncio.Lock()
 def serve_root():
     return FileResponse(ANGULAR_DIR / "index.html", media_type="text/html")
 
+@app.get("/home")
+def serve_root():
+    return FileResponse(ANGULAR_DIR / "index.html", media_type="text/html")
+
+@app.get("/register")
+def serve_root():
+    return FileResponse(ANGULAR_DIR / "index.html", media_type="text/html")
+
+@app.get("/about-us")
+def serve_root():
+    return FileResponse(ANGULAR_DIR / "index.html", media_type="text/html")
+
+@app.get("/contact")
+def serve_root():
+    return FileResponse(ANGULAR_DIR / "index.html", media_type="text/html")
+
+@app.get("/search")
+def serve_root():
+    return FileResponse(ANGULAR_DIR / "index.html", media_type="text/html")
+
+@app.get("/users")
+def serve_root():
+    return FileResponse(ANGULAR_DIR / "index.html", media_type="text/html")
+
+@app.get("/album")
+def serve_root():
+    return FileResponse(ANGULAR_DIR / "index.html", media_type="text/html")
+
+@app.get("/help")
+def serve_root():
+    return FileResponse(ANGULAR_DIR / "index.html", media_type="text/html")
+
+
 
 # ---------------------------------------------------------------------
 # API routes
@@ -511,6 +544,42 @@ async def block_user(payload: dict = Body(...)):
         "block_list": user["block"],
     }
 
+@app.patch("/like")
+async def like_user(payload: dict = Body(...)):
+    userId = payload["userId"]
+    liked_userid = payload["liked_userid"]
+
+    ensure_data_file(DATA_DIR, USERS_PATH)
+    users = await load_users(USERS_PATH)
+
+    idx = find_user_index_by_userid(users, userId)
+    if idx is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user = users[idx]
+
+    if "like" not in user or not isinstance(user["like"], list):
+        user["like"] = []
+
+    if liked_userid in user["like"]:
+        user["like"].remove(liked_userid)
+        action = "unblocked"
+    else:
+        user["like"].append(liked_userid)
+        action = "liked"
+
+    users[idx] = user
+    await save_users(USERS_PATH, users)
+
+    return {
+        "ok": True,
+        "action": action,
+        "userID": userId,
+        "liked_userID": liked_userid,
+        "like_list": user["like"]
+    }
+
+
 
 @app.post("/addMessage")
 async def add_message(payload: SendMessagePayload):
@@ -606,12 +675,12 @@ class SpaStaticFiles(StaticFiles):
         return response
 
 
-app.mount("/", SpaStaticFiles(directory=str(ANGULAR_DIR)), name="spa")
-
-
 @app.get("/manifest.webmanifest")
 def manifest():
     return FileResponse(ANGULAR_DIR / "manifest.webmanifest", media_type="application/manifest+json")
+
+app.mount("/", SpaStaticFiles(directory=str(ANGULAR_DIR)), name="spa")
+
 
 
 # ---------------------------------------------------------------------

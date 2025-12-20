@@ -286,6 +286,9 @@
       <input id="filter_height_min" type="number" formControlName="filter_height_min" placeholder='מגובה (ס"מ)' />
       <span class="range-separator">עד</span>
       <input id="filter_height_max" type="number" formControlName="filter_height_max" placeholder='עד גובה (ס"מ)' />
+      <div class="errors" *ngIf="form.errors?.heightRangeInvalid && (form.touched || form.dirty)">
+        <small>טווח גבהים לא תקין (מגובה גדול מ"עד גובה").</small>
+      </div>
     </div>
 
     <label class="label" for="filter_age_min">מגיל עד גיל</label>
@@ -293,8 +296,11 @@
       <input id="filter_age_min" type="number" formControlName="filter_age_min" placeholder="מגיל" />
       <span class="range-separator">עד</span>
       <input id="filter_age_max" type="number" formControlName="filter_age_max" placeholder="עד גיל" />
+      <div class="errors" *ngIf="form.errors?.ageRangeInvalid && (form.touched || form.dirty)">
+        <small>טווח גילאים לא תקין (מגיל גדול מ"עד גיל").</small>
+      </div>
     </div>
-
+    
     <label class="label" for="filter_family_status">סטטוס</label>
     <div class="field">
       <div formArrayName="filter_family_status" class="checkbox-list">
