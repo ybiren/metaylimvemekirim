@@ -2,143 +2,21 @@
   display: block;
   direction: rtl;
   padding: 0 8px 24px;
-  background: #f0f2f5; /* FB-like page background */
+  background: #f0f2f5;
 }
 
-/* ========== DESKTOP GRID (MAX 3 PER ROW) ========== */
+/* =====================================================
+   DESKTOP GRID (MAX 3 PER ROW)
+===================================================== */
 
 .users-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* ✅ max 3 */
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  align-items: start;
-
-  /* keep grid compact and centered on wide screens */
   max-width: 980px;
   margin: 0 auto;
+  align-items: start;
 }
-
-/* ========== CARD WRAPPER ========== */
-
-.user-card {
-  display: flex;
-  align-items: stretch;
-}
-
-/* ========== CARD INNER (FB-LIKE) ========== */
-
-.user-card__inner {
-  width: 100%;
-  max-width: 420px; /* used for single/mobile */
-  margin: 0 auto;
-  padding: 16px;
-
-  background: #fff;
-  border-radius: 16px;
-
-  /* visible border (helps on mobile) */
-  border: 1.5px solid #d0d3d8;
-
-  /* outset shadow */
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.12),
-    0 6px 18px rgba(0, 0, 0, 0.08);
-
-  text-align: center;
-  transition: transform 0.25s ease, opacity 0.25s ease, box-shadow 0.25s ease;
-}
-
-/* ✅ Smaller card width on desktop */
-@media (min-width: 900px) {
-  .user-card__inner {
-    max-width: 260px;
-    padding: 14px;
-  }
-
-  .avatar {
-    width: 84px;
-    height: 84px;
-  }
-}
-
-/* ========== AVATAR ========== */
-
-.avatar {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  object-fit: cover;
-  display: block;
-  margin: 0 auto 8px;
-}
-
-/* ========== NAME ========== */
-
-.name {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: #222;
-  text-decoration: none;
-}
-
-/* ========== ACTIONS ========== */
-
-.actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  margin-top: 6px;
-}
-
-.like-btn {
-  border: none;
-  background: none;
-  cursor: pointer;
-  padding: 0;
-}
-
-.heart {
-  font-size: 20px;
-  opacity: 0.4;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.heart.liked {
-  opacity: 1;
-  transform: scale(1.1);
-  color: red;
-}
-
-.like-label {
-  font-size: 0.9rem;
-}
-
-/* ========== ONLINE / META ========== */
-
-.blink {
-  margin-top: 8px;
-  font-size: 0.8rem;
-  color: #0a7a0a;
-  animation: blinkAnimation 1.2s infinite;
-}
-
-.user-index-indicator {
-  margin-top: 8px;
-  font-size: 0.8rem;
-  opacity: 0.7;
-}
-
-/* ========== LOADING / EMPTY ========== */
-
-.loading,
-.no-users {
-  text-align: center;
-  padding: 24px 0;
-}
-
-/* ========== MOBILE/TABLET: RESPONSIVE GRID ========== */
 
 @media (max-width: 1024px) {
   .users-grid {
@@ -152,38 +30,249 @@
     grid-template-columns: 1fr;
     max-width: 420px;
   }
+}
 
+/* =====================================================
+   CARD (DEFAULT – GRID / DESKTOP)
+===================================================== */
+
+.user-card {
+  display: flex;
+  align-items: stretch;
+}
+
+.user-card__inner {
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px;
+
+  background: #fff;
+  border-radius: 16px;
+  border: 1.5px solid #d0d3d8;
+
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.12),
+    0 6px 18px rgba(0, 0, 0, 0.08);
+
+  text-align: center;
+  transition: transform 0.25s ease, opacity 0.25s ease, box-shadow 0.25s ease;
+}
+
+@media (min-width: 900px) {
   .user-card__inner {
-    border-width: 2px;
-    box-shadow:
-      0 2px 4px rgba(0, 0, 0, 0.14),
-      0 10px 26px rgba(0, 0, 0, 0.12);
+    max-width: 260px;
+    padding: 14px;
   }
 }
 
-/* ========== SINGLE USER (SWIPE MODE) ========== */
+/* Avatar – NORMAL MODE (circle) */
+.avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto 8px;
+}
+
+@media (min-width: 900px) {
+  .avatar {
+    width: 84px;
+    height: 84px;
+  }
+}
+
+/* =====================================================
+   TEXT / ACTIONS (BIGGER)
+===================================================== */
+
+.name {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #222;
+  text-decoration: none;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.like-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.heart {
+  font-size: 26px;
+  opacity: 0.4;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.heart.liked {
+  opacity: 1;
+  transform: scale(1.15);
+  color: red;
+}
+
+.like-label {
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.blink {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #0a7a0a;
+  animation: blinkAnimation 1.2s infinite;
+}
+
+/* default index (desktop grid) */
+.user-index-indicator {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  opacity: 0.7;
+  font-weight: 600;
+}
+
+.loading,
+.no-users {
+  text-align: center;
+  padding: 24px 0;
+}
+
+@media (max-width: 600px) {
+  .user-card__inner {
+    border-width: 2px;
+    box-shadow:
+      0 2px 4px rgba(0,0,0,.14),
+      0 10px 26px rgba(0,0,0,.12);
+  }
+}
+
+/* =====================================================
+   SWIPE MODE (MOBILE / TABLET ONLY)
+===================================================== */
 
 .single-user-wrapper {
   width: 100%;
-  display: flex;
-  justify-content: center;
   touch-action: none;
-  padding: 0;
-  overflow: hidden; /* prevent animation overflow */
+  overflow: hidden;
 }
 
-.user-card--single {
-  width: 100%;
-  max-width: 100%;
+@media (max-width: 1024px) {
+  :host {
+    padding-bottom: 0;
+  }
+
+  /* container fills viewport minus header (=72px) */
+  .single-user-wrapper {
+    height: calc(100dvh - 72px);
+    min-height: calc(100vh - 72px);
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+  }
+
+  .user-card.user-card--single {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: stretch;
+  }
+
+  .user-card.user-card--single .user-card__inner {
+    width: 100%;
+    max-width: 420px;
+    height: 100%;
+
+    margin: 12px auto;
+    padding: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    border-radius: 16px;
+    overflow: hidden;
+
+    background: #fff;
+  }
+
+  /* HERO image (full width, not circle) */
+  .user-card--single .avatar {
+    width: 100%;
+    height: 55%;
+    min-height: 240px;
+
+    margin: 0;
+    border-radius: 0;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Swipe typography a bit bigger */
+  .user-card--single .name {
+    font-size: 1.25rem;
+    padding: 10px 16px 6px;
+    text-align: center;
+  }
+
+  .user-card--single .actions {
+    padding: 0 16px 8px;
+  }
+
+  .user-card--single .like-label {
+    font-size: 1.1rem;
+  }
+
+  .user-card--single .blink {
+    padding: 0 16px 10px;
+    text-align: center;
+  }
+
+  /* ✅ COUNTER UNDER LIKE (NOT ABSOLUTE) */
+  .user-card--single .user-index-indicator {
+    position: static;
+    transform: none;
+    bottom: auto;
+    left: auto;
+    right: auto;
+
+    margin: 10px 0 0;
+    padding: 0 16px 14px;
+
+    font-size: 0.95rem;
+    font-weight: 600;
+    opacity: 0.7;
+    color: #444;
+
+    background: none;
+    border: none;
+    box-shadow: none;
+    text-align: center;
+  }
+
+  /* small separator line above the counter */
+  .user-card--single .user-index-indicator::before {
+    content: '';
+    display: block;
+    width: 46px;
+    height: 1px;
+    background: #ddd;
+    margin: 8px auto 10px;
+  }
 }
 
-/* centered white card box */
-.user-card--single .user-card__inner {
-  max-width: 420px;
-  padding: 16px;
-}
-
-/* ========== SWAP ANIMATION ========== */
+/* =====================================================
+   SWIPE ANIMATIONS
+===================================================== */
 
 .slide-left {
   animation: slideInFromRight 0.25s ease;
@@ -194,28 +283,18 @@
 }
 
 @keyframes slideInFromRight {
-  from {
-    transform: translateX(40px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
 @keyframes slideInFromLeft {
-  from {
-    transform: translateX(-40px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(-40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
-/* ========== BLINK ========== */
+/* =====================================================
+   BLINK
+===================================================== */
 
 @keyframes blinkAnimation {
   0% { opacity: 1; }
