@@ -1,0 +1,104 @@
+<section class="wrap" dir="rtl">
+  <div class="card">
+    <h1 class="title">טופס קבלת אס אמ אסים על אירועים</h1>
+
+    <p class="desc">
+      אני מעונין לקבל הודעת אס אמ אס על אירועי הקבוצה "מטיילים ומכירים" לקבוצת הגיל שלי.
+      אפשר לבחור יותר מאופציה אחת. בכל רגע ניתן להסיר את שמכם מרשימת התפוצה.
+    </p>
+
+    <div class="status ok" *ngIf="sent()">הטופס נשלח בהצלחה ✅</div>
+    <div class="status err" *ngIf="error()">{{ error() }}</div>
+
+    <!-- Full name -->
+    <label class="lbl">שם פרטי ומשפחה *</label>
+    <input
+      class="inp"
+      [value]="form().fullName"
+      (input)="setField('fullName', ($any($event.target).value))"
+      (blur)="markTouched('fullName')"
+      placeholder="לדוגמה: יוסי כהן"
+    />
+    <div class="hint" *ngIf="touched().fullName && fullNameErr()">{{ fullNameErr() }}</div>
+
+    <!-- Email -->
+    <label class="lbl">כתובת מייל *</label>
+    <input
+      class="inp"
+      [value]="form().email"
+      (input)="setField('email', ($any($event.target).value))"
+      (blur)="markTouched('email')"
+      placeholder="name@example.com"
+    />
+    <div class="hint" *ngIf="touched().email && emailErr()">{{ emailErr() }}</div>
+
+    <!-- Ages -->
+    <label class="lbl">קבוצת גיל רלוונטית לעדכונים עבורי *</label>
+
+    <div class="checkboxes" (blur)="markTouched('ages')" tabindex="-1">
+      <label class="cb" *ngFor="let opt of ageOptions; let i = index">
+        <input
+          type="checkbox"
+          [checked]="form().ageChecks[i]"
+          (change)="toggleAge(i)"
+        />
+        <span>{{ opt }}</span>
+      </label>
+    </div>
+
+    <div class="hint" *ngIf="touched().ages && agesErr()">{{ agesErr() }}</div>
+
+    <!-- Phone -->
+    <label class="lbl">נייד *</label>
+    <input
+      class="inp"
+      [value]="form().phone"
+      (input)="setField('phone', ($any($event.target).value))"
+      (blur)="markTouched('phone')"
+      placeholder="050-1234567"
+      inputmode="tel"
+    />
+    <div class="hint" *ngIf="touched().phone && phoneErr()">{{ phoneErr() }}</div>
+
+    <!-- Note -->
+    <label class="lbl">מעוניין בקבלת מייל אישי על האירעים השונים *</label>
+    <textarea
+      class="ta"
+      rows="3"
+      [value]="form().personalEmailNote"
+      (input)="setField('personalEmailNote', ($any($event.target).value))"
+      (blur)="markTouched('personalEmailNote')"
+      placeholder="כתוב כאן..."
+    ></textarea>
+    <div class="hint" *ngIf="touched().personalEmailNote && personalEmailNoteErr()">
+      {{ personalEmailNoteErr() }}
+    </div>
+
+    <!-- Consent -->
+    <label class="cb wide">
+      <input
+        type="checkbox"
+        [checked]="form().consentInfo"
+        (change)="setField('consentInfo', !form().consentInfo); markTouched('consentInfo')"
+      />
+      <span>מקובל עלי המידע למעלה *</span>
+    </label>
+    <div class="hint" *ngIf="touched().consentInfo && consentInfoErr()">{{ consentInfoErr() }}</div>
+
+    <label class="cb wide">
+      <input
+        type="checkbox"
+        [checked]="form().consentSignature"
+        (change)="setField('consentSignature', !form().consentSignature); markTouched('consentSignature')"
+      />
+      <span>אני מאשר את הרשום בטופס הרשמה המצורף *</span>
+    </label>
+    <div class="hint" *ngIf="touched().consentSignature && consentSignatureErr()">
+      {{ consentSignatureErr() }}
+    </div>
+
+    <button class="btn" type="button" (click)="submit()" [disabled]="!canSubmit()">
+      {{ submitting() ? 'שולח...' : 'שליחה' }}
+    </button>
+  </div>
+</section>

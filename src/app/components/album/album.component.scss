@@ -189,3 +189,27 @@
 .dot.active {
   background: rgba(0, 0, 0, 0.55);
 }
+
+.like-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.heart {
+  font-size: 26px;
+  opacity: 0.4;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.heart.liked {
+  opacity: 1;
+  transform: scale(1.15);
+  color: red;
+}
+
+.like-label {
+  font-size: 1.05rem;
+  font-weight: 500;
+}

@@ -43,6 +43,10 @@ export class ChatService {
   readonly unreadTotal$ = new BehaviorSubject<number>(0);
   readonly activePeer$  = new BehaviorSubject<number | null>(null);
 
+  readonly statusChanged$  = new BehaviorSubject<number>(0);
+
+
+
   // ==== NEW: Web Audio fallback (reliable beep) ====
   private audioCtx?: AudioContext;
   private audioUnlocked = false;
@@ -122,6 +126,7 @@ export class ChatService {
   }
 
   connect(peerId: number) {
+    console.log("connect");
     this.peer = peerId;
     this.me = getCurrentUserId();
     if (!this.me) {
@@ -134,7 +139,7 @@ export class ChatService {
     const finalUrl = this.buildWsUrl(peerId);
     this.ws = new WebSocket(finalUrl);
 
-    this.ws.onopen = () => { this.reconnectDelay = 500; };
+    this.ws.onopen = () => { this.reconnectDelay = 500; this.statusChanged$.next(WebSocket.OPEN);console.log("open"); };
 
     this.ws.onmessage = (ev) => {
       this.zone.run(() => {
@@ -173,12 +178,14 @@ export class ChatService {
 
     this.ws.onclose = () => {
       this.typing$.next(false);
+      console.log("closed");
       this.scheduleReconnect();
     };
     this.ws.onerror = () => this.scheduleReconnect();
   }
 
   disconnect() {
+    console.log("disconnect");
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = undefined;
@@ -190,6 +197,7 @@ export class ChatService {
 
   // ------------------- Client -> Server events -------------------
   send(content: string) {
+    console.log("AAA", this.ws.readyState);
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     const payload = { type: 'message', content };
     try { this.ws.send(JSON.stringify(payload)); } catch (e) {
@@ -215,15 +223,18 @@ export class ChatService {
 
   // ------------------- Reconnect -------------------
   private scheduleReconnect() {
+    console.log("scheduleReconnect");
     if (!this.peer) return;
     if (this.reconnectTimer) return;
 
     const delay = Math.min(this.reconnectDelay, this.maxReconnect);
     this.reconnectDelay = Math.min(this.reconnectDelay * 2, this.maxReconnect);
 
+    console.log("scheduleReconnect2");
+    
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = undefined;
-      this.connect(this.peer);
+      //this.connect(this.peer);
     }, delay);
   }
 

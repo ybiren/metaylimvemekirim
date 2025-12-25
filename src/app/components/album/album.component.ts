@@ -3,6 +3,11 @@ import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlbumService } from '../../services/album.service';
 import { getCurrentUserId } from '../../core/current-user';
+import { IUser } from '../../interfaces';
+import { UsersService } from '../../services/users.service';
+import { ToastService } from '../../services/toast.service';
+import { filter, take } from 'rxjs';
+import { ChatService } from '../../services/chat.service';
 
 type UiImage = {
   apiUrl: string;       // "/images/{id}/extra/..."
@@ -20,14 +25,18 @@ type UiImage = {
 export class AlbumComponent implements OnInit {
   private albumSrv = inject(AlbumService);
   private destroyRef = inject(DestroyRef);
+  private usersSvc = inject(UsersService);
+  private toast = inject(ToastService);
+  private chat = inject(ChatService);
+      
   userId = input<number>(getCurrentUserId());
   
   loading = signal(false);
   errorMsg = signal('');
   images = signal<UiImage[]>([]);
   index = signal(0);
-
-
+  loggedInUser = signal<IUser | null>(null);
+  
   count = computed(() => this.images().length);
   hasImages = computed(() => this.count() > 0);
 
@@ -39,6 +48,10 @@ export class AlbumComponent implements OnInit {
     return list[i];
   });
 
+  constructor() {
+    this.loggedInUser.set(JSON.parse(localStorage.getItem('user')) as IUser)
+  }
+  
   ngOnInit(): void {
     this.refresh();
   }
@@ -111,4 +124,35 @@ export class AlbumComponent implements OnInit {
     const parts = apiUrl.split('/');
     return parts.length ? parts[parts.length - 1] : undefined;
   }
+
+  toggleLike() {
+      const userId = this.loggedInUser().userID;
+      this.usersSvc.like(userId, this.userId()).subscribe({
+        next: (res: any) => {
+          this.toast.show('הוספת like ✓');
+          localStorage.setItem('user', JSON.stringify({...this.loggedInUser(),"like": [...res.like_list]}));
+          this.loggedInUser.set(JSON.parse(localStorage.getItem('user')) as IUser);
+          if(this.loggedInUser().like?.includes(this.userId())) {
+            this.chat.setActivePeer(this.userId());
+            this.chat.connect(this.userId());
+            this.chat.statusChanged$
+            .pipe(
+              filter(stat => stat === WebSocket.OPEN),
+              take(1),
+              takeUntilDestroyed(this.destroyRef)
+            )
+            .subscribe(() => {
+              this.chat.send(`קבלת לייק מ ${this.loggedInUser().c_name}`);
+              this.chat.setActivePeer(null);
+              this.chat.disconnect();
+            });
+          }
+        },
+        error: () => alert("אירעה שגיאה")
+      });
+  }
+
+  isLiked = computed(() => this.loggedInUser().like?.includes(this.userId()))
+  
+  
 }

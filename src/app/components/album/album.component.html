@@ -6,7 +6,19 @@
         {{ index() + 1 }} / {{ count() }}
       </div>
     </div>
-
+    
+    @if(loggedInUser().userID !== userId()) {
+    <button
+      class="like-btn"
+      type="button"
+      (click)="toggleLike()"
+      [attr.aria-pressed]="isLiked() ? 'true' : 'false'"
+      aria-label="Like"
+      title="Like"
+   >
+      <span class="heart" [class.liked]="isLiked()">❤</span>
+    </button>
+   }
     <button type="button" class="btn" (click)="refresh()" [disabled]="loading()">
       רענן
     </button>

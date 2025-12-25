@@ -121,9 +121,9 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
       // filters
       filter_height_min: [145],
-      filter_height_max: [145],
-      filter_age_min: [null],
-      filter_age_max: [null],
+      filter_height_max: [200],
+      filter_age_min: [25],
+      filter_age_max: [90],
       filter_family_status: this.buildFilterFamilyStatusArray(),
       filter_smoking_status: [0],
     },

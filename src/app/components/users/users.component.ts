@@ -7,6 +7,7 @@ import {
   input,
   effect,
   computed,
+  DestroyRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
@@ -18,6 +19,9 @@ import { getCurrentUserId } from '../../core/current-user';
 import { UsersService } from '../../services/users.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ToastService } from '../../services/toast.service';
+import { ChatService } from '../../services/chat.service';
+import { filter, take, takeWhile } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 
 @Component({
@@ -48,7 +52,9 @@ export class UsersComponent implements OnInit, OnDestroy {
   private usersSvc = inject(UsersService);
   private device = inject(DeviceDetectorService);
   private toast = inject(ToastService);
-
+  private chat = inject(ChatService);
+  private destroyRef = inject(DestroyRef);
+    
   apiBase = environment.apibase;
   private me = getCurrentUserId();
   loggedInUser = signal<IUser | null>(null);
@@ -139,11 +145,26 @@ export class UsersComponent implements OnInit, OnDestroy {
     const userId = this.loggedInUser().userID;
     this.usersSvc.like(userId, u.userID).subscribe({
       next: (res: any) => {
-        this.toast.show('הוספת like ✓');
-        localStorage.setItem('user', JSON.stringify({...this.loggedInUser(),"like": [...res.like_list]}));
-        this.loggedInUser.set(JSON.parse(localStorage.getItem('user')) as IUser);
-      } ,
-      error: () => alert("שגיאה בעת חסימת המשתמש")
+         this.toast.show('הוספת like ✓');
+         localStorage.setItem('user', JSON.stringify({...this.loggedInUser(),"like": [...res.like_list]}));
+         this.loggedInUser.set(JSON.parse(localStorage.getItem('user')) as IUser);
+         if(this.loggedInUser().like?.includes(u.userID)) {
+           this.chat.setActivePeer(u.userID);
+           this.chat.connect(u.userID);
+           this.chat.statusChanged$
+          .pipe(
+            filter(stat => stat === WebSocket.OPEN),
+            take(1),
+            takeUntilDestroyed(this.destroyRef)
+          )
+          .subscribe(() => {
+            this.chat.send(`קבלת לייק מ ${this.loggedInUser().c_name}`);
+            this.chat.setActivePeer(null);
+            this.chat.disconnect();
+          });
+         }
+      },
+      error: () => alert("אירעה שגיאה")
     });
   }
 

@@ -44,6 +44,14 @@
         (click)="onNavLinkClick()"
         >צור קשר</a
       >
+      
+      <a
+        routerLink="/sms"
+        routerLinkActive="active"
+        (click)="onNavLinkClick()"
+        >sms</a
+      >
+
       @if (loggedInUser) {
         
         <!-- Inbox dropdown -->
@@ -81,7 +89,7 @@
             </header>
 
             <ul class="list">
-              <li *ngFor="let t of threads" (click)="openChat(t.peerId)">
+              <li *ngFor="let t of threads" (click)="openChat(t.peerId, t.lastPreview)">
                 <div class="row">
                   <div class="avatar">
                     <span>

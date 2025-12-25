@@ -16,9 +16,10 @@ from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse, JSONResponse
 from starlette.types import Scope
 
-from models import SendMessagePayload
+from models.sendmessage_payload import SendMessagePayload
 
 # import routers
+from routes.sms_updates import router2 as sms_updates_router
 from ws.notify import router as notify_router
 from ws.chat import router as chat_router
 
@@ -85,6 +86,7 @@ app.add_middleware(
 
 app.include_router(notify_router)
 app.include_router(chat_router)
+app.include_router(sms_updates_router)
 
 # ---------------------------------------------------------------------
 # Locks

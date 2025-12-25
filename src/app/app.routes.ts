@@ -11,6 +11,8 @@ import { ContactPageComponent } from './components/contact/contact,component';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 import { AlbumComponent } from './components/album/album.component';
 import { HelpComponent } from './components/help/help.component';
+import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
+import { SmsUpdatesSignalFormComponent } from './components/sms-updates-signal-form/sms-updates-signal-form.component';
 
 export const appRoutes: Route[] = [
   { path: 'home', component: HomeComponent },
@@ -25,5 +27,7 @@ export const appRoutes: Route[] = [
   { path: 'contact', component: ContactPageComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'album', component: AlbumComponent },
-  { path: 'help', component: HelpComponent }
+  { path: 'help', component: HelpComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
+  { path: 'sms', component: SmsUpdatesSignalFormComponent },
 ];

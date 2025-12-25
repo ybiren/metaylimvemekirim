@@ -89,15 +89,19 @@ export class TopMenuComponent implements OnInit, OnDestroy {
     if (this.open) this.chat.refreshThreads();
   }
 
-  openChat(peerId: number) {
+  openChat(peerId: number, lastPreview: string) {
     const isMobile = window.innerWidth < 600;
-    this.dialog.open(ChatWindowComponent, {
-      data: { peerId },
-      panelClass: isMobile ? 'im-dialog--mobile' : 'im-dialog--desktop',
-      ...(isMobile
-        ? { width: '100vw', height: '100vh' }
-        : { width: 'min(420px, 95vw)', height: '80vh' }),
-    });
+    if(lastPreview.includes("קבלת לייק מ")) {
+      this.router.navigate([`/user/${peerId}`]);
+    } else {
+      this.dialog.open(ChatWindowComponent, {
+        data: { peerId },
+        panelClass: isMobile ? 'im-dialog--mobile' : 'im-dialog--desktop',
+        ...(isMobile
+          ? { width: '100vw', height: '100vh' }
+          : { width: 'min(420px, 95vw)', height: '80vh' }),
+      });
+    } 
     this.open = false;
     this.isMenuOpen = false;
   }

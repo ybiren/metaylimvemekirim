@@ -1,6 +1,6 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule, NavigationEnd } from '@angular/router';
+import { Router, RouterModule, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { PwaInstallComponent } from './components/pwa-install/pwa-install.component';
 import { LoginComponent } from './components/login/login.component';
@@ -32,6 +32,7 @@ export class App implements OnInit, OnDestroy{
   private presence = inject(PresenceService);
   private presenceSub?: Subscription;
   private usersSvc = inject(UsersService);
+  private activatedRoute = inject(ActivatedRoute);
 
   spinnerTplHtml = `
     <div class="lds-dual-ring"></div>
@@ -48,6 +49,12 @@ export class App implements OnInit, OnDestroy{
       this.presenceSub = this.presence.start(25_000, userID); // match HEARTBEAT_SEC
        // Navigate immediately to /users
       this.router.navigateByUrl('/home');
+    } else {
+      const params = new URLSearchParams(window.location.search);
+      if(params.get("uid")) {
+        const uid = params.get("uid");
+        this.router.navigateByUrl(`/reset-password?uid=${uid}`);
+      }
     }
 
     // 2) Set initial value of isHome

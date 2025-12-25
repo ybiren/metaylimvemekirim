@@ -27,7 +27,7 @@
             <option value="מעשן">מעשן</option>
             <option value="לא מעשן">לא מעשן</option>
           </select>
-          <small class="muted">בסנטימטרים</small>
+          
         </div>
 
         <!-- גובה -->
@@ -37,6 +37,7 @@
             <option [value]="0">הכל</option>
             <option *ngFor="let h of heights" [value]="h" [disabled]="h===0">{{ h }}</option>
           </select>
+          <small class="muted">בסנטימטרים</small>
         </div>
 
         <!-- טווח גילאים -->
