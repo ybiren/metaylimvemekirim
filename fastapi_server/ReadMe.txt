@@ -81,3 +81,29 @@ systemctl enable --now crond
  
  bash (terminal 2)
  psql 'postgresql://postgres:StrongPass123!@127.0.0.1:15433/metaylim'
+
+
+
+
+
+
+ in case of account lock (delete pgadmin and recreate it):
+ 
+ 1) docker rm -f pgadmin
+ 
+ 2) docker volume ls | grep pgadmin
+    docker volume rm <volume_name>
+ 
+ 3) docker run -d \
+  --name pgadmin \
+  --network pgnet \
+  -p 5050:80 \
+  -e PGADMIN_DEFAULT_EMAIL=sar888@gmail.com \
+  -e PGADMIN_DEFAULT_PASSWORD=jordan \
+  -e PGADMIN_CONFIG_SERVER_MODE=False \
+  -v /opt/pgadmin/servers.json:/pgadmin4/servers.json \
+  --restart=always \
+  dpage/pgadmin4  
+
+  for checking if port is open:
+  sudo ss -tulpn | grep :5050

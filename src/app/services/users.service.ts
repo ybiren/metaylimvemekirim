@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { IUser } from '../interfaces';
-import { BehaviorSubject, firstValueFrom } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, of } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { getCurrentUserId } from '../core/current-user';
 
@@ -37,14 +37,18 @@ export class UsersService {
   }
 
   is_blockedByPeerSignal(userId: number, peerId: number) {
+    
+    return toSignal(of({is_blocked: false}));
+    /*
     return toSignal(
       this.http.post<{ is_blocked: boolean }>(`${this.baseUrl}/is_blocked_by_peer`, { userId, peerId }),
       { initialValue: null }
-    );
+    );*/
+  
   }  
   
   getName(userId: number): string {
-    return this.users$.value.find(u => u.userID === userId)?.c_name ?? `משתמש #${userId}`;
+    return userId!==-1000 ? this.users$.value.find(u => u.userID === userId)?.c_name ?? `משתמש #${userId}` : "חברים";
   }
   
   

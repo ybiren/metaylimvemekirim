@@ -148,6 +148,13 @@
       >
 
       <a
+          routerLink="#"
+          routerLinkActive="active"
+          (click)="onNavLinkClick(); openChat(-1000,'');"
+        >צ'אט עם חברים</a
+      >
+
+      <a
           routerLink="/help"
           routerLinkActive="active"
           (click)="onNavLinkClick()"

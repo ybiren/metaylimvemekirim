@@ -3,7 +3,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 SYSTEM = platform.system()  # 'Windows', 'Linux', 'Darwin'
-print(SYSTEM)
 if SYSTEM == "Windows": #dev
     DATABASE_URL = "postgresql://postgres:StrongPass123!@127.0.0.1:15433/metaylim"
 elif SYSTEM == "Linux": #prod

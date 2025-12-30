@@ -7,26 +7,50 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
-from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
+
+from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect, Depends
+from db import get_db
+from helper import get_user
 
 router = APIRouter()
 
-# Storage
+# =========================
+# Storage (DM only)
+# =========================
 CHAT_PATH = Path("data/chat.json")
 CHAT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-# In-memory process state
 chat_lock = asyncio.Lock()
-ROOM_SOCKETS: Dict[str, Set[WebSocket]] = {}  # roomId -> sockets
+ROOM_SOCKETS: Dict[str, Set[WebSocket]] = {}
+
+# =========================
+# GLOBAL chat (in-memory)
+# =========================
+GLOBAL_PEER_ID = -1000
+GLOBAL_ROOM_ID = "global"
+GLOBAL_LOCK = asyncio.Lock()
+GLOBAL_MESSAGES: List[dict] = []
 
 # ---------- utils ----------
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
+
 def _room_id(u1: int, u2: int) -> str:
-    a, b = sorted([int(u1), int(u2)])
+    a, b = sorted([u1, u2])
     return f"dm:{a}:{b}"
+
+
+def _is_global(peer_id: int) -> bool:
+    return peer_id == GLOBAL_PEER_ID
+
+
+def _resolve_room(user_id: int, peer_id: int) -> str:
+    if _is_global(peer_id):
+        return GLOBAL_ROOM_ID
+    return _room_id(user_id, peer_id)
+
 
 async def _load() -> List[dict]:
     if not CHAT_PATH.exists():
@@ -36,276 +60,220 @@ async def _load() -> List[dict]:
     except Exception:
         return []
 
+
 async def _save(data: List[dict]) -> None:
-    CHAT_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    CHAT_PATH.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
 
 def _find_thread(data: List[dict], room_id: str) -> Optional[dict]:
-    for t in data:
-        if t.get("roomId") == room_id:
-            return t
-    return None
+    return next((t for t in data if t.get("roomId") == room_id), None)
+
 
 def _ensure_thread(data: List[dict], u1: int, u2: int) -> dict:
     rid = _room_id(u1, u2)
     t = _find_thread(data, rid)
-    if t is None:
-        a, b = sorted([int(u1), int(u2)])
+    if not t:
+        a, b = sorted([u1, u2])
         t = {
             "roomId": rid,
-            "fromUserId": a,     # kept for your original shape
+            "fromUserId": a,
             "toUserId": b,
-            "messages": [],      # [{id, fromUserId, toUserId, content, sentAt, deliveredAt, readAt}]
+            "messages": [],
         }
         data.append(t)
     return t
 
+
 async def _broadcast(room_id: str, payload: dict) -> None:
-    print(f"\n[BROADCAST] room={room_id} payload={payload}\n")  # <--- ADD LOG
     for s in list(ROOM_SOCKETS.get(room_id, ())):
         try:
             await s.send_json(payload)
         except Exception:
             ROOM_SOCKETS[room_id].discard(s)
 
-# ---------- HTTP: history & read ----------
+# =========================
+# HTTP
+# =========================
 
 @router.get("/chat/history")
 async def chat_history(
-    user1: int = Query(..., description="first userID"),
-    user2: int = Query(..., description="second userID"),
+    user1: int = Query(...),
+    user2: int = Query(...),
     limit: int = Query(200, ge=1, le=2000),
 ):
-    """Unified thread for the pair, messages sorted by sentAt DESC, limited."""
+    if _is_global(user2):
+        async with GLOBAL_LOCK:
+            msgs = sorted(
+                GLOBAL_MESSAGES,
+                key=lambda m: m["sentAt"],
+                reverse=True,
+            )[:limit]
+        return {"ok": True, "roomId": GLOBAL_ROOM_ID, "messages": msgs}
+
     rid = _room_id(user1, user2)
     async with chat_lock:
         data = await _load()
         t = _find_thread(data, rid)
-        msgs = (t or {}).get("messages", [])
-        msgs_sorted = sorted(msgs, key=lambda m: m.get("sentAt", ""), reverse=True)
-        if limit:
-            msgs_sorted = msgs_sorted[:limit]
-    return {"ok": True, "roomId": rid, "messages": msgs_sorted}
+        msgs = sorted(
+            (t or {}).get("messages", []),
+            key=lambda m: m["sentAt"],
+            reverse=True,
+        )[:limit]
+
+    return {"ok": True, "roomId": rid, "messages": msgs}
+
 
 @router.get("/chat/mark-read")
 async def mark_read(
-    userId: int = Query(..., description="reader userID"),
-    peerId: int = Query(..., description="peer userID"),
+    userId: int = Query(...),
+    peerId: int = Query(...),
 ):
-    """Mark as read all messages TO userId in this DM up to timestamp (inclusive)."""
+    if _is_global(peerId):
+        return {"ok": True, "updated": []}
+
     rid = _room_id(userId, peerId)
-    changed_ids: List[str] = []
+    updated: List[str] = []
 
     async with chat_lock:
         data = await _load()
         t = _find_thread(data, rid)
         if not t:
             return {"ok": True, "updated": []}
+
         for m in t["messages"]:
-            if m.get("toUserId") == int(userId) and not m.get("readAt"):
-                 m["readAt"] = datetime.now(timezone.utc).isoformat()
-                 changed_ids.append(m["id"])
+            if m["toUserId"] == userId and not m.get("readAt"):
+                m["readAt"] = _now_iso()
+                updated.append(m["id"])
+
         await _save(data)
 
-    if changed_ids:
-        await _broadcast(rid, {"type": "read", "ids": changed_ids, "reader": int(userId), "roomId": rid})
-    return {"ok": True, "updated": changed_ids}
+    if updated:
+        await _broadcast(rid, {"type": "read", "ids": updated, "roomId": rid})
 
-
-def _thread_stats_for(user_id: int, t: Dict) -> Optional[Tuple[int, Dict]]:
-    """
-    Given a unified DM thread doc, return (peerId, stats) for user_id, or None if not part of it.
-    Thread shape (as we store):
-      {
-        "roomId": "dm:<a>:<b>",
-        "fromUserId": <a>,   # kept for back-compat
-        "toUserId":   <b>,
-        "messages": [ { id, fromUserId, toUserId, content, sentAt, deliveredAt, readAt }, ... ]
-      }
-
-    NOTE: lastAt / lastPreview / lastFromUserId are based ONLY on the
-    last message sent by the peer (not the current user).
-    """
-
-    rid = t.get("roomId", "")
-    if not isinstance(rid, str) or not rid.startswith("dm:"):
-        return None
-
-    try:
-        a, b = map(int, rid.split(":")[1:3])
-    except Exception:
-        return None
-
-    if user_id not in (a, b):
-        return None
-
-    peer = b if user_id == a else a
-    msgs: List[Dict] = t.get("messages", []) or []
-
-    # ----- last message from PEER only -----
-    peer_msgs = [
-        m for m in msgs
-        if int(m.get("fromUserId", -1)) == peer
-    ]
-
-    last_peer = max(peer_msgs, key=lambda m: m.get("sentAt", ""), default=None)
-
-    if last_peer:
-        last_at = last_peer.get("sentAt", "") or ""
-        last_from = peer  # by definition it's the peer
-        last_preview = (last_peer.get("content", "") or "")[:120]
-    else:
-        # peer never sent a message in this thread
-        last_at = ""
-        last_from = None
-        last_preview = ""
-
-    # unread for this user (messages addressed to me, not yet read)
-    unread = sum(
-        1
-        for m in msgs
-        if int(m.get("toUserId", -1)) == user_id and not m.get("readAt")
-    )
-
-    stats = {
-        "roomId": rid,
-        "peerId": peer,
-        "lastAt": last_at,
-        "lastFromUserId": last_from,
-        "lastPreview": last_preview,
-        "unread": unread,
-        "count": len(msgs),
-    }
-    return peer, stats
+    return {"ok": True, "updated": updated}
 
 
 @router.get("/chat/threads")
 async def chat_threads(
-    userId: int = Query(..., description="current userID"),
-    limit: int = Query(50, ge=1, le=500, description="max threads to return")
+    userId: int = Query(...),
+    limit: int = Query(50, ge=1, le=500),
+    includeGlobal: bool = Query(False),
 ):
-    """
-    Returns threads for userId, each:
-      { roomId, peerId, lastAt, lastFromUserId, lastPreview, unread, count }
-    Sorted by lastAt DESC. Limited by ?limit=.
-    """
-    user = int(userId)
+    user = userId
+    items: List[Dict] = []
+
     async with chat_lock:
-        data = await _load()  # uses your existing JSON storage
-        items: List[Dict] = []
+        data = await _load()
         for t in data:
-            res = _thread_stats_for(user, t)
-            if res:
-                _, stats = res
-                items.append(stats)
+            rid = t.get("roomId", "")
+            if not rid.startswith("dm:"):
+                continue
 
-        # sort most recent first (DESC by lastAt ISO)
-        items.sort(key=lambda s: s.get("lastAt", ""), reverse=True)
-        if limit:
-            items = items[:limit]
+            a, b = map(int, rid.split(":")[1:3])
+            if user not in (a, b):
+                continue
 
-    return {"ok": True, "threads": items}
+            peer = b if user == a else a
+            msgs = t.get("messages", [])
+            peer_msgs = [m for m in msgs if m["fromUserId"] == peer]
+            last = max(peer_msgs, key=lambda m: m["sentAt"], default=None)
+         
+            items.append({
+                "roomId": rid,
+                "peerId": peer,
+                "lastAt": last["sentAt"] if last else "",
+                "lastFromUserId": peer if last else None,
+                "lastPreview": (last["content"][:120] if last else ""),
+                "unread": sum(
+                    1 for m in msgs
+                    if m["toUserId"] == user and not m.get("readAt")
+                ),
+                "count": len(msgs),
+            })
 
-# ---------- WebSocket: /ws/chat ----------
+    if includeGlobal:
+        async with GLOBAL_LOCK:
+            last = max(GLOBAL_MESSAGES, key=lambda m: m["sentAt"], default=None)
+            items.append({
+                "roomId": GLOBAL_ROOM_ID,
+                "peerId": GLOBAL_PEER_ID,
+                "lastAt": last["sentAt"] if last else "",
+                "lastFromUserId": last["fromUserId"] if last else None,
+                "lastPreview": last["content"][:120] if last else "",
+                "unread": 0,
+                "count": len(GLOBAL_MESSAGES),
+            })
+
+    items.sort(key=lambda x: x["lastAt"], reverse=True)
+    return {"ok": True, "threads": items[:limit]}
+
+# =========================
+# WebSocket
+# =========================
 
 @router.websocket("/ws/chat")
 async def ws_chat(
     ws: WebSocket,
-    userId: int = Query(..., description="sender userID (uses your userID field)"),
-    peerId: int = Query(..., description="recipient userID"),
+    userId: int = Query(...),
+    peerId: int = Query(...),
+    db: Session = Depends(get_db)
 ):
-    """
-    Connect with: ws://host/ws/chat?userId=3&peerId=7
-    - Room is dm:<min>:<max>, so both sides land in the same room.
-    - On connect: mark undelivered inbound messages as delivered.
-    - On message: persist, echo to sender, push to peer; set delivered/read accordingly.
-    """
     await ws.accept()
-    rid = _room_id(userId, peerId)
+    rid = _resolve_room(userId, peerId)
     ROOM_SOCKETS.setdefault(rid, set()).add(ws)
 
-    # On connect, mark any inbound (to userId) undelivered as delivered
-    delivered_ids: List[str] = []
-    now_iso = _now_iso()
-    async with chat_lock:
-        data = await _load()
-        t = _ensure_thread(data, userId, peerId)
-        for m in t["messages"]:
-            if m.get("toUserId") == int(userId) and not m.get("deliveredAt"):
-                m["deliveredAt"] = now_iso
-                delivered_ids.append(m["id"])
-        if delivered_ids:
-            await _save(data)
+    if not _is_global(peerId):
+        delivered_ids = []
+        async with chat_lock:
+            data = await _load()
+            t = _ensure_thread(data, userId, peerId)
+            for m in t["messages"]:
+                if m["toUserId"] == userId and not m.get("deliveredAt"):
+                    m["deliveredAt"] = _now_iso()
+                    delivered_ids.append(m["id"])
+            if delivered_ids:
+                await _save(data)
 
-    if delivered_ids:
-        await _broadcast(rid, {"type": "delivered", "ids": delivered_ids, "roomId": rid})
+        if delivered_ids:
+            await _broadcast(rid, {"type": "delivered", "ids": delivered_ids, "roomId": rid})
 
     try:
         while True:
             packet = await ws.receive_json()
-            print("WS IN:", packet)
-            typ = (packet.get("type") or "message").strip()
+            if packet.get("type") != "message":
+                continue
 
-            if typ == "message":
-                content = (packet.get("content") or "").strip()
-                if not content:
-                    continue
+            content = (packet.get("content") or "").strip()
+            if not content:
+                continue
 
-                msg_id = str(uuid.uuid4())
-                sent_iso = _now_iso()
-                payload = {
-                    "id": msg_id,
-                    "fromUserId": int(userId),
-                    "toUserId": int(peerId),
-                    "content": content,
-                    "sentAt": sent_iso,
-                    "deliveredAt": None,
-                    "readAt": None,
-                }
+            msg = {
+                "id": str(uuid.uuid4()),
+                "fromUserId": userId,
+                "fromUserName": get_user(db,userId).name,
+                "toUserId": peerId,
+                "content": content,
+                "sentAt": _now_iso(),
+            }
 
-                # persist
-                async with chat_lock:
-                    data = await _load()
-                    t = _ensure_thread(data, userId, peerId)
-                    t["messages"].append(payload)
-                    await _save(data)
+            if _is_global(peerId):
+                async with GLOBAL_LOCK:
+                    GLOBAL_MESSAGES.append(msg)
+                await _broadcast(GLOBAL_ROOM_ID, {"type": "message", "roomId": GLOBAL_ROOM_ID, "msg": msg})
+                continue
 
-                # deliver to everyone in room
-                delivered = False
-                for sock in list(ROOM_SOCKETS.get(rid, ())):
-                    try:
-                        await sock.send_json({"type": "message", "roomId": rid, "msg": payload})
-                        # If peer is connected (any socket that's not 'ws' AND belongs to peer),
-                        # we consider it delivered; since we don't track owners per socket here,
-                        # we mark delivered optimistically once any other socket received it.
-                        if sock is not ws:
-                            delivered = True
-                    except Exception:
-                        ROOM_SOCKETS[rid].discard(sock)
+            msg.update({"deliveredAt": None, "readAt": None})
 
-                if delivered:
-                    # mark delivered in store
-                    async with chat_lock:
-                        data = await _load()
-                        t = _ensure_thread(data, userId, peerId)
-                        for m in t["messages"]:
-                            if m["id"] == msg_id:
-                                m["deliveredAt"] = _now_iso()
-                                break
-                        await _save(data)
-                    await _broadcast(rid, {"type": "delivered", "ids": [msg_id], "roomId": rid})
+            async with chat_lock:
+                data = await _load()
+                t = _ensure_thread(data, userId, peerId)
+                t["messages"].append(msg)
+                await _save(data)
 
-            elif typ == "readUpTo":
-                up_to = packet.get("upToIso")
-                if up_to:
-                    # Mark read for messages to userId up to timestamp
-                    await mark_read(userId=int(userId), peerId=int(peerId), upToIso=up_to)
-
-            elif typ == "typing":
-                await _broadcast(rid, {"type": "typing", "fromUserId": int(userId), "roomId": rid})
-
-            else:
-                # ignore unknown types
-                pass
+            await _broadcast(rid, {"type": "message", "roomId": rid, "msg": msg})
 
     except WebSocketDisconnect:
         pass

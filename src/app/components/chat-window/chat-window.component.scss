@@ -1,5 +1,6 @@
 /* =========================================================
    Chat Window (component styles) – RTL / Hebrew optimized
+   Multi-user WhatsApp-like sender line
    ========================================================= */
 
 :host {
@@ -7,7 +8,7 @@
   --chat-header-bg:    #075e54;
   --chat-header-fg:    #fff;
 
-  --bubble-peer:       #fff;
+  --bubble-peer:       #ffffff;
   --bubble-me:         #d7f8d9;
 
   --bubble-shadow:     0 1px 0 rgba(0,0,0,.06);
@@ -55,17 +56,35 @@
   cursor: pointer;
 }
 
-.chat__name   { font-weight: 700; }
-.chat__status { font-size: 12px; opacity: .9; }
+.chat__head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chat__name {
+  font-weight: 700;
+}
+
+.chat__status {
+  font-size: 12px;
+  opacity: .9;
+}
+
+.chat__status.online {
+  opacity: 1;
+}
 
 /* ===== Scroll area (messages) ===== */
 .chat__scroll {
   flex: 1 1 auto;
-  min-height: 0;                 /* key to allow scrolling child to shrink */
+  min-height: 0;
   overflow: auto;
+
   padding: var(--pad-y) var(--pad-x);
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+
   padding-bottom: calc(var(--pad-y) + env(safe-area-inset-bottom, 0px));
 }
 
@@ -78,64 +97,91 @@
 }
 
 /* =========================================================
-   Message Bubbles — shrink to content (no unwanted expansion)
+   Message bubble
    ========================================================= */
 
 .msg {
-  /* row layout inside the bubble so text + meta share one baseline */
   display: flex;
-  align-items: flex-end;
-  gap: 6px;
+  flex-direction: column;     /* sender line on top */
+  gap: 4px;
 
-  /* 👇 shrink-wrap to content, but cap long lines */
   width: fit-content;
-  max-width: 85%;                /* adjust: 78–90% to taste */
+  max-width: 85%;
 
   margin: 6px 0;
   border-radius: 14px;
+
   background: var(--bubble-peer);
   box-shadow: var(--bubble-shadow);
 
-  /* fix perceived extra left padding in RTL by using logical paddings */
   padding-block: 8px;
-  padding-inline: 10px 6px;      /* right=10px, left=6px in RTL */
+  padding-inline: 10px 6px;
 
-  /* Hebrew text behavior */
-  direction: rtl;                /* RTL flow inside bubble */
-  white-space: pre-wrap;         /* keep user line breaks */
-  word-break: break-word;        /* wrap long URLs/words */
+  direction: rtl;              /* RTL inside bubble */
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* Outgoing (me) → right side in RTL */
 .msg--me {
   background: var(--bubble-me);
-  margin-inline-start: auto;       /* push to right in RTL */
+  margin-inline-start: auto;   /* push right */
 }
 
 /* Incoming (peer) → left side in RTL */
 .msg--peer {
-  margin-inline-end: auto;     /* push to left in RTL */
+  margin-inline-end: auto;     /* push left */
 }
 
-/* ===== Text & Meta (time + ticks) on one line ===== */
-.text {
+/* ===== Sender line (WhatsApp-style) ===== */
+.msg__sender {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 2px;
+
+  /* Each sender can have a unique color via CSS var */
+  color: var(--sender-color, #1b7f5a);
+}
+
+/* ===== Body row: text + meta on the same line ===== */
+.msg__body {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+/* Text */
+.msg__text {
   line-height: 1.25;
-  text-align: right;             /* Hebrew multi-line alignment */
-  margin-inline-end: 4px;        /* tiny gap before time */
+  text-align: right;
+  margin-inline-end: 4px;
 }
 
-.meta {
-  direction: ltr;                /* numbers & ✓✓ read naturally */
+/* Meta (time + ticks) */
+.msg__meta {
+  direction: ltr;
   display: inline-flex;
-  align-items: center;           /* same baseline as text */
+  align-items: center;
   gap: 4px;
+
   font-size: 11px;
   opacity: .7;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
-.ticks { letter-spacing: -1px; }
-.ticks.delivered { opacity: .85; }
-.ticks.read      { opacity: 1; }
+.msg__ticks {
+  letter-spacing: -1px;
+}
+
+.msg__ticks.delivered {
+  opacity: .85;
+}
+
+.msg__ticks.read {
+  opacity: 1;
+}
 
 /* ===== Typing indicator ===== */
 .chat__typing {
@@ -161,6 +207,7 @@
   flex: 1 1 auto;
   min-width: 0;
   min-height: 36px;
+
   padding: 8px 10px;
   border: 1px solid #c9d6cf;
   border-radius: 999px;
@@ -172,16 +219,26 @@
   border: 0;
   border-radius: 999px;
   padding: 8px 14px;
+
   background: #24a859;
   color: #fff;
   font-weight: 600;
   cursor: pointer;
 }
 
-.chat__send:disabled { opacity: .5; cursor: default; }
+.chat__send:disabled {
+  opacity: .5;
+  cursor: default;
+}
 
 /* ===== Small screens ===== */
 @media (max-width: 480px) {
-  :host { --pad-x: 10px; --pad-y: 8px; }
-  .msg { max-width: 90%; }       /* a bit wider on phones feels nicer */
+  :host {
+    --pad-x: 10px;
+    --pad-y: 8px;
+  }
+
+  .msg {
+    max-width: 90%;
+  }
 }

@@ -62,6 +62,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
       this.close();
       return;
     }
+    this.scrollToEnd();
 
     // mark active peer (used by service to mute beeps, etc.)
     this.chat.setActivePeer(this.peerId);

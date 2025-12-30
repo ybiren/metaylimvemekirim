@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import uvicorn
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile, Query, Body
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile, Query, Body, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse, JSONResponse
@@ -40,10 +40,12 @@ from helper import (
     find_user_index_by_userid,
     load_messages,
     save_messages,
-    pass_filter
+    pass_filter,
+    get_user
 )
 
 from sendgrid_test.send_mail import send_mail
+
 
 # ---------------------------------------------------------------------
 # Config & Logging

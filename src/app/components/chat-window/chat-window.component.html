@@ -3,17 +3,19 @@
   <header class="chat__header">
     <button type="button" class="chat__close" (click)="close()">✕</button>
 
-    <div>
+    <div class="chat__head">
       <div class="chat__name">צ'אט עם {{ peerName }}</div>
-      <div class="chat__status" [class.online]="isPeerOnline">
-        {{ isPeerOnline ? 'מחובר/ת' : 'לא מחובר/ת' }}
-      </div>
+
+      @if(peerId!== -1000) {
+        <div class="chat__status" [class.online]="isPeerOnline">
+          {{ isPeerOnline ? 'מחובר/ת' : 'לא מחובר/ת' }}
+        </div>
+      }
     </div>
   </header>
 
   <!-- Messages -->
   <main class="chat__scroll" #scrollArea>
-
     <div class="chat__empty" *ngIf="messages.length === 0">
       אין הודעות עדיין
     </div>
@@ -24,14 +26,26 @@
       [class.msg--me]="m.fromUserId === me"
       [class.msg--peer]="m.fromUserId !== me"
     >
-      <span class="text">{{ m.content }}</span>
+      <!-- Sender (WhatsApp-style): only for peers in rooms -->
+      <div class="msg__sender" *ngIf="m.fromUserId !== me">
+        {{ m.fromUserName }}  
+      </div>
 
-      <span class="meta">
-        <span class="time">{{ m.sentAt | date:'HH:mm' }}</span>
-        <span class="ticks"
-              [class.delivered]="!!m.deliveredAt"
-              [class.read]="!!m.readAt">✓✓</span>
-      </span>
+      <!-- Bubble body: text + meta on one line -->
+      <div class="msg__body">
+        <span class="msg__text">{{ m.content }}</span>
+
+        <span class="msg__meta">
+          <span class="msg__time">{{ m.sentAt | date:'HH:mm' }}</span>
+          <span
+            class="msg__ticks"
+            [class.delivered]="!!m.deliveredAt"
+            [class.read]="!!m.readAt"
+          >
+            ✓✓
+          </span>
+        </span>
+      </div>
     </div>
 
     <div class="chat__typing" *ngIf="typing$ | async">מקליד/ה…</div>
@@ -39,21 +53,21 @@
 
   <!-- Composer -->
   @if(!isLoggedIUserBlockedByPeer()?.is_blocked) {
-  <footer class="chat__composer">
-    <input
-      #input
-      class="chat__input"
-      type="text"
-      dir="rtl"
-      placeholder="כתוב הודעה…"
-      [(ngModel)]="draft"
-      (keydown.enter)="send()"
-      (input)="onTyping()"
-    />
+    <footer class="chat__composer">
+      <input
+        #input
+        class="chat__input"
+        type="text"
+        dir="rtl"
+        placeholder="כתוב הודעה…"
+        [(ngModel)]="draft"
+        (keydown.enter)="send()"
+        (input)="onTyping()"
+      />
 
-    <button type="button" class="chat__send" (click)="send()">
-      שלח
-    </button>
-  </footer>
+      <button type="button" class="chat__send" (click)="send()">
+        שלח
+      </button>
+    </footer>
   }
 </div>

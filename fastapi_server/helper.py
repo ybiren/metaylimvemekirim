@@ -5,9 +5,18 @@ import json
 import mimetypes
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-from fastapi import HTTPException, UploadFile
+from fastapi import HTTPException, UploadFile, Depends
 from datetime import date
 import bcrypt
+
+from db import get_db
+from models.user import User
+
+
+
+def get_user(db: Session, user_id: int):
+    print("AAAAAAAAAAAAAA")
+    return db.query(User).filter(User.id == user_id).first()
 
 # -----------------------------
 # Image helpers

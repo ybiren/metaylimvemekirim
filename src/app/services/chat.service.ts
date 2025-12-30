@@ -7,6 +7,7 @@ import { environment } from '../../environments/environment';
 export type ChatMsg = {
   id: string;
   fromUserId: number;
+  fromUserName: string;
   toUserId: number;
   content: string;
   sentAt: string;
