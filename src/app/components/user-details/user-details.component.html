@@ -25,22 +25,22 @@
       <div *ngIf="!u" class="placeholder">אין תמונה</div>
     </div>
 
-    <h2 class="name">{{ u.c_name }}</h2>
-    <a class="email" [href]="'mailto:' + u.c_email">{{ u.c_email }}</a>
+    <h2 class="name">{{ u.name }}</h2>
+    <a class="email" [href]="'mailto:' + u.email">{{ u.email }}</a>
 
     <div class="grid">
-      <div><strong>ת. לידה:</strong> {{ u.c_birth_day || '—' }}/{{ u.c_birth_month || '—' }}/{{ u.c_birth_year || '—' }}</div>
-      <div><strong>מין:</strong> {{ textByValue(gender, u.c_gender)  || '—' }}</div>
-      <div><strong>איזור:</strong> {{ textByValue(regions, u.c_country) || '—' }}</div>
-      <div><strong>טלפון:</strong> {{ u.c_pcell || '—' }}</div>
-      <div><strong>מצב משפחתי:</strong> {{ textByValue(familyStatus, u.c_ff) || '—' }}</div>
+      <div><strong>ת. לידה:</strong> {{ u.birth_day || '—' }}/{{ u.birth_month || '—' }}/{{ u.birth_year || '—' }}</div>
+      <div><strong>מין:</strong> {{ textByValue(gender, u.gender)  || '—' }}</div>
+      <div><strong>איזור:</strong> {{ textByValue(regions, u.country) || '—' }}</div>
+      <div><strong>טלפון:</strong> {{ u.phone || '—' }}</div>
+      <div><strong>מצב משפחתי:</strong> {{ textByValue(familyStatus, u.ff) || '—' }}</div>
     </div>
 
-    <div class="about" *ngIf="u.c_details || u.c_details1">
+    <div class="about" *ngIf="u.details || u.details1">
       <h3>אודות</h3>
-      <p *ngIf="u.c_details">{{ u.c_details }}</p>
-      <h4 *ngIf="u.c_details1">תחומי עניין</h4>
-      <p *ngIf="u.c_details1">{{ u.c_details1 }}</p>
+      <p *ngIf="u.details">{{ u.details }}</p>
+      <h4 *ngIf="u.details1">תחומי עניין</h4>
+      <p *ngIf="u.details1">{{ u.details1 }}</p>
     </div>
 
     <!-- ✅ Block Button -->
@@ -50,6 +50,6 @@
     }
   </div>
   } @else {
-    <app-album [userId]="user().userID"></app-album>    
+    <app-album [userId]="id"></app-album>    
   }
 </section>

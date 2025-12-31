@@ -47,6 +47,7 @@ from helper import (
 
 from sendgrid_test.send_mail import send_mail
 from schemas.chat_room import ChatRoomOut2
+from schemas.user import UserBase
 from db import get_db
 
 
@@ -671,6 +672,9 @@ async def is_blocked(payload: dict = Body(...)):
 async def list_chat_rooms(db: Session = Depends(get_db)):
     return get_system_chat_rooms(db)
 
+@app.get("/user/{userid}", response_model=UserBase)
+async def get_user_by_id(userid: int, db: Session = Depends(get_db)):
+  return get_user(db,userid)
 
 # ---------------------------------------------------------------------
 # SPA + static (mount LAST)

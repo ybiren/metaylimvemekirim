@@ -40,19 +40,19 @@ export class UserDetailsComponent implements OnInit {
   loggedInUser = signal<IUser | null>(null);
   isLoggedIUserBlockedByPeer: Signal<{is_blocked:boolean}>;
   isShowProfile = signal<boolean>(true);
-  
+  id = 0;
 
   constructor() {
 
     this.loggedInUser.set(JSON.parse(localStorage.getItem('user')) as IUser)
     const idParam = this.route.snapshot.paramMap.get('userID') || this.route.snapshot.paramMap.get('id');
-    const id = Number(idParam);
-    if (!id) {
+    this.id = Number(idParam);
+    if (!this.id) {
       this.error.set('Invalid user id');
       return;
     }
-    this.fetchUser(id);
-    this.isLoggedIUserBlockedByPeer = this.usersSrv.is_blockedByPeerSignal(this.loggedInUser().userID, id);
+    this.fetchUser(this.id);
+    this.isLoggedIUserBlockedByPeer = this.usersSrv.is_blockedByPeerSignal(this.loggedInUser().userID, this.id);
   }
   
   ngOnInit(): void {
@@ -61,14 +61,36 @@ export class UserDetailsComponent implements OnInit {
   fetchUser(id: number) {
     this.loading.set(true);
     this.error.set('');
+    
+
+    this.usersSrv
+      .getUser(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (user) => {
+          this.user.set(user);
+          this.loading.set(false);
+        },
+        error: (err) => {
+          console.error('Failed to load user', err);
+          this.error.set('לא הצלחתי לטעון משתמש. נסה שוב.');
+          this.loading.set(false);
+        },
+      });
+
+
+    /*
     // Using existing GET /users and filtering client-side
     this.usersSrv.users$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((users) => {
       const found = (users || []).find(u => u.userID === id) || JSON.parse(localStorage.getItem('user'));
       this.user.set(found);
       this.loading.set(false);
     });
+    */
     
-    
+
+
+
     /*this.http.get<{ ok: boolean; users: IUser[] }>(`${this.apiBase}/users`).subscribe({
       next: (res) => {
         const found = (res.users || []).find(u => u.userID === id) || null;
@@ -90,7 +112,7 @@ export class UserDetailsComponent implements OnInit {
   
   imageUrl = computed(() => {
     const rand = Math.floor(Math.random() * 1000000);    
-    return `${this.apiBase}/images/${this.user().userID}?id=${rand}`;
+    return `${this.apiBase}/images/${this.id}?id=${rand}`;
   });
 
   

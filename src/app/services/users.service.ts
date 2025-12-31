@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { IUser } from '../interfaces';
-import { BehaviorSubject, firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, Observable, of } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { getCurrentUserId } from '../core/current-user';
 
@@ -12,6 +12,8 @@ export class UsersService {
  
   private baseUrl = environment.apibase;
   readonly users$ = new BehaviorSubject<IUser[]>([]); 
+  private baseApi = environment.apibase;
+  
 
   constructor(private http: HttpClient) {}
 
@@ -59,6 +61,10 @@ export class UsersService {
     return this.http.patch(`${this.baseUrl}/like`, {userId, liked_userid});
   }
 
+
+  getUser(userId: number): Observable<any> {
+    return this.http.get<any[]>(`${this.baseApi}/user/${userId}`);
+  }
 
 
 }

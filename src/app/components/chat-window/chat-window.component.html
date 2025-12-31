@@ -1,23 +1,88 @@
-<div class="chat" dir="rtl">
+<div class="chat" dir="rtl" (click)="menuOpen = false">
   <!-- Header -->
-  <header class="chat__header">
-    <button type="button" class="chat__close" (click)="close()">✕</button>
+  <header class="chat__header" (click)="$event.stopPropagation()">
+    <!-- Right side (RTL): close + title -->
+    <div class="chat__header-right">
+      <button type="button" class="chat__close" (click)="close()" aria-label="סגור">✕</button>
 
-    <div class="chat__head">
-      <div class="chat__name">
-        @if(peerId > 0) {
-        צ'אט עם {{ peerName }}
-        } @else {
-          {{roomName}}
+      <div class="chat__head">
+        <div class="chat__name">
+          @if (peerId > 0) {
+            צ'אט עם {{ peerName }}
+          } @else {
+            {{ roomName }}
+          }
+        </div>
+
+        @if (peerId > 0) {
+          <div class="chat__status" [class.online]="isPeerOnline">
+            {{ isPeerOnline ? 'מחובר/ת' : 'לא מחובר/ת' }}
+          </div>
         }
       </div>
-
-      @if(peerId > 0) {
-        <div class="chat__status" [class.online]="isPeerOnline">
-          {{ isPeerOnline ? 'מחובר/ת' : 'לא מחובר/ת' }}
-        </div>
-      }
     </div>
+
+    <!-- Left side (RTL): menu (rooms only) -->
+    @if (peerId <= 0) {
+      <div class="chat__menu" (click)="$event.stopPropagation()">
+        <button
+          type="button"
+          class="chat__menu-btn"
+          aria-label="תפריט חדר"
+          [attr.aria-expanded]="menuOpen"
+          (click)="toggleMenu()"
+        >
+          <span class="kebab" aria-hidden="true">
+            <span class="kebab__dot"></span>
+            <span class="kebab__dot"></span>
+            <span class="kebab__dot"></span>
+          </span>
+        </button>
+
+        @if (menuOpen) {
+          <div class="chat__menu-pop" role="menu">
+            <div class="chat__menu-title">משתתפים</div>
+
+            <div class="chat__menu-list">
+              <button
+                type="button"
+                class="chat__menu-user"
+                role="menuitem"
+                *ngFor="let u of roomUsers; trackBy: trackByUserId"
+                (click)="openUserFromMenu(u)"
+                [class.is-me]="u.userId === me"
+              >
+                <img
+                  class="chat__menu-avatar"
+                  [src]="imageUrl()(u.userId)"
+                  [alt]="u.name"
+                  loading="lazy"
+                />
+
+                <span class="chat__menu-name">
+                  {{ u.name }}
+                  <span class="chat__menu-me" *ngIf="u.userId === me">(אני)</span>
+                </span>
+
+                <a
+                  class="chat__menu-profile"
+                  href=""
+                  (click)="goToProfile(u.userId, $event)"
+                >
+                  הצג פרופיל
+                </a>
+
+
+              </button>
+
+              <div class="chat__menu-empty" *ngIf="!roomUsers || roomUsers.length === 0">
+                אין משתתפים להצגה
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
   </header>
 
   <!-- Messages -->
@@ -32,17 +97,15 @@
       [class.msg--me]="m.fromUserId === me"
       [class.msg--peer]="m.fromUserId !== me"
     >
-      <!-- Sender (WhatsApp-style): only for peers in rooms -->
       <div class="msg__sender" *ngIf="m.fromUserId !== me">
-        {{ m.fromUserName }}  
+        {{ m.fromUserName }}
       </div>
 
-      <!-- Bubble body: text + meta on one line -->
       <div class="msg__body">
         <span class="msg__text">{{ m.content }}</span>
 
         <span class="msg__meta">
-          <span class="msg__time">{{ m.sentAt | date:'HH:mm' }}</span>
+          <span class="msg__time">{{ m.sentAt | date : 'HH:mm' }}</span>
           <span
             class="msg__ticks"
             [class.delivered]="!!m.deliveredAt"
@@ -58,7 +121,7 @@
   </main>
 
   <!-- Composer -->
-  @if(!isLoggedIUserBlockedByPeer()?.is_blocked) {
+  @if (!isLoggedIUserBlockedByPeer()?.is_blocked) {
     <footer class="chat__composer">
       <input
         #input
@@ -71,7 +134,7 @@
         (input)="onTyping()"
       />
 
-      <button type="button" class="chat__send" (click)="send()">
+      <button type="button" class="chat__send" (click)="send()" [disabled]="!draft?.trim()">
         שלח
       </button>
     </footer>

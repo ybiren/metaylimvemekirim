@@ -26,6 +26,14 @@ export type ThreadRow = {
   count: number;
 };
 
+// ✅ NEW: minimal user row for the UI
+export type ChatUserRow = {
+  userId: number;
+  name: string;
+  online?: boolean;
+  imageUrl?: string | null;
+};
+
 @Injectable({ providedIn: 'root' })
 export class ChatService {
   private ws?: WebSocket;
@@ -47,6 +55,9 @@ export class ChatService {
 
   readonly statusChanged$  = new BehaviorSubject<number>(0);
 
+  // ✅ NEW: users observable
+  readonly users$ = new BehaviorSubject<ChatUserRow[]>([]);
+
   http = inject(HttpClient);
 
   // ==== NEW: Web Audio fallback (reliable beep) ====
@@ -54,7 +65,6 @@ export class ChatService {
   private audioUnlocked = false;
 
   constructor(private zone: NgZone) {
-    // Prepare/resume WebAudio on first user gesture (required by iOS/Safari)
     const unlock = async () => {
       try {
         if (!this.audioCtx) this.audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -76,6 +86,30 @@ export class ChatService {
     this.activePeer$.next(peerId);
   }
 
+  // ------------------- Users (top / sidebar) -------------------
+  async refreshUsers() {
+    this.me = getCurrentUserId();
+    if (!this.me) return;
+
+    try {
+      // ✅ pick ONE endpoint style that matches your backend:
+      // Option A (recommended): /users?me=123
+      const r = await fetch(`${this.baseApi}/users?me=${this.me}`);
+
+      // Option B: /presence/users?userId=123  (if you already have presence)
+      // const r = await fetch(`${this.baseApi}/presence/users?userId=${this.me}`);
+
+      const j = await r.json();
+
+      // Accept either {users:[...]} or just [...]
+      const rows = Array.isArray(j) ? j : (Array.isArray(j.users) ? j.users : []);
+      this.users$.next(rows as ChatUserRow[]);
+    } catch (e) {
+      console.warn('[Chat] refreshUsers failed', e);
+      this.users$.next([]);
+    }
+  }
+
   // ------------------- Threads (top menu) -------------------
   private refreshThreadsQueued = false;
   async refreshThreads() {
@@ -95,12 +129,11 @@ export class ChatService {
       this.unreadTotal$.next(rows.reduce((sum, t) => sum + (t.unread || 0), 0));
 
       if (this.unreadTotal$.value !== prevUnreadTotal) {
-        this.playBeep(); // ← uses WebAudio now
+        this.playBeep();
       }
     }, 100);
   }
 
-  // ------------------- History + WebSocket -------------------
   async loadHistory(peerId: number, limit = 200) {
     this.me = getCurrentUserId();
     if (!this.me) return;
@@ -110,14 +143,10 @@ export class ChatService {
     this.messages$.next([...arr].reverse());
   }
 
-  // ------------------- History + WebSocket -------------------
   async markAsRead(peerId: number) {
     this.me = getCurrentUserId();
     if (!this.me) return;
-    const r = await fetch(`${this.baseApi}/chat/mark-read?userId=${this.me}&peerId=${peerId}`);
-    //const j = await r.json();
-    //const arr = Array.isArray(j.messages) ? (j.messages as ChatMsg[]) : [];
-    //this.messages$.next([...arr].reverse());
+    await fetch(`${this.baseApi}/chat/mark-read?userId=${this.me}&peerId=${peerId}`);
   }
 
   private buildWsUrl(peerId: number) {
@@ -136,12 +165,23 @@ export class ChatService {
       return;
     }
 
+    // ✅ update users list when connecting (and also threads if you want)
+    ////this.refreshUsers();
+    this.refreshThreads();
+
     try { this.ws?.close(); } catch {}
 
     const finalUrl = this.buildWsUrl(peerId);
     this.ws = new WebSocket(finalUrl);
 
-    this.ws.onopen = () => { this.reconnectDelay = 500; this.statusChanged$.next(WebSocket.OPEN);console.log("open"); };
+    this.ws.onopen = () => {
+      this.reconnectDelay = 500;
+      this.statusChanged$.next(WebSocket.OPEN);
+      console.log("open");
+
+      // ✅ after socket opens (useful after reconnect)
+      ////this.refreshUsers();
+    };
 
     this.ws.onmessage = (ev) => {
       this.zone.run(() => {
@@ -174,15 +214,23 @@ export class ChatService {
         } else if (data.type === 'typing') {
           this.typing$.next(true);
           setTimeout(() => this.zone.run(() => this.typing$.next(false)), 1500);
+
+        // ✅ OPTIONAL: if your backend ever sends presence updates
+        } else if (data.type === 'presence' && Array.isArray(data.users)) {
+          this.users$.next(data.users as ChatUserRow[]);
         }
       });
     };
 
     this.ws.onclose = () => {
       this.typing$.next(false);
-      console.log("closed");
+      this.statusChanged$.next(WebSocket.CLOSED);
+
+      // ✅ refresh users to reflect "me offline"/others state (or clear)
+      //this.refreshUsers().catch(() => {});
       this.scheduleReconnect();
     };
+
     this.ws.onerror = () => this.scheduleReconnect();
   }
 
@@ -195,9 +243,12 @@ export class ChatService {
     try { this.ws?.close(); } catch {}
     this.ws = undefined;
     this.typing$.next(false);
+
+    // ✅ clear users list on disconnect (as you requested)
+    this.users$.next([]);
+    this.statusChanged$.next(WebSocket.CLOSED);
   }
 
-  // ------------------- Client -> Server events -------------------
   send(content: string) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     const payload = { type: 'message', content };
@@ -222,7 +273,6 @@ export class ChatService {
     if (lastPeerMsg) this.markReadUpTo(lastPeerMsg.sentAt);
   }
 
-  // ------------------- Reconnect -------------------
   private scheduleReconnect() {
     console.log("scheduleReconnect");
     if (!this.peer) return;
@@ -232,24 +282,18 @@ export class ChatService {
     this.reconnectDelay = Math.min(this.reconnectDelay * 2, this.maxReconnect);
 
     console.log("scheduleReconnect2");
-    
+
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = undefined;
-      //this.connect(this.peer);
+      // this.connect(this.peer);
     }, delay);
   }
 
-  // ------------------- Beep (WebAudio) -------------------
-  /**
-   * Plays a short sine beep (~150ms). No assets, no MIME issues.
-   * Requires a prior user gesture on some browsers (we "unlock" in constructor).
-   */
   async playBeep() {
     try {
       if (!this.audioCtx) {
         this.audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
-      // try to resume if needed
       if (this.audioCtx.state === 'suspended') {
         await this.audioCtx.resume().catch(() => {});
       }
@@ -261,10 +305,10 @@ export class ChatService {
       const gain = ctx.createGain();
 
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, now); // A5
+      osc.frequency.setValueAtTime(880, now);
       gain.gain.setValueAtTime(0.0, now);
-      gain.gain.linearRampToValueAtTime(0.15, now + 0.005);  // quick attack
-      gain.gain.linearRampToValueAtTime(0.0,  now + 0.15);   // short release
+      gain.gain.linearRampToValueAtTime(0.15, now + 0.005);
+      gain.gain.linearRampToValueAtTime(0.0,  now + 0.15);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
@@ -272,17 +316,11 @@ export class ChatService {
       osc.start(now);
       osc.stop(now + 0.16);
     } catch (e) {
-      // As a last resort, swallow error to avoid crashing UI
       console.warn('[Chat] beep failed:', e);
     }
   }
 
-    
   getChatRooms(): Observable<any[]> {
-    return this.http.get<any[]>(
-      `${this.baseApi}/chat_rooms`
-    );
+    return this.http.get<any[]>(`${this.baseApi}/chat_rooms`);
   }
-
-
 }

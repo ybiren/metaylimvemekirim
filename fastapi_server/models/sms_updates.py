@@ -7,6 +7,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import ARRAY, INET
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from typing import Optional
 
 
 class Base(DeclarativeBase):
@@ -34,8 +35,8 @@ class SmsUpdate(Base):
     consent_signature: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
     source: Mapped[str] = mapped_column(String(32), default="web")
-    ip_address: Mapped[str | None] = mapped_column(INET)
-    user_agent: Mapped[str | None] = mapped_column(Text)
+    ip_address: Mapped[Optional[str]] = mapped_column(INET)
+    user_agent: Mapped[Optional[str]] = mapped_column(Text)
 
     created_at: Mapped[str] = mapped_column(
         TIMESTAMP(timezone=True),
