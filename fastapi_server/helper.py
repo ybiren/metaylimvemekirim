@@ -9,14 +9,22 @@ from fastapi import HTTPException, UploadFile, Depends
 from datetime import date
 import bcrypt
 
-from db import get_db
 from models.user import User
+from models.chat_room import ChatRoom
 
 
 
 def get_user(db: Session, user_id: int):
-    print("AAAAAAAAAAAAAA")
     return db.query(User).filter(User.id == user_id).first()
+
+def get_system_chat_rooms(db: Session):
+    return (
+        db.query(ChatRoom)
+        .filter(ChatRoom.id < 0)
+        .order_by(ChatRoom.id)
+        .all()
+    )
+
 
 # -----------------------------
 # Image helpers

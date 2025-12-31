@@ -1,8 +1,9 @@
 // src/app/core/chat.service.ts
-import { Injectable, NgZone } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { inject, Injectable, NgZone } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { getCurrentUserId } from '../core/current-user';
 import { environment } from '../../environments/environment';
+import { HttpClient } from '@angular/common/http';
 
 export type ChatMsg = {
   id: string;
@@ -46,7 +47,7 @@ export class ChatService {
 
   readonly statusChanged$  = new BehaviorSubject<number>(0);
 
-
+  http = inject(HttpClient);
 
   // ==== NEW: Web Audio fallback (reliable beep) ====
   private audioCtx?: AudioContext;
@@ -198,7 +199,6 @@ export class ChatService {
 
   // ------------------- Client -> Server events -------------------
   send(content: string) {
-    console.log("AAA", this.ws.readyState);
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     const payload = { type: 'message', content };
     try { this.ws.send(JSON.stringify(payload)); } catch (e) {
@@ -276,4 +276,13 @@ export class ChatService {
       console.warn('[Chat] beep failed:', e);
     }
   }
+
+    
+  getChatRooms(): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.baseApi}/chat_rooms`
+    );
+  }
+
+
 }

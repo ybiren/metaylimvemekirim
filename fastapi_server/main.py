@@ -41,10 +41,13 @@ from helper import (
     load_messages,
     save_messages,
     pass_filter,
-    get_user
+    get_user,
+    get_system_chat_rooms
 )
 
 from sendgrid_test.send_mail import send_mail
+from schemas.chat_room import ChatRoomOut2
+from db import get_db
 
 
 # ---------------------------------------------------------------------
@@ -663,6 +666,10 @@ async def is_blocked(payload: dict = Body(...)):
     peer = users[peeridx]
     is_blocked = peer.get("block") and userId in peer["block"]
     return {"is_blocked": bool(is_blocked)}
+
+@app.get("/chat_rooms", response_model=List[ChatRoomOut2])
+async def list_chat_rooms(db: Session = Depends(get_db)):
+    return get_system_chat_rooms(db)
 
 
 # ---------------------------------------------------------------------

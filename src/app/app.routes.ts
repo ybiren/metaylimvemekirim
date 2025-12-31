@@ -13,6 +13,7 @@ import { AlbumComponent } from './components/album/album.component';
 import { HelpComponent } from './components/help/help.component';
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 import { SmsUpdatesSignalFormComponent } from './components/sms-updates-signal-form/sms-updates-signal-form.component';
+import { ChatSystemRoomsComponent } from './components/chat-system-rooms/chat-system-rooms.component';
 
 export const appRoutes: Route[] = [
   { path: 'home', component: HomeComponent },
@@ -30,4 +31,5 @@ export const appRoutes: Route[] = [
   { path: 'help', component: HelpComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'sms', component: SmsUpdatesSignalFormComponent },
+  { path: 'chat-system-rooms', component: ChatSystemRoomsComponent },
 ];

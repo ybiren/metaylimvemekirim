@@ -4,9 +4,15 @@
     <button type="button" class="chat__close" (click)="close()">✕</button>
 
     <div class="chat__head">
-      <div class="chat__name">צ'אט עם {{ peerName }}</div>
+      <div class="chat__name">
+        @if(peerId > 0) {
+        צ'אט עם {{ peerName }}
+        } @else {
+          {{roomName}}
+        }
+      </div>
 
-      @if(peerId!== -1000) {
+      @if(peerId > 0) {
         <div class="chat__status" [class.online]="isPeerOnline">
           {{ isPeerOnline ? 'מחובר/ת' : 'לא מחובר/ת' }}
         </div>

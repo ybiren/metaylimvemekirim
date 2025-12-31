@@ -26,8 +26,6 @@ ROOM_SOCKETS: Dict[str, Set[WebSocket]] = {}
 # =========================
 # GLOBAL chat (in-memory)
 # =========================
-GLOBAL_PEER_ID = -1000
-GLOBAL_ROOM_ID = "global"
 GLOBAL_LOCK = asyncio.Lock()
 GLOBAL_MESSAGES: List[dict] = []
 
@@ -43,12 +41,12 @@ def _room_id(u1: int, u2: int) -> str:
 
 
 def _is_global(peer_id: int) -> bool:
-    return peer_id == GLOBAL_PEER_ID
+    return peer_id < 0
 
 
 def _resolve_room(user_id: int, peer_id: int) -> str:
     if _is_global(peer_id):
-        return GLOBAL_ROOM_ID
+        return str(peer_id)
     return _room_id(user_id, peer_id)
 
 
@@ -111,7 +109,7 @@ async def chat_history(
                 key=lambda m: m["sentAt"],
                 reverse=True,
             )[:limit]
-        return {"ok": True, "roomId": GLOBAL_ROOM_ID, "messages": msgs}
+        return {"ok": True, "roomId": user2, "messages": msgs}
 
     rid = _room_id(user1, user2)
     async with chat_lock:
@@ -194,19 +192,7 @@ async def chat_threads(
                 "count": len(msgs),
             })
 
-    if includeGlobal:
-        async with GLOBAL_LOCK:
-            last = max(GLOBAL_MESSAGES, key=lambda m: m["sentAt"], default=None)
-            items.append({
-                "roomId": GLOBAL_ROOM_ID,
-                "peerId": GLOBAL_PEER_ID,
-                "lastAt": last["sentAt"] if last else "",
-                "lastFromUserId": last["fromUserId"] if last else None,
-                "lastPreview": last["content"][:120] if last else "",
-                "unread": 0,
-                "count": len(GLOBAL_MESSAGES),
-            })
-
+    
     items.sort(key=lambda x: x["lastAt"], reverse=True)
     return {"ok": True, "threads": items[:limit]}
 
@@ -262,7 +248,7 @@ async def ws_chat(
             if _is_global(peerId):
                 async with GLOBAL_LOCK:
                     GLOBAL_MESSAGES.append(msg)
-                await _broadcast(GLOBAL_ROOM_ID, {"type": "message", "roomId": GLOBAL_ROOM_ID, "msg": msg})
+                await _broadcast(str(peerId), {"type": "message", "roomId": peerId, "msg": msg})
                 continue
 
             msg.update({"deliveredAt": None, "readAt": None})

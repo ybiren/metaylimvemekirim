@@ -1,0 +1,22 @@
+<section class="rooms" dir="rtl">
+  <h2 class="rooms__title">חדרים מערכתיים</h2>
+
+  @if (loading()) {
+    <div class="state">טוען חדרים…</div>
+  } @else if (error()) {
+    <div class="state state--error">{{ error() }}</div>
+  } @else if (rooms().length === 0) {
+    <div class="state">אין חדרים להצגה</div>
+  } @else {
+    <div class="rooms-grid">
+      <button
+        class="room"
+        *ngFor="let r of rooms(); trackBy: trackById"
+        type="button"
+        (click)="openChat(r.id, r.room_id)"
+      >
+        {{ r.room_id }}
+      </button>
+    </div>
+  }
+</section>

@@ -36,7 +36,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   private users    = inject(UsersService);
 
   /** dialog data (optional) — no decorators needed */
-  private dlgData = inject(DIALOG_DATA, { optional: true }) as { peerId?: number } | null;
+  private dlgData = inject(DIALOG_DATA, { optional: true }) as { peerId?: number, roomName?: string } | null;
   private destroyRef = inject(DestroyRef);
 
   /** expose typing stream to template */
@@ -49,10 +49,14 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   get peerName() { return this.users.getName(this.peerId!); }
   isLoggedIUserBlockedByPeer: Signal<{is_blocked:boolean}>;
  
+  roomName = "";
+
   constructor() {
     // Resolve peerId from @Input or dialog data
     if (this.peerId == null) this.peerId = this.dlgData?.peerId;
+    this.roomName =  this.dlgData?.roomName;
     this.isLoggedIUserBlockedByPeer = this.users.is_blockedByPeerSignal(this.me, this.peerId);
+  
   }
 
   async ngOnInit() {
