@@ -379,6 +379,14 @@
   cursor: default;
 }
 
+.chat__menu-profile {
+  font-size: 12px;
+  font-weight: 700;
+  color: #075e54;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
 /* ===== Small screens ===== */
 @media (max-width: 480px) {
   :host {

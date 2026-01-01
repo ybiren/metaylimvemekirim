@@ -75,7 +75,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
       this.close();
       return;
     }
-    this.scrollToEnd();
+    ////this.scrollToEnd();
 
     // mark active peer (used by service to mute beeps, etc.)
     this.chatSvc.setActivePeer(this.peerId);
@@ -92,7 +92,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     this.chatSvc.messages$.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(list => {
         this.messages = list;
-        this.scrollToEnd();
+        setTimeout(() => this.scrollToEnd(),300);
       });
 
     this.chatSvc.users$
@@ -136,7 +136,9 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     queueMicrotask(() => {
       const el = this.scrollArea?.nativeElement;
       if (!el) return;
-      el.scrollTop = el.scrollHeight;
+      //el.scrollTop = el.scrollHeight;
+      el.scrollTop = 999999;
+      //console.log("scrollTop", el.scrollTop);
     });
   }
 

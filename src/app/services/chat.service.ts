@@ -30,8 +30,6 @@ export type ThreadRow = {
 export type ChatUserRow = {
   userId: number;
   name: string;
-  online?: boolean;
-  imageUrl?: string | null;
 };
 
 @Injectable({ providedIn: 'root' })

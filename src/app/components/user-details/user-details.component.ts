@@ -135,10 +135,9 @@ export class UserDetailsComponent implements OnInit {
   }
 
   isBlocked = computed(() => {
-    const u = this.user();
     const me = this.loggedInUser();
-    if (!u || !me) return false;
-    return me.block?.includes(u.userID );
+    if (!this.id || !me) return false;
+    return me.block?.includes(this.id);
   });
   
   
@@ -149,7 +148,7 @@ export class UserDetailsComponent implements OnInit {
 
     const isMobile = window.innerWidth < 600;
     this.dialog.open(ChatWindowComponent, {
-      data: { peerId: u.userID },
+      data: { peerId: this.id },
       panelClass: isMobile ? 'im-dialog-mobile' : 'im-dialog-desktop',
       ...(isMobile ? { width: '100vw', height: '100vh' } : { width: 'min(420px, 95vw)', height:'80vh' }),
     });
