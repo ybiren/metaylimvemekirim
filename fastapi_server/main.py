@@ -42,14 +42,16 @@ from helper import (
     save_messages,
     pass_filter,
     get_user,
-    get_system_chat_rooms
+    get_system_chat_rooms,
+    get_user_by_email_pass,
+    apply_user_filters
 )
 
 from sendgrid_test.send_mail import send_mail
 from schemas.chat_room import ChatRoomOut2
 from schemas.user import UserBase
 from db import get_db
-
+from models.user import User
 
 # ---------------------------------------------------------------------
 # Config & Logging
@@ -401,8 +403,22 @@ async def register(
     })
 
 
-@app.post("/users")
-async def get_users(payload: dict = Body(...)) -> JSONResponse:
+@app.post("/users", response_model=list[UserBase])
+async def get_users(payload: dict = Body(...), db: Session = Depends(get_db)):
+    # accept either userId or userid
+    user_id = payload.get("userId", payload.get("userid"))
+    if not user_id:
+        raise HTTPException(status_code=400, detail="Missing userId")
+
+    me = db.query(User).filter(User.id == int(user_id)).first()
+    if not me:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    q = db.query(User)
+    q = apply_user_filters(q, me)
+
+    return q.all()
+    '''
     ensure_data_file(DATA_DIR, USERS_PATH)
     async with users_lock:
         users = await load_users(USERS_PATH)
@@ -412,13 +428,18 @@ async def get_users(payload: dict = Body(...)) -> JSONResponse:
         filtered_users = [u for u in users if u.get("userID") != user.get("userID") and pass_filter(u, user)]
        
     return JSONResponse({"ok": True, "count": len(filtered_users), "users": filtered_users})
+    '''
 
-
-@app.post("/login")
+@app.post("/login", response_model=UserBase)
 async def login(
     c_email: str = Form(...),
     password: str = Form(...),
+    db: Session = Depends(get_db)
 ):
+    c_email = (c_email or "").strip().lower()
+    return get_user_by_email_pass(db, c_email, password)
+
+    '''
     email = (c_email or "").strip().lower()
     async with users_lock:
         user, idx, users = await get_user_and_index_by_email(USERS_PATH, email)
@@ -437,7 +458,7 @@ async def login(
     user_id = user_sanitized.get("userID")
     image_url = f"/images/{user_id}" if user_id else None
     return JSONResponse({"ok": True, "message": "Login successful.", "user": user_sanitized, "image_url": image_url, "users": filtered_users})
-
+    '''
 
 @app.post("/forgotPass")
 async def forgot_pass(

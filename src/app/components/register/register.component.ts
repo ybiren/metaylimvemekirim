@@ -393,7 +393,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
         this.user.set(found);
 
         if (this.user()) {
-          const uid = this.user()!.userID;
+          const uid = this.user()!.id;
 
           // profile image preview
           this.imagePreviewUrl = `${this.apiBase}/images/${uid}`;
@@ -406,26 +406,27 @@ export class RegisterComponent implements OnInit, OnDestroy {
         }
 
         const current = this.user();
+        console.log("current",current);  
 
         this.form.patchValue({
-          c_name: current?.c_name ?? this.form.value.c_name,
-          c_gender: current?.c_gender ?? this.form.value.c_gender,
-          c_birth_day: current?.c_birth_day ? current.c_birth_day : (this.form.value.c_birth_day as unknown as number),
-          c_birth_month: current?.c_birth_month ? current.c_birth_month : (this.form.value.c_birth_month as unknown as number),
-          c_birth_year: current?.c_birth_year ? current.c_birth_year : (this.form.value.c_birth_year as unknown as number),
-          c_country: current?.c_country ?? this.form.value.c_country,
-          c_pcell: current?.c_pcell ?? this.form.value.c_pcell,
-          c_email: current?.c_email ?? this.form.value.c_email,
-          c_ff: current?.c_ff ?? this.form.value.c_ff,
-          c_details: current?.c_details ?? this.form.value.c_details,
-          c_details1: current?.c_details1 ?? this.form.value.c_details1,
-          c_height: current?.c_height ?? this.form.value.c_height,
-          c_education: current?.c_education ?? this.form.value.c_education,
-          c_work: current?.c_work ?? this.form.value.c_work,
-          c_children: current?.c_children ?? this.form.value.c_children,
-          c_smoking: current?.c_smoking ?? this.form.value.c_smoking,
-          c_url: current?.c_url ?? this.form.value.c_url,
-          c_fb: current?.c_fb ?? this.form.value.c_fb,
+          c_name: current?.name ?? this.form.value.c_name,
+          c_gender: current?.gender ?? this.form.value.c_gender,
+          c_birth_day: current?.birth_day ??  (this.form.value.c_birth_day as unknown as number),
+          c_birth_month: current?.birth_month ??  (this.form.value.c_birth_month as unknown as number),
+          c_birth_year: current?.birth_year ??  (this.form.value.c_birth_year as unknown as number),
+          c_country: current?.country ?? this.form.value.c_country,
+          c_pcell: current?.pcell ?? this.form.value.c_pcell,
+          c_email: current?.email ?? this.form.value.c_email,
+          c_ff: current?.ff ?? this.form.value.c_ff,
+          c_details: current?.details ?? this.form.value.c_details,
+          c_details1: current?.details1 ?? this.form.value.c_details1,
+          c_height: current?.height ?? this.form.value.c_height,
+          c_education: current?.education ?? this.form.value.c_education,
+          c_work: current?.work ?? this.form.value.c_work,
+          c_children: current?.children ?? this.form.value.c_children,
+          c_smoking: current?.smoking ?? this.form.value.c_smoking,
+          c_url: current?.url ?? this.form.value.c_url,
+          c_fb: current?.fb ?? this.form.value.c_fb,
           password: current?.password2 ?? this.form.value.password,
           password2: current?.password2 ?? this.form.value.password2,
           filter_height_min: current?.filter_height_min ?? this.form.value.filter_height_min,

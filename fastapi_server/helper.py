@@ -11,11 +11,15 @@ import bcrypt
 
 from models.user import User
 from models.chat_room import ChatRoom
-
-
+from passlib.context import CryptContext
+from sqlalchemy import and_, or_
 
 def get_user(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id).first()
+
+def  get_user_by_email_pass(db, c_email, password):
+     pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
+     return db.query(User).filter(User.email == c_email and User.password_hash == pwd_context).first()
 
 def get_system_chat_rooms(db: Session):
     return (
@@ -24,6 +28,83 @@ def get_system_chat_rooms(db: Session):
         .order_by(ChatRoom.id)
         .all()
     )
+
+
+def calc_age_py(day, month, year):
+    if not (day and month and year):
+        return None
+    try:
+        born = date(int(year), int(month), int(day))
+    except ValueError:
+        return None
+    today = date.today()
+    return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+
+
+def apply_user_filters(q, me):
+    q = q.filter(User.id != me.id)
+
+    my_height = me.height
+
+    if my_height is not None:
+        q = q.filter(
+          or_(
+                User.filter_height_min.is_(None),
+                User.filter_height_max.is_(None),
+            and_(
+                User.filter_height_min <= my_height,
+                User.filter_height_max >= my_height,
+            ),
+          )
+        )
+    else:
+       pass
+
+
+    my_age = calc_age_py(me.birth_day, me.birth_month, me.birth_year)
+    if my_age is not None:
+       q = q.filter(
+         or_(
+           User.filter_age_min.is_(None),
+           User.filter_age_max.is_(None),
+           and_(
+             User.filter_age_min <= my_age,
+             User.filter_age_max >= my_age,
+           ),
+         )
+       )
+    else:
+       pass
+
+    my_ff = me.ff
+    if my_ff is not None:
+        q = q.filter(
+            or_(
+                User.filter_family_status.is_(None),     # no filter
+                User.filter_family_status == "",         # no filter (if you store empty string)
+                User.filter_family_status == "0",        # no filter (if you use "0" meaning all)
+                ("," + User.filter_family_status + ",").contains(f",{int(my_ff)},")
+            )
+        )
+    else:
+        pass
+
+
+    my_smoking = me.smoking
+    if my_smoking is not None:
+        q = q.filter(
+            or_(
+                User.filter_smoking_status.is_(None),           # no filter
+                User.filter_smoking_status == "0",              # no filter
+                User.filter_smoking_status == str(int(my_smoking)),
+            )
+        )
+    else:
+        pass
+
+    return q
+
+
 
 
 # -----------------------------

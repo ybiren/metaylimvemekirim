@@ -43,11 +43,11 @@ export class LoginComponent {
     console.log("apibase", environment.apibase);
     this.http.post(`${environment.apibase}/login`, formData).subscribe({
       next: (res: any) => {
-        if (res && res.ok) {
+        if (res) {
           this.success = 'ברוך הבא!';
           console.log('Login success:', res);
           // Save user in localStorage
-          localStorage.setItem('user', JSON.stringify(res.user));
+          localStorage.setItem('user', JSON.stringify(res));
           this.usersSvc.users$.next((res.users ?? []));
           setTimeout(() => {
             this.router.navigate(['/home']);

@@ -18,14 +18,16 @@ export class UsersService {
   constructor(private http: HttpClient) {}
 
   async load() {
+     /*
     if(getCurrentUserId()) {
       try {
-        const res = await firstValueFrom(this.http.post<{ users: IUser[] }>(`${this.baseUrl}/users`,{userId: getCurrentUserId()}));
+        const res = await firstValueFrom();
         this.users$.next((res.users ?? []));
       } catch (err) {
         console.error('[UsersService] Failed to load users:', err);
       }
     }
+    */
   }
   
   
@@ -64,6 +66,10 @@ export class UsersService {
 
   getUser(userId: number): Observable<any> {
     return this.http.get<any[]>(`${this.baseApi}/user/${userId}`);
+  }
+
+  getAllUsers() {
+     return this.http.post<IUser[]>(`${this.baseUrl}/users`,{userId: getCurrentUserId()});
   }
 
 

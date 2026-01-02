@@ -25,8 +25,8 @@
   <div class="top-menu">
     @if (loggedInUser) {
       <div class="greeting">
-        <a [routerLink]="['/user', loggedInUser.userID]">
-          ({{ loggedInUser.c_name }})
+        <a [routerLink]="['/user', loggedInUser.id]">
+          ({{ loggedInUser.name }})
         </a>
       </div>
     }

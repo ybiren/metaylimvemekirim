@@ -23,7 +23,7 @@
               class="avatar"
             />
 
-            <a [routerLink]="['/user', u.userID]" class="name">
+            <a [routerLink]="['/user', u.id]" class="name">
               {{ u.c_name }}
             </a>
 
@@ -32,19 +32,19 @@
                 class="like-btn"
                 type="button"
                 (click)="toggleLike(u)"
-                [attr.aria-pressed]="isLiked()(u.userID) ? 'true' : 'false'"
+                [attr.aria-pressed]="isLiked()(u.id) ? 'true' : 'false'"
                 aria-label="Like"
                 title="Like"
               >
-                <span class="heart" [class.liked]="isLiked()(u.userID)">❤</span>
+                <span class="heart" [class.liked]="isLiked()(u.id)">❤</span>
               </button>
               <span class="like-label">
-                {{ isLiked()(u.userID) ? 'Liked' : 'Like' }}
+                {{ isLiked()(u.id) ? 'Liked' : 'Like' }}
               </span>
             
             </div>
 
-            @if (isOnline()(u.userID)) {
+            @if (isOnline()(u.id)) {
               <div class="blink">כרגע באתר</div>
             }
 
@@ -75,8 +75,8 @@
             class="avatar"
           />
 
-          <a [routerLink]="['/user', u.userID]" class="name">
-            {{ u.c_name }}
+          <a [routerLink]="['/user', u.id]" class="name">
+            {{ u.name }}
           </a>
 
           <div class="actions">
@@ -84,18 +84,18 @@
               class="like-btn"
               type="button"
               (click)="toggleLike(u)"
-              [attr.aria-pressed]="isLiked()(u.userID) ? 'true' : 'false'"
+              [attr.aria-pressed]="isLiked()(u.id) ? 'true' : 'false'"
               aria-label="Like"
               title="Like"
             >
-              <span class="heart" [class.liked]="isLiked()(u.userID)">❤</span>
+              <span class="heart" [class.liked]="isLiked()(u.id)">❤</span>
             </button>
             <span class="like-label">
-              {{ isLiked()(u.userID) ? 'Liked' : 'Like' }}
+              {{ isLiked()(u.id) ? 'Liked' : 'Like' }}
             </span>
           </div>
 
-          @if (isOnline()(u.userID)) {
+          @if (isOnline()(u.id)) {
             <div class="blink">כרגע באתר</div>
           }
         </div>

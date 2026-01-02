@@ -102,10 +102,10 @@ export class UsersComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     if (!this.inputUsers()) {
       // main users page: subscribe to service
-      this.usersSvc.users$.subscribe((users) => this.users.set(users));
+      this.usersSvc.getAllUsers().subscribe((users) => this.users.set(users));
     } else {
       // embedded mode: exclude myself
-      this.users.set(this.inputUsers()!.filter((u) => u.userID !== this.me));
+      this.users.set(this.inputUsers()!.filter((u) => u.id !== this.me));
     }
   }
 
@@ -121,9 +121,8 @@ export class UsersComponent implements OnInit, OnDestroy {
   });
 
   imageUrl = computed(() => {
-    console.log(this.users());
     const rand = Math.floor(Math.random() * 1_000_000);
-    return (u: IUser) => `${this.apiBase}/images/${u.userID}?id=${rand}`;
+    return (u: IUser) => `${this.apiBase}/images/${u.id}?id=${rand}`;
   });
 
   isOnline = computed(() => {
@@ -138,19 +137,19 @@ export class UsersComponent implements OnInit, OnDestroy {
   // -------- utils / actions --------
 
   trackByUserId(index: number, u: IUser): number {
-    return u.userID;
+    return u.id;
   }
 
   toggleLike(u: IUser) {
-    const userId = this.loggedInUser().userID;
-    this.usersSvc.like(userId, u.userID).subscribe({
+    const userId = this.loggedInUser().id;
+    this.usersSvc.like(userId, u.id).subscribe({
       next: (res: any) => {
          this.toast.show('הוספת like ✓');
          localStorage.setItem('user', JSON.stringify({...this.loggedInUser(),"like": [...res.like_list]}));
          this.loggedInUser.set(JSON.parse(localStorage.getItem('user')) as IUser);
-         if(this.loggedInUser().like?.includes(u.userID)) {
-           this.chat.setActivePeer(u.userID);
-           this.chat.connect(u.userID);
+         if(this.loggedInUser().like?.includes(u.id)) {
+           this.chat.setActivePeer(u.id);
+           this.chat.connect(u.id);
            this.chat.statusChanged$
           .pipe(
             filter(stat => stat === WebSocket.OPEN),

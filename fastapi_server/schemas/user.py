@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class UserBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    id: Optional[int] = None
     name: Optional[str] = None
     gender: Optional[int] = None
 
