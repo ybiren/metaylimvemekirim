@@ -9,6 +9,7 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.dialects.postgresql import JSONB
 
 
 class Base(DeclarativeBase):
@@ -63,6 +64,12 @@ class User(Base):
 
     filter_family_status = Column(String(100))
     filter_smoking_status = Column(String(20))
+
+    extra_images = Column(
+        JSONB,
+        nullable=True,
+        default=list   
+    )
 
     # timestamptz (timestamp with time zone)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

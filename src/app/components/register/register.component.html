@@ -1,6 +1,7 @@
 <form class="form" [formGroup]="form" (ngSubmit)="onSubmit()" dir="rtl" novalidate>
+  <!-- Intro -->
   <section class="intro card">
-    @if(!user()) {
+    @if (!user()) {
       <h1 class="title">הרשמה לפגוש אותי</h1>
       <p>
         ברוכים הבאים לרשת החברתית פגוש אותי<br />
@@ -10,7 +11,7 @@
       <p class="muted">
         <a href="feedback.asp">אם אינך מצליח להרשם לחץ כאן לעזרה</a>
       </p>
-    } @else{
+    } @else {
       <h1 class="title">עדכון פרטים</h1>
     }
   </section>
@@ -27,7 +28,7 @@
       </div>
     </div>
 
-    @if(user()) {
+    @if (user()) {
       <label class="label" for="c_height">גובה</label>
       <div class="field">
         <div class="inline-note">
@@ -39,11 +40,11 @@
     <label class="label" for="c_gender">מין*</label>
     <div class="field">
       <select id="c_gender" formControlName="c_gender">
-        <option value="0">בחר</option>
-        <option *ngFor="let r of gender" [value]="r.val">{{ r.txt }}</option>
+        <option [ngValue]="0">בחר</option>
+        <option *ngFor="let r of gender" [ngValue]="r.val">{{ r.txt }}</option>
       </select>
       <div class="errors" *ngIf="f.c_gender.touched && f.c_gender.invalid">
-        <small *ngIf="f.c_gender.errors?.required">שדה חובה</small>
+        <small *ngIf="f.c_gender.errors?.min">שדה חובה</small>
       </div>
     </div>
 
@@ -51,37 +52,30 @@
     <div class="field">
       <div class="field-row">
         <select formControlName="c_birth_day">
-          <option value="0">יום</option>
-          <option *ngFor="let d of days" [value]="d">{{ d }}</option>
+          <option [ngValue]="0">יום</option>
+          <option *ngFor="let d of days" [ngValue]="d">{{ d }}</option>
         </select>
         <select formControlName="c_birth_month">
-          <option value="0">חודש</option>
-          <option *ngFor="let m of months" [value]="m">{{ m }}</option>
+          <option [ngValue]="0">חודש</option>
+          <option *ngFor="let m of months" [ngValue]="m">{{ m }}</option>
         </select>
         <select formControlName="c_birth_year">
-          <option value="0">שנה</option>
-          <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+          <option [ngValue]="0">שנה</option>
+          <option *ngFor="let y of years" [ngValue]="y">{{ y }}</option>
         </select>
       </div>
 
-      <div
-        class="errors"
-        *ngIf="(f.c_birth_day.touched || f.c_birth_month.touched || f.c_birth_year.touched) &&
-               (f.c_birth_day.invalid || f.c_birth_month.invalid || f.c_birth_year.invalid)"
-      >
-        <small
-          *ngIf="f.c_birth_day.errors?.required || f.c_birth_month.errors?.required || f.c_birth_year.errors?.required"
-        >
-          חובה לבחור תאריך מלא
-        </small>
+      <div class="errors" *ngIf="(f.c_birth_day.touched || f.c_birth_month.touched || f.c_birth_year.touched) &&
+        (f.c_birth_day.invalid || f.c_birth_month.invalid || f.c_birth_year.invalid)">
+        <small>חובה לבחור תאריך מלא</small>
       </div>
     </div>
 
     <label class="label" for="c_country">אזור מגורים*</label>
     <div class="field">
       <select id="c_country" formControlName="c_country">
-        <option value="0">בחר</option>
-        <option *ngFor="let r of regions" [value]="r.val">{{ r.txt }}</option>
+        <option [ngValue]="0">בחר</option>
+        <option *ngFor="let r of regions" [ngValue]="r.val">{{ r.txt }}</option>
       </select>
       <div class="errors" *ngIf="f.c_country.touched && f.c_country.invalid">
         <small *ngIf="f.c_country.errors?.required">שדה חובה</small>
@@ -108,21 +102,21 @@
 
     <label class="label" for="c_education">השכלה</label>
     <div class="field">
-      <select id="c_education" formControlName="c_education" dir="rtl">
-        <option value="0">בחר</option>
-        <option *ngFor="let e of education" [value]="e.val">{{ e.txt }}</option>
+      <select id="c_education" formControlName="c_education">
+        <option [ngValue]="0">בחר</option>
+        <option *ngFor="let e of education" [ngValue]="e.val">{{ e.txt }}</option>
       </select>
     </div>
 
     <label class="label" for="c_work">תחום עיסוק</label>
     <div class="field">
-      <select id="c_work" formControlName="c_work" dir="rtl">
-        <option value="0">בחר</option>
-        <option *ngFor="let w of work" [value]="w.val">{{ w.txt }}</option>
+      <select id="c_work" formControlName="c_work">
+        <option [ngValue]="0">בחר</option>
+        <option *ngFor="let w of work" [ngValue]="w.val">{{ w.txt }}</option>
       </select>
     </div>
 
-    @if(user()) {
+    @if (user()) {
       <label class="label" for="c_url">כתובת אתר אינטרנט</label>
       <div class="field">
         <input id="c_url" type="url" formControlName="c_url" placeholder="http://myurl" dir="ltr" />
@@ -130,9 +124,7 @@
           <small>כתובת לא תקינה</small>
         </div>
       </div>
-    }
 
-    @if(user()) {
       <label class="label" for="c_fb">כתובת פרופיל פייסבוק</label>
       <div class="field">
         <input id="c_fb" type="url" formControlName="c_fb" placeholder="" dir="ltr" />
@@ -141,55 +133,46 @@
 
     <label class="label" for="c_ff">מצב משפחתי</label>
     <div class="field">
-      <select id="c_ff" formControlName="c_ff" dir="rtl">
-        <option value="0">בחר</option>
-        <option *ngFor="let r of familyStatus" [value]="r.val">{{ r.txt }}</option>
+      <select id="c_ff" formControlName="c_ff">
+        <option [ngValue]="0">בחר</option>
+        <option *ngFor="let r of familyStatus" [ngValue]="r.val">{{ r.txt }}</option>
       </select>
     </div>
 
-    @if(user()) {
+    @if (user()) {
       <label class="label" for="c_children">מספר ילדים</label>
       <div class="field">
-        <select id="c_children" formControlName="c_children" dir="rtl">
-          <option value="0">בחר</option>
-          <option *ngFor="let c of childrenStatus" [value]="c.val">{{ c.txt }}</option>
+        <select id="c_children" formControlName="c_children">
+          <option [ngValue]="0">בחר</option>
+          <option *ngFor="let c of childrenStatus" [ngValue]="c.val">{{ c.txt }}</option>
         </select>
       </div>
-    }
 
-    @if(user()) {
       <label class="label" for="c_smoking">הרגלי עישון</label>
       <div class="field">
-        <select id="c_smoking" formControlName="c_smoking" dir="rtl">
-          <option value="0">בחר</option>
-          <option *ngFor="let s of smokingStatus" [value]="s.val">{{ s.txt }}</option>
+        <select id="c_smoking" formControlName="c_smoking">
+          <option [ngValue]="0">בחר</option>
+          <option *ngFor="let s of smokingStatus" [ngValue]="s.val">{{ s.txt }}</option>
         </select>
       </div>
     }
 
+    <!-- Profile image -->
     <label class="label" for="c_image">תמונת פרופיל</label>
     <div class="field">
-      <input
-        id="c_image"
-        type="file"
-        accept="image/*"
-        (change)="onImageSelected($event)"
-        formControlName="c_image"
-      />
+      <input id="c_image" type="file" accept="image/*" (change)="onImageSelected($event)" />
 
       <div class="preview-row" *ngIf="imagePreviewUrl">
         <img [src]="imagePreviewUrl" alt="תצוגה מקדימה" class="avatar-preview" />
         <small class="muted">תצוגה מקדימה</small>
       </div>
 
-      <div class="errors" *ngIf="(f.c_image.touched && f.c_image.invalid) || imageError">
-        <small *ngIf="f.c_image.errors?.required">שדה חובה</small>
-        <small *ngIf="f.c_image.errors?.notImage">נא לבחור קובץ תמונה תקין</small>
-        <small *ngIf="f.c_image.errors?.tooLarge">גודל התמונה לא יכול לעלות על ‎256KB‎</small>
-        <small *ngIf="imageError">{{ imageError }}</small>
+      <div class="errors" *ngIf="imageError">
+        <small>{{ imageError }}</small>
       </div>
     </div>
 
+    <!-- Extra images -->
     <label class="label" for="c_extra_images">תמונות נוספות (עד 5)</label>
     <div class="field">
       <div class="extra-upload-row">
@@ -214,7 +197,7 @@
               type="button"
               class="remove-btn danger"
               (click)="deleteServerExtraImage(i)"
-              [disabled]="deletingExtraId() === serverExtraItems[i]?.id"
+              [disabled]="deletingExtraId() === serverExtraItems[i]?.filename"
             >
               מחק
             </button>
@@ -237,29 +220,32 @@
     </div>
   </div>
 
-  <h2 class="section-header">סיסמה לכניסה מאובטחת</h2>
-  <div
-    class="grid card"
-    [class.group-invalid]="form.hasError('passwordMismatch') && (f.password2.touched || f.password.touched)"
-  >
-    <label class="label" for="password">סיסמה*</label>
-    <div class="field">
-      <input id="password" type="password" formControlName="password" maxlength="9" />
-      <div class="errors" *ngIf="f.password.touched && f.password.invalid">
-        <small *ngIf="f.password.errors?.required">שדה חובה</small>
-        <small *ngIf="f.password.errors?.maxlength">עד 9 תווים (כמו במקור)</small>
+  <!-- Password section ONLY on register -->
+  @if (!user()) {
+    <h2 class="section-header">סיסמה לכניסה מאובטחת</h2>
+    <div
+      class="grid card"
+      [class.group-invalid]="form.hasError('passwordMismatch') && (f.password2.touched || f.password.touched)"
+    >
+      <label class="label" for="password">סיסמה*</label>
+      <div class="field">
+        <input id="password" type="password" formControlName="password" maxlength="9" />
+        <div class="errors" *ngIf="f.password.touched && f.password.invalid">
+          <small *ngIf="f.password.errors?.required">שדה חובה</small>
+          <small *ngIf="f.password.errors?.maxlength">עד 9 תווים (כמו במקור)</small>
+        </div>
       </div>
-    </div>
 
-    <label class="label" for="password2">אימות סיסמה*</label>
-    <div class="field">
-      <input id="password2" type="password" formControlName="password2" maxlength="9" />
-      <div class="errors" *ngIf="(f.password2.touched && f.password2.invalid) || form.errors?.passwordMismatch">
-        <small *ngIf="f.password2.errors?.required">שדה חובה</small>
-        <small *ngIf="form.errors?.passwordMismatch">הסיסמאות אינן תואמות</small>
+      <label class="label" for="password2">אימות סיסמה*</label>
+      <div class="field">
+        <input id="password2" type="password" formControlName="password2" maxlength="9" />
+        <div class="errors" *ngIf="(f.password2.touched && f.password2.invalid) || form.errors?.passwordMismatch">
+          <small *ngIf="f.password2.errors?.required">שדה חובה</small>
+          <small *ngIf="form.errors?.passwordMismatch">הסיסמאות אינן תואמות</small>
+        </div>
       </div>
     </div>
-  </div>
+  }
 
   <h2 class="section-header">קצת עליך</h2>
   <div class="grid card">
@@ -300,13 +286,13 @@
         <small>טווח גילאים לא תקין (מגיל גדול מ"עד גיל").</small>
       </div>
     </div>
-    
+
     <label class="label" for="filter_family_status">סטטוס</label>
     <div class="field">
       <div formArrayName="filter_family_status" class="checkbox-list">
         <div *ngFor="let s of familyStatus; let i = index" class="checkbox-item">
           <label>
-            <input type="checkbox" [formControlName]="i" dir="rtl" />
+            <input type="checkbox" [formControlName]="i" />
             {{ s.txt }}
           </label>
         </div>
@@ -315,10 +301,10 @@
 
     <label class="label" for="filter_smoking_status">הרגלי עישון</label>
     <div class="field">
-      <select id="filter_smoking_status" formControlName="filter_smoking_status" dir="rtl">
-        <option value="0">הכל</option>
-        <option [value]="smokingStatus[0].val">{{ smokingStatus[0].txt }}</option>
-        <option [value]="smokingStatus[1].val">{{ smokingStatus[1].txt }}</option>
+      <select id="filter_smoking_status" formControlName="filter_smoking_status">
+        <option [ngValue]="0">הכל</option>
+        <option [ngValue]="smokingStatus[0].val">{{ smokingStatus[0].txt }}</option>
+        <option [ngValue]="smokingStatus[1].val">{{ smokingStatus[1].txt }}</option>
       </select>
     </div>
   </div>
@@ -342,9 +328,11 @@
   <button class="submit-btn" type="submit" [disabled]="submitting() || form.invalid">
     @if (submitting()) { שומר... } @else { שמירה }
   </button>
+
   <p class="server-msg" *ngIf="serverMsg()">{{ serverMsg() }}</p>
 </form>
- <div style="visibility: hidden;">filler</div> 
- <br>
- <div style="visibility: hidden;">filler</div> 
- <br>
+
+<div style="visibility: hidden;">filler</div>
+<br />
+<div style="visibility: hidden;">filler</div>
+<br />

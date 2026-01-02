@@ -8,11 +8,13 @@ import os
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile, Query, Body, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.encoders import jsonable_encoder
 from starlette.responses import FileResponse, JSONResponse
 from starlette.types import Scope
 
@@ -234,6 +236,8 @@ async def delete_user_extra_image(user_id: int, filename: str):
 
 @app.post("/register")
 async def register(
+    db: Session = Depends(get_db),
+
     c_name: str = Form(...),
     c_gender: str = Form(...),
     c_birth_day: str = Form(...),
@@ -242,14 +246,18 @@ async def register(
     c_country: str = Form(...),
     c_email: str = Form(...),
     c_ff: str = Form(...),
-    password: str = Form(...),
-    password2: str = Form(...),
+
+    password: Optional[str] = Form(None),
+    password2: Optional[str] = Form(None),
+
     sessionID: str = Form(...),
     c_pcell: str = Form(""),
     c_details: str = Form(""),
     c_details1: str = Form(""),
+
     c_image: Optional[UploadFile] = File(None),
-    c_extra_images: Optional[List[UploadFile]] = File(None),  # extras as repeated key
+    c_extra_images: Optional[List[UploadFile]] = File(None),
+
     c_height: str = Form(...),
     c_education: str = Form(...),
     c_work: str = Form(...),
@@ -257,6 +265,7 @@ async def register(
     c_smoking: str = Form(...),
     c_url: str = Form(...),
     c_fb: str = Form(...),
+
     filter_height_min: str = Form(...),
     filter_height_max: str = Form(...),
     filter_age_min: str = Form(...),
@@ -267,40 +276,51 @@ async def register(
     def _has_real_file(up: Optional[UploadFile]) -> bool:
         return bool(up and getattr(up, "filename", None))
 
+    # (optional) convert numeric strings to int here if your DB columns are integers
+    def to_int(v: Any) -> Optional[int]:
+        try:
+            if v is None or v == "":
+                return None
+            return int(v)
+        except Exception:
+            return None
+
     user_fields: Dict[str, Any] = {
-        "c_name": c_name,
-        "c_gender": c_gender,
-        "c_birth_day": c_birth_day,
-        "c_birth_month": c_birth_month,
-        "c_birth_year": c_birth_year,
-        "c_country": c_country,
-        "c_pcell": c_pcell,
-        "c_email": c_email,
-        "c_ff": c_ff,
-        "c_details": c_details,
-        "c_details1": c_details1,
+        "name": c_name,
+        "gender": to_int(c_gender),
+        "birth_day": to_int(c_birth_day),
+        "birth_month": to_int(c_birth_month),
+        "birth_year": to_int(c_birth_year),
+        "country": to_int(c_country),
+        "pcell": c_pcell,
+        "email": c_email,
+        "ff": to_int(c_ff),
+        "details": c_details,
+        "details1": c_details1,
         "sessionID": sessionID,
+
+        # NOTE: upsert_user must NOT update password on update
         "password": password,
         "password2": password2,
-        "c_height": c_height,
-        "c_education": c_education,
-        "c_work": c_work,
-        "c_children": c_children,
-        "c_smoking": c_smoking,
-        "c_url": c_url,
-        "c_fb": c_fb,
-        "filter_height_min": filter_height_min,
-        "filter_height_max": filter_height_max,
-        "filter_age_min": filter_age_min,
-        "filter_age_max": filter_age_max,
-        "filter_family_status": filter_family_status,
-        "filter_smoking_status": filter_smoking_status,
+
+        "height": to_int(c_height),
+        "education": to_int(c_education),
+        "work": to_int(c_work),
+        "children": to_int(c_children),
+        "smoking": to_int(c_smoking),
+        "url": c_url,
+        "fb": c_fb,
+
+        "filter_height_min": to_int(filter_height_min),
+        "filter_height_max": to_int(filter_height_max),
+        "filter_age_min": to_int(filter_age_min),
+        "filter_age_max": to_int(filter_age_max),
+        "filter_family_status": filter_family_status,          # CSV like "1,2,3"
+        "filter_smoking_status": str(filter_smoking_status),   # keep as string if column is string
     }
 
-    # upsert guarded by lock
-    async with users_lock:
-        stored_user = await upsert_user(USERS_PATH, user_fields)
-    user_id = stored_user["userID"]
+    stored_user, created = upsert_user(db, user_fields)
+    user_id = stored_user.id
 
     # -------------------------
     # optional profile image
@@ -308,7 +328,7 @@ async def register(
     if _has_real_file(c_image):
         ensure_image_content_type(c_image)
         image_bytes, image_size = await read_file(c_image)
-        
+
         image_rel_path = save_image_to_disk(
             image_bytes=image_bytes,
             user_id=user_id,
@@ -316,31 +336,29 @@ async def register(
             images_dir=IMAGES_DIR,
             base_dir_for_rel=BASE_DIR,
         )
-        stored_user.update(
-            {
-                "image_path": image_rel_path,
-                "image_content_type": c_image.content_type,
-                "image_size": image_size,
-            }
-        )
-        async with users_lock:
-            await upsert_user(USERS_PATH, stored_user)
+
+        # ✅ ORM attributes (NOT dict)
+        stored_user.image_path = image_rel_path
+        stored_user.image_content_type = c_image.content_type
+        stored_user.image_size = image_size
+
+        db.commit()
+        db.refresh(stored_user)
 
         log.info("Upserted user (with profile image): email=%s userID=%s image=%s",
-                 stored_user.get("c_email"), user_id, image_rel_path)
+                 stored_user.email, user_id, image_rel_path)
     else:
         log.info("Upserted user (no profile image change): email=%s userID=%s",
-                 stored_user.get("c_email"), user_id)
+                 stored_user.email, user_id)
 
     # -------------------------
     # optional extra images (APPEND, up to 5 total)
     # -------------------------
-    if c_extra_images is not None:
-        real_files = [f for f in (c_extra_images or []) if f and getattr(f, "filename", None)]
+    if c_extra_images:
+        real_files = [f for f in c_extra_images if f and getattr(f, "filename", None)]
 
-        # אם המשתמש לא העלה extras חדשים - לא נוגעים ברשימה הקיימת
         if real_files:
-            existing: List[Dict[str, Any]] = list(stored_user.get("extra_images") or [])
+            existing: List[Dict[str, Any]] = list(stored_user.extra_images or [])
 
             if len(existing) + len(real_files) > MAX_EXTRA_IMAGES:
                 raise HTTPException(
@@ -352,7 +370,7 @@ async def register(
             for up in real_files:
                 ensure_image_content_type(up)
                 bts, size = await read_file(up)
-                
+
                 guid = uuid.uuid4().hex
                 rel_path = save_extra_image_to_disk(
                     image_bytes=bts,
@@ -370,36 +388,35 @@ async def register(
                     "filename": fn,
                 })
 
-            stored_user["extra_images"] = existing + new_meta
-            async with users_lock:
-                await upsert_user(USERS_PATH, stored_user)
+            # ✅ ORM attribute (JSONB column)
+            stored_user.extra_images = existing + new_meta
+
+            db.commit()
+            db.refresh(stored_user)
 
             log.info("Appended %d extra images (total=%d): email=%s userID=%s",
-                     len(new_meta), len(stored_user["extra_images"]),
-                     stored_user.get("c_email"), user_id)
+                     len(new_meta), len(stored_user.extra_images or []),
+                     stored_user.email, user_id)
 
+    # -------------------------
     # response urls
-    image_url = f"/images/{user_id}" if stored_user.get("image_path") else None
+    # -------------------------
+    image_url = f"/images/{user_id}" if stored_user.image_path else None
 
     extra_urls: List[str] = []
-    for x in (stored_user.get("extra_images") or []):
+    for x in (stored_user.extra_images or []):
         fn = x.get("filename")
         if fn:
             extra_urls.append(f"/images/{user_id}/extra/{fn}")
 
-    async with users_lock:
-        users = await load_users(USERS_PATH)
-        filtered_users = [u for u in users if u.get("userID") != stored_user.get("userID") and pass_filter(u, stored_user)]
-    
-    
-
+    # ✅ Make user JSON serializable
     return JSONResponse({
         "ok": True,
+        "created": created,
         "message": "User saved.",
-        "user": stored_user,
+        "user": jsonable_encoder(stored_user),
         "image_url": image_url,
         "extra_image_urls": extra_urls,
-        "users": filtered_users
     })
 
 

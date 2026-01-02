@@ -1,15 +1,23 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class ExtraImage(BaseModel):
+    path: str
+    content_type: str
+    size: int
+    filename: str
 
 
 class UserBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: Optional[int] = None
+
     name: Optional[str] = None
     gender: Optional[int] = None
 
@@ -19,7 +27,7 @@ class UserBase(BaseModel):
 
     country: Optional[int] = None
     phone: Optional[str] = None
-    email: Optional[str] = None   # ✅ plain string
+    email: Optional[str] = None
 
     ff: Optional[int] = None
 
@@ -43,24 +51,8 @@ class UserBase(BaseModel):
     filter_family_status: Optional[str] = None
     filter_smoking_status: Optional[str] = None
 
-
-class UserCreate(UserBase):
-    name: str
-    email: str        # ✅ no EmailStr
-    password: str = Field(min_length=6, max_length=128)
-
-
-class UserLogin(BaseModel):
-    email: str        # ✅ no EmailStr
-    password: str
-
-
-class UserUpdate(UserBase):
-    password: Optional[str] = Field(default=None, min_length=6, max_length=128)
-
-
-class UserPublic(UserBase):
-    id: int
+    # ✅ JSONB list of dicts -> typed list
+    extra_images: Optional[List[ExtraImage]] = None
 
     image_filename: Optional[str] = None
     image_content_type: Optional[str] = None

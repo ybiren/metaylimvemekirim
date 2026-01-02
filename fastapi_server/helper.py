@@ -12,7 +12,7 @@ import bcrypt
 from models.user import User
 from models.chat_room import ChatRoom
 from passlib.context import CryptContext
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, select
 
 def get_user(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id).first()
@@ -105,7 +105,48 @@ def apply_user_filters(q, me):
     return q
 
 
+def upsert_user(db: Session, user_fields: Dict[str, Any]) -> Tuple[User, bool]:
+    """
+    Upsert by email (SYNC):
+    - if email exists -> update (EXCEPT password/password2)
+    - else -> insert (can include password/password2)
+    Returns: (user, created: bool)
+    """
+    email = (user_fields.get("email") or "").strip().lower()
+    if not email:
+        raise ValueError("email is required for upsert")
 
+    data = dict(user_fields)
+    data["email"] = email
+
+    # find existing user by email
+    stmt = select(User).where(User.email == email)
+    res = db.execute(stmt)
+    user = res.scalar_one_or_none()
+
+    if user is None:
+        # INSERT
+        user = User(**data)
+        db.add(user)
+        created = True
+    else:
+        # UPDATE (do NOT update password/password2)
+        data.pop("password", None)
+        data.pop("password2", None)
+
+        for k, v in data.items():
+            if k in {"id", "email"}:
+                continue
+            # choose policy: skip None updates
+            if v is None:
+                continue
+            setattr(user, k, v)
+
+        created = False
+
+    db.commit()
+    db.refresh(user)
+    return user, created
 
 # -----------------------------
 # Image helpers
@@ -267,12 +308,8 @@ def find_user_index_by_userid(users: List[Dict[str, Any]], user_id: int) -> Opti
     return None
 
 
+'''
 async def upsert_user(users_path: Path, user_fields: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Add new user or update existing by c_email.
-    New user -> userID = len(users) (1-based)
-    Existing  -> update in place.
-    """
     users = await load_users(users_path)
     idx = _find_user_index_by_email(users, user_fields.get("c_email", ""))
     if idx is None:
@@ -288,7 +325,7 @@ async def upsert_user(users_path: Path, user_fields: Dict[str, Any]) -> Dict[str
         users[idx] = merged
         await save_users(users_path, users)
         return merged
-
+'''
 
 def verify_password(plain: str, stored_user: Dict[str, Any]) -> bool:
     """Support bcrypt-hash (preferred) and legacy plaintext."""

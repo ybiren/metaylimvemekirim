@@ -1,19 +1,13 @@
 import { Component, DestroyRef, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  FormBuilder,
-  Validators,
-  ReactiveFormsModule,
-  FormArray,
-  FormControl,
-} from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { RegisterService } from '../../services/register.service';
 import { AlbumService } from '../../services/album.service';
-
 import { UsersService } from '../../services/users.service';
+
 import { rangeValidator, hebrewNameValidator, passwordMatchValidator } from '../../validators/form-validators';
 import { IOption, IUser } from '../../interfaces';
 import { getCurrentUserId } from '../../core/current-user';
@@ -26,6 +20,7 @@ import { EDUCATION_TOKEN } from '../../consts/education.consts';
 import { WORK_TOKEN } from '../../consts/work.consts';
 import { CHILDREN_STATUS_TOKEN } from '../../consts/children-status.consts';
 import { SMOKING_STATUS_TOKEN } from '../../consts/smoking-status.consts';
+import { firstValueFrom } from 'rxjs';
 
 type ServerExtraItem = {
   id: string;         // GUID
@@ -89,14 +84,24 @@ export class RegisterComponent implements OnInit, OnDestroy {
   serverExtraPreviewUrls: string[] = [];
   deletingExtraId = signal<string | null>(null);
 
+  // New files (local)
+  get extraImages(): FormArray<FormControl<File | null>> {
+    return this.form.get('c_extra_images') as FormArray<FormControl<File | null>>;
+  }
+
+  get filterFamilyStatusFA(): FormArray {
+    return this.form.get('filter_family_status') as FormArray;
+  }
+
   form = this.fb.group(
     {
-      c_name: ['', hebrewNameValidator],
-      c_gender: [0],
+      // main
+      c_name: ['', [Validators.required, hebrewNameValidator]],
+      c_gender: [0, [Validators.min(1)]],
       c_birth_day: [0, [Validators.min(1), Validators.max(31)]],
       c_birth_month: [0, [Validators.min(1), Validators.max(12)]],
       c_birth_year: [0, [Validators.min(1900)]],
-      c_country: [0, Validators.required],
+      c_country: [0, [Validators.required]],
       c_pcell: ['', [Validators.maxLength(13), Validators.pattern(/^[0-9+\-\s]*$/)]],
       c_email: ['', [Validators.required, Validators.email]],
       c_url: ['', [Validators.pattern(/https?:\/\/[\w\-]+(\.[\w\-]+)+[/#?]?.*$/)]],
@@ -104,12 +109,9 @@ export class RegisterComponent implements OnInit, OnDestroy {
       c_ff: [0],
       c_details: [''],
       c_details1: [''],
-      password: ['', [Validators.required, Validators.maxLength(9)]],
-      password2: ['', [Validators.required, Validators.maxLength(9)]],
-      acceptTerms: [false, Validators.requiredTrue],
 
       // images
-      c_image: this.fb.control<File | null>(null, []),
+      c_image: this.fb.control<File | null>(null),
       c_extra_images: this.fb.array<FormControl<File | null>>([]),
 
       // profile fields
@@ -119,19 +121,33 @@ export class RegisterComponent implements OnInit, OnDestroy {
       c_children: [0],
       c_smoking: [0],
 
+      // password (enabled only on register)
+      password: [''],
+      password2: [''],
+
+      // terms
+      acceptTerms: [false, [Validators.requiredTrue]],
+
       // filters
       filter_height_min: [145],
       filter_height_max: [200],
       filter_age_min: [25],
       filter_age_max: [90],
-      filter_family_status: this.buildFilterFamilyStatusArray(),
+      filter_family_status: this.buildFilterFamilyStatusArray([]),
       filter_smoking_status: [0],
     },
     {
-      validators: [passwordMatchValidator,rangeValidator('filter_age_min', 'filter_age_max'), rangeValidator('filter_height_min', 'filter_height_max')],
+      validators: [
+        rangeValidator('filter_age_min', 'filter_age_max'),
+        rangeValidator('filter_height_min', 'filter_height_max'),
+      ],
       updateOn: 'change',
     }
   );
+
+  get f() {
+    return this.form.controls;
+  }
 
   ngOnInit(): void {
     this.fetchUser();
@@ -142,21 +158,75 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.extraPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
   }
 
-  get f() {
-    return this.form.controls;
+  // --------------------
+  // Mode toggles (register vs update)
+  // --------------------
+  private setModeValidators(isRegister: boolean) {
+    const password = this.form.get('password')!;
+    const password2 = this.form.get('password2')!;
+
+    if (isRegister) {
+      password.setValidators([Validators.required, Validators.maxLength(9)]);
+      password2.setValidators([Validators.required, Validators.maxLength(9)]);
+
+      this.form.setValidators([
+        passwordMatchValidator,
+        rangeValidator('filter_age_min', 'filter_age_max'),
+        rangeValidator('filter_height_min', 'filter_height_max'),
+      ]);
+    } else {
+      password.clearValidators();
+      password2.clearValidators();
+
+      // clear values & errors so they never block submit
+      password.setValue('');
+      password2.setValue('');
+      password.setErrors(null);
+      password2.setErrors(null);
+
+      this.form.setValidators([
+        rangeValidator('filter_age_min', 'filter_age_max'),
+        rangeValidator('filter_height_min', 'filter_height_max'),
+      ]);
+    }
+
+    password.updateValueAndValidity({ emitEvent: false });
+    password2.updateValueAndValidity({ emitEvent: false });
+    this.form.updateValueAndValidity({ emitEvent: false });
   }
 
-  get filterFamilyStatusFA(): FormArray {
-    return this.form.get('filter_family_status') as FormArray;
+  private requireFullBirthdateValidators() {
+    // already min/max validators; if 0 => invalid; we can keep it simple by forcing min(1)
+    // Done via Validators.min(1) on day/month, and year min(1900) + value 0 invalid visually.
   }
 
-  get extraImages(): FormArray<FormControl<File | null>> {
-    return this.form.get('c_extra_images') as FormArray<FormControl<File | null>>;
+  // --------------------
+  // FamilyStatus (server can return CSV string or number[])
+  // --------------------
+  private parseFamilyStatus(v: unknown): number[] {
+    if (Array.isArray(v)) {
+      return v.map((x) => Number(x)).filter((x) => Number.isFinite(x) && x !== 0);
+    }
+    if (typeof v === 'string') {
+      return v
+        .split(',')
+        .map((s) => Number(s.trim()))
+        .filter((x) => Number.isFinite(x) && x !== 0);
+    }
+    return [];
   }
 
-  private buildFilterFamilyStatusArray(selectedVals: number[] = []): FormArray {
+  private buildFilterFamilyStatusArray(selectedVals: number[]): FormArray {
     const controls = this.familyStatus.map((s) => this.fb.control(selectedVals.includes(s.val)));
     return this.fb.array(controls);
+  }
+
+  selectedFamilyStatus(): number[] {
+    const raw = this.form.value.filter_family_status as boolean[] | null | undefined;
+    if (!raw || !Array.isArray(raw)) return [];
+    return raw
+      .map((checked, i) => (checked ? this.familyStatus[i].val : null))
+      .filter((v) => v !== null) as number[];
   }
 
   // --------------------
@@ -175,33 +245,28 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.imagePreviewUrl = null;
 
     if (!file) {
-      this.f['c_image'].setValue(null);
-      this.f['c_image'].setErrors({ required: true });
-      this.f['c_image'].markAsTouched();
+      // optional image; no hard required here
+      input.value = '';
       return;
     }
 
     if (!file.type || !file.type.startsWith('image/')) {
-      this.f['c_image'].setValue(null);
-      this.f['c_image'].setErrors({ notImage: true });
       this.imageError = 'נא לבחור קובץ תמונה תקין';
       input.value = '';
       return;
     }
-    
 
     this.profileObjectUrl = URL.createObjectURL(file);
     this.imagePreviewUrl = this.profileObjectUrl;
 
-    this.f['c_image'].setErrors(null);
-    this.f['c_image'].setValue(file);
-    this.f['c_image'].markAsDirty();
+    this.form.get('c_image')!.setValue(file);
+    this.form.get('c_image')!.markAsDirty();
 
     input.value = '';
   }
 
   // --------------------
-  // Extra images (local new files, up to 5 minus server count)
+  // Extra images (local new files)
   // --------------------
   onExtraImagesSelected(event: Event): void {
     this.extraImagesError = '';
@@ -209,7 +274,6 @@ export class RegisterComponent implements OnInit, OnDestroy {
     const files = Array.from(input.files ?? []);
     if (!files.length) return;
 
-    // total limit across server + local
     const alreadyOnServer = this.serverExtraItems.length;
     const totalNow = alreadyOnServer + this.extraImages.length;
     const available = this.MAX_EXTRA_IMAGES - totalNow;
@@ -241,7 +305,6 @@ export class RegisterComponent implements OnInit, OnDestroy {
   removeExtraImage(i: number): void {
     const url = this.extraPreviewUrls[i];
     if (url) URL.revokeObjectURL(url);
-
     this.extraImages.removeAt(i);
     this.extraPreviewUrls.splice(i, 1);
   }
@@ -272,21 +335,18 @@ export class RegisterComponent implements OnInit, OnDestroy {
   deleteServerExtraImage(index: number): void {
     const uid = getCurrentUserId();
     if (!uid) return;
-    
     const item = this.serverExtraItems[index];
     const filename = item?.filename;
     if (!filename) return;
-     
+
     this.deletingExtraId.set(filename);
     this.extraImagesError = '';
-    
+
     this.albumSrv.deleteExtraImage(uid, filename).subscribe({
       next: () => {
-        // remove from lists
         this.serverExtraItems.splice(index, 1);
         this.serverExtraPreviewUrls.splice(index, 1);
 
-        // force change detection on arrays
         this.serverExtraItems = [...this.serverExtraItems];
         this.serverExtraPreviewUrls = [...this.serverExtraPreviewUrls];
 
@@ -301,20 +361,83 @@ export class RegisterComponent implements OnInit, OnDestroy {
   }
 
   // --------------------
+  // Load user data
+  // --------------------
+  private async fetchUser() {
+        const found = JSON.parse(localStorage.getItem('user') ?? 'null') as IUser | null;
+        if(found) {
+          this.user.set(await firstValueFrom(this.usersSrv.getUser(found.id)));
+        }
+
+        // ✅ set validators based on mode
+        this.setModeValidators(!this.user());
+
+        const current = this.user();
+        if (current) {
+          const uid = current.id;
+          
+          // profile image preview
+          this.imagePreviewUrl = `${this.apiBase}/images/${uid}`;
+
+          // server extras
+          this.loadServerExtraImages(uid);
+
+          // patch values (NO passwords)
+          this.form.patchValue({
+            c_name: current.name ?? '',
+            c_gender: Number(current.gender ?? 0),
+            c_birth_day: Number(current.birth_day ?? 0),
+            c_birth_month: Number(current.birth_month ?? 0),
+            c_birth_year: Number(current.birth_year ?? 0),
+            c_country: Number(current.country ?? 0),
+            c_pcell: (current as any).pcell ?? '',
+            c_email: current.email ?? '',
+            c_ff: Number(current.ff ?? 0),
+            c_details: current.details ?? '',
+            c_details1: current.details1 ?? '',
+            c_height: Number(current.height ?? 0),
+            c_education: Number(current.education ?? 0),
+            c_work: Number(current.work ?? 0),
+            c_children: Number(current.children ?? 0),
+            c_smoking: Number(current.smoking ?? 0),
+            c_url: current.url ?? '',
+            c_fb: current.fb ?? '',
+
+            filter_height_min: Number((current as any).filter_height_min ?? 145),
+            filter_height_max: Number((current as any).filter_height_max ?? 200),
+            filter_age_min: Number((current as any).filter_age_min ?? 25),
+            filter_age_max: Number((current as any).filter_age_max ?? 90),
+            filter_smoking_status: Number((current as any).filter_smoking_status ?? 0),
+          });
+
+          const saved = this.parseFamilyStatus((current as any).filter_family_status);
+          this.form.setControl('filter_family_status', this.buildFilterFamilyStatusArray(saved));
+        } else {
+          // register mode: clear server extras
+          this.serverExtraItems = [];
+          this.serverExtraPreviewUrls = [];
+          this.imagePreviewUrl = null;
+
+          // reset family status checkboxes
+          this.form.setControl('filter_family_status', this.buildFilterFamilyStatusArray([]));
+        }
+  }
+
+  // --------------------
   // Submit
   // --------------------
   onSubmit(): void {
     this.form.markAllAsTouched();
     this.debugFormErrors();
 
-    if (this.f['c_gender'].value === 0) this.f['c_gender'].setErrors({ required: true });
-    if (!this.f['c_birth_day'].value) this.f['c_birth_day'].setErrors({ required: true });
-    if (!this.f['c_birth_month'].value) this.f['c_birth_month'].setErrors({ required: true });
-    if (!this.f['c_birth_year'].value) this.f['c_birth_year'].setErrors({ required: true });
+    // birthdate must be full (simple: day/month/year must be >0)
+    if ((this.f.c_birth_day.value ?? 0) < 1) this.f.c_birth_day.setErrors({ required: true });
+    if ((this.f.c_birth_month.value ?? 0) < 1) this.f.c_birth_month.setErrors({ required: true });
+    if ((this.f.c_birth_year.value ?? 0) < 1900) this.f.c_birth_year.setErrors({ required: true });
 
     if (this.form.invalid) return;
 
-    // Enforce total extras <= 5
+    // total extras <= 5
     const totalExtras = this.serverExtraItems.length + this.extraImages.length;
     if (totalExtras > this.MAX_EXTRA_IMAGES) {
       this.extraImagesError = `אפשר עד ${this.MAX_EXTRA_IMAGES} תמונות נוספות (כולל קיימות).`;
@@ -322,131 +445,68 @@ export class RegisterComponent implements OnInit, OnDestroy {
     }
 
     const fd = new FormData();
-    fd.append('c_name', String(this.f['c_name'].value ?? ''));
-    fd.append('c_gender', String(this.f['c_gender'].value ?? ''));
-    fd.append('c_birth_day', String(this.f['c_birth_day'].value ?? ''));
-    fd.append('c_birth_month', String(this.f['c_birth_month'].value ?? ''));
-    fd.append('c_birth_year', String(this.f['c_birth_year'].value ?? ''));
-    fd.append('c_country', String(this.f['c_country'].value ?? ''));
-    fd.append('c_pcell', String(this.f['c_pcell'].value ?? ''));
-    fd.append('c_email', String(this.f['c_email'].value ?? ''));
-    fd.append('c_ff', String(this.f['c_ff'].value ?? ''));
-    fd.append('c_details', String(this.f['c_details'].value ?? ''));
-    fd.append('c_details1', String(this.f['c_details1'].value ?? ''));
-    fd.append('password', String(this.f['password'].value ?? ''));
-    fd.append('password2', String(this.f['password2'].value ?? ''));
+
+    fd.append('c_name', String(this.f.c_name.value ?? ''));
+    fd.append('c_gender', String(this.f.c_gender.value ?? 0));
+    fd.append('c_birth_day', String(this.f.c_birth_day.value ?? 0));
+    fd.append('c_birth_month', String(this.f.c_birth_month.value ?? 0));
+    fd.append('c_birth_year', String(this.f.c_birth_year.value ?? 0));
+    fd.append('c_country', String(this.f.c_country.value ?? 0));
+    fd.append('c_pcell', String(this.f.c_pcell.value ?? ''));
+    fd.append('c_email', String(this.f.c_email.value ?? ''));
+    fd.append('c_ff', String(this.f.c_ff.value ?? 0));
+    fd.append('c_details', String(this.f.c_details.value ?? ''));
+    fd.append('c_details1', String(this.f.c_details1.value ?? ''));
     fd.append('sessionID', this.sessionID());
 
-    const imageFile = this.f['c_image'].value as File | null;
+    // ✅ password ONLY on register
+    if (!this.user()) {
+      fd.append('password', String(this.f.password.value ?? ''));
+      fd.append('password2', String(this.f.password2.value ?? ''));
+    }
+
+    const imageFile = this.form.get('c_image')!.value as File | null;
     if (imageFile) fd.append('c_image', imageFile);
 
-    // Append NEW extras only (server extras already exist)
+    // NEW extras only
     this.extraImages.controls.forEach((ctrl) => {
       const f = ctrl.value;
       if (f) fd.append('c_extra_images', f);
     });
 
-    fd.append('c_height', String(this.f['c_height'].value ?? ''));
-    fd.append('c_education', String(this.f['c_education'].value ?? ''));
-    fd.append('c_work', String(this.f['c_work'].value ?? ''));
-    fd.append('c_children', String(this.f['c_children'].value ?? ''));
-    fd.append('c_smoking', String(this.f['c_smoking'].value ?? ''));
-    fd.append('c_url', String(this.f['c_url'].value ?? ''));
-    fd.append('c_fb', String(this.f['c_fb'].value ?? ''));
+    fd.append('c_height', String(this.f.c_height.value ?? 0));
+    fd.append('c_education', String(this.f.c_education.value ?? 0));
+    fd.append('c_work', String(this.f.c_work.value ?? 0));
+    fd.append('c_children', String(this.f.c_children.value ?? 0));
+    fd.append('c_smoking', String(this.f.c_smoking.value ?? 0));
+    fd.append('c_url', String(this.f.c_url.value ?? ''));
+    fd.append('c_fb', String(this.f.c_fb.value ?? ''));
 
-    fd.append('filter_height_min', String(this.f['filter_height_min'].value ?? ''));
-    fd.append('filter_height_max', String(this.f['filter_height_max'].value ?? ''));
-    fd.append('filter_age_min', String(this.f['filter_age_min'].value ?? ''));
-    fd.append('filter_age_max', String(this.f['filter_age_max'].value ?? ''));
+    fd.append('filter_height_min', String(this.f.filter_height_min.value ?? 0));
+    fd.append('filter_height_max', String(this.f.filter_height_max.value ?? 0));
+    fd.append('filter_age_min', String(this.f.filter_age_min.value ?? 0));
+    fd.append('filter_age_max', String(this.f.filter_age_max.value ?? 0));
 
     const selectedStatuses = this.selectedFamilyStatus();
     fd.append('filter_family_status', selectedStatuses.join(','));
-    fd.append('filter_smoking_status', String(this.f['filter_smoking_status'].value ?? ''));
+
+    fd.append('filter_smoking_status', String(this.f.filter_smoking_status.value ?? 0));
 
     this.submitting.set(true);
     this.serverMsg.set('');
 
     this.registerSrv.registerFormData(fd).subscribe({
       next: (res) => {
-        this.serverMsg.set('נרשמת בהצלחה!');
+        this.serverMsg.set(this.user() ? 'עודכן בהצלחה!' : 'נרשמת בהצלחה!');
         this.submitting.set(false);
-        localStorage.setItem('user', JSON.stringify(res.user));
-        this.usersSrv.users$.next(res.users);
-        setTimeout(() => this.router.navigate(['/home']), 500);
+        setTimeout(() => this.router.navigate(['/home']), 400);
       },
       error: (err) => {
         console.error(err);
-        this.serverMsg.set('שגיאה בהרשמה. נסה שוב.');
+        this.serverMsg.set('שגיאה בשמירה. נסה שוב.');
         this.submitting.set(false);
       },
     });
-  }
-
-  // --------------------
-  // Load user data
-  // --------------------
-  private fetchUser() {
-    this.usersSrv.users$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((users) => {
-        const found = JSON.parse(localStorage.getItem('user')) as IUser;
-        this.user.set(found);
-
-        if (this.user()) {
-          const uid = this.user()!.id;
-
-          // profile image preview
-          this.imagePreviewUrl = `${this.apiBase}/images/${uid}`;
-
-          // server extras
-          this.loadServerExtraImages(uid);
-        } else {
-          this.serverExtraItems = [];
-          this.serverExtraPreviewUrls = [];
-        }
-
-        const current = this.user();
-        console.log("current",current);  
-
-        this.form.patchValue({
-          c_name: current?.name ?? this.form.value.c_name,
-          c_gender: current?.gender ?? this.form.value.c_gender,
-          c_birth_day: current?.birth_day ??  (this.form.value.c_birth_day as unknown as number),
-          c_birth_month: current?.birth_month ??  (this.form.value.c_birth_month as unknown as number),
-          c_birth_year: current?.birth_year ??  (this.form.value.c_birth_year as unknown as number),
-          c_country: current?.country ?? this.form.value.c_country,
-          c_pcell: current?.pcell ?? this.form.value.c_pcell,
-          c_email: current?.email ?? this.form.value.c_email,
-          c_ff: current?.ff ?? this.form.value.c_ff,
-          c_details: current?.details ?? this.form.value.c_details,
-          c_details1: current?.details1 ?? this.form.value.c_details1,
-          c_height: current?.height ?? this.form.value.c_height,
-          c_education: current?.education ?? this.form.value.c_education,
-          c_work: current?.work ?? this.form.value.c_work,
-          c_children: current?.children ?? this.form.value.c_children,
-          c_smoking: current?.smoking ?? this.form.value.c_smoking,
-          c_url: current?.url ?? this.form.value.c_url,
-          c_fb: current?.fb ?? this.form.value.c_fb,
-          password: current?.password2 ?? this.form.value.password,
-          password2: current?.password2 ?? this.form.value.password2,
-          filter_height_min: current?.filter_height_min ?? this.form.value.filter_height_min,
-          filter_height_max: current?.filter_height_max ?? this.form.value.filter_height_max,
-          filter_age_min: current?.filter_age_min ?? this.form.value.filter_age_min,
-          filter_age_max: current?.filter_age_max ?? this.form.value.filter_age_max,
-          filter_smoking_status: current?.filter_smoking_status ?? this.form.value.filter_smoking_status,
-        });
-
-        const saved = (current?.filter_family_status ?? []) as number[];
-        this.form.setControl('filter_family_status', this.buildFilterFamilyStatusArray(saved));
-      });
-  }
-
-  selectedFamilyStatus(): number[] {
-    const raw = this.form.value.filter_family_status as boolean[] | null | undefined;
-    if (!raw || !Array.isArray(raw)) return [];
-    return raw
-      .map((checked, i) => (checked ? this.familyStatus[i].val : null))
-      .filter((v) => v !== null) as number[];
   }
 
   private debugFormErrors() {
