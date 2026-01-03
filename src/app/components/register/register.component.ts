@@ -377,7 +377,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
           const uid = current.id;
           
           // profile image preview
-          this.imagePreviewUrl = `${this.apiBase}/images/${uid}`;
+          this.imagePreviewUrl = `${this.apiBase}/images/${uid}?id=${Math.floor(Math.random() * 1000000)}`;
 
           // server extras
           this.loadServerExtraImages(uid);

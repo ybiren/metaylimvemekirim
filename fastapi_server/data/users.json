@@ -37,12 +37,6 @@
     "filter_smoking_status": "1",
     "extra_images": [
       {
-        "path": "data\\images\\1\\extra\\3ad6c83d58274a9f9f14231e3b96f5e0.jpg",
-        "content_type": "image/jpeg",
-        "size": 99245,
-        "filename": "3ad6c83d58274a9f9f14231e3b96f5e0.jpg"
-      },
-      {
         "path": "data\\images\\1\\extra\\1139e25c54484f3193d66a8cfadc63eb.png",
         "content_type": "image/png",
         "size": 1166904,

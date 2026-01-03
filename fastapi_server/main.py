@@ -154,26 +154,27 @@ async def health() -> Dict[str, Any]:
 
 
 @app.get("/images/{user_id}")
-async def get_user_image(user_id: int):
+async def get_user_image(user_id: int, db: Session = Depends(get_db)):
+    '''
     path = await find_user_image_path(
         user_id=user_id,
         base_dir=BASE_DIR,
         images_dir=IMAGES_DIR,
         users_path=USERS_PATH,
     )
+    '''
+    path = get_user(db, user_id).image_path
     if not path:
         raise HTTPException(status_code=404, detail="Image not found")
+    
     media_type = mimetypes.guess_type(str(path))[0] or "application/octet-stream"
     return FileResponse(path, media_type=media_type)
 
 
 @app.get("/images/{user_id}/extra/{filename}")
-async def get_user_extra_image(user_id: int, filename: str):
-    path = find_user_extra_image_path(
-        user_id=user_id,
-        filename=filename,
-        images_dir=IMAGES_DIR,
-    )
+async def get_user_extra_image(user_id: int, filename: str, db: Session = Depends(get_db)):
+    
+    path =  f"data/images/{user_id}/extra/{filename}" 
     if not path:
         raise HTTPException(status_code=404, detail="Extra image not found")
     media_type = mimetypes.guess_type(str(path))[0] or "application/octet-stream"
@@ -181,14 +182,9 @@ async def get_user_extra_image(user_id: int, filename: str):
 
 
 @app.get("/images/{user_id}/extra")
-async def list_user_extra_images(user_id: int):
+async def list_user_extra_images(user_id: int, db: Session = Depends(get_db)):
     async with users_lock:
-        users = await load_users(USERS_PATH)
-        idx = find_user_index_by_userid(users, user_id)
-        if idx is None:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        extras = users[idx].get("extra_images") or []
+        extras = get_user(db, user_id).extra_images or []
         urls: List[str] = []
         for x in extras:
             fn = x.get("filename")
@@ -199,39 +195,29 @@ async def list_user_extra_images(user_id: int):
 
 
 @app.delete("/images/{user_id}/extra/{filename}")
-async def delete_user_extra_image(user_id: int, filename: str):
-    async with users_lock:
-        users = await load_users(USERS_PATH)
-        idx = find_user_index_by_userid(users, user_id)
-        if idx is None:
-            raise HTTPException(status_code=404, detail="User not found")
+async def delete_user_extra_image(user_id: int, filename: str, db: AsyncSession = Depends(get_db)):
+    
+  user = get_user(db, user_id)
+  extras = user.extra_images or []
+   
+  # ensure exists in metadata
+  if not any(x.get("filename") == filename for x in extras):
+    raise HTTPException(status_code=404, detail="Extra image not found")
+    
+  # remove from metadata
+  user.extra_images = [x for x in extras if x.get("filename") != filename]
+  db.commit()
 
-        user = users[idx]
-        extras = user.get("extra_images") or []
+  path = Path("data") / "images" / str(user_id) / "extra" / filename
+  if path and path.exists():
+    try:
+      path.unlink()
+    except Exception as e:
+      log.warning("Failed to unlink extra image: %s (%s)", path, e)
 
-        # ensure exists in metadata
-        if not any(x.get("filename") == filename for x in extras):
-            raise HTTPException(status_code=404, detail="Extra image not found")
 
-        # delete file from disk (best-effort)
-        path = find_user_extra_image_path(
-            user_id=user_id,
-            filename=filename,
-            images_dir=IMAGES_DIR,
-        )
-        if path and path.exists():
-            try:
-                path.unlink()
-            except Exception as e:
-                log.warning("Failed to unlink extra image: %s (%s)", path, e)
-
-        # remove metadata
-        user["extra_images"] = [x for x in extras if x.get("filename") != filename]
-        users[idx] = user
-        await save_users(USERS_PATH, users)
-
-    log.info("Deleted extra image: userID=%s file=%s", user_id, filename)
-    return {"ok": True, "deleted": filename, "remaining": len(user["extra_images"])}
+  log.info("Deleted extra image: userID=%s file=%s", user_id, filename)
+  return {"ok": True, "deleted": filename, "remaining": len(user.extra_images)}
 
 
 @app.post("/register")
