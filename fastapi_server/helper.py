@@ -19,6 +19,13 @@ def get_user(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id).first()
 
 
+def get_user_by_email(db, c_email: str):
+    user = db.query(User).filter(User.email == c_email).first()
+    if not user:
+      raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Bad credentials")
+    return user
+
+
 pwd_context = CryptContext(
     schemes=["pbkdf2_sha256"],
     deprecated="auto")
@@ -27,10 +34,8 @@ def get_user_by_email_pass(db, c_email: str, password: str):
     user = db.query(User).filter(User.email == c_email).first()
     if not user:
       raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Bad credentials")
-
     if not pwd_context.verify(password, user.password_hash):
       raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Bad credentials")
-
     return user
 
 def get_system_chat_rooms(db: Session):
@@ -117,6 +122,9 @@ def apply_user_filters(q, me):
     return q
 
 
+def hash_password(raw: str) -> str:
+    return pwd_context.hash(raw)
+
 def upsert_user(db: Session, user_fields: Dict[str, Any]) -> Tuple[User, bool]:
     """
     Upsert by email (SYNC):
@@ -138,6 +146,13 @@ def upsert_user(db: Session, user_fields: Dict[str, Any]) -> Tuple[User, bool]:
 
     if user is None:
         # INSERT
+        raw_password = data.pop("password", None)
+        data.pop("password2", None)
+        if not raw_password:
+            raise ValueError("password is required when creating a user")
+
+        data["password_hash"] = hash_password(raw_password)
+        
         user = User(**data)
         db.add(user)
         created = True

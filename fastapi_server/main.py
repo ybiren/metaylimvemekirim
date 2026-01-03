@@ -46,7 +46,9 @@ from helper import (
     get_user,
     get_system_chat_rooms,
     get_user_by_email_pass,
-    apply_user_filters
+    apply_user_filters,
+    get_user_by_email,
+    hash_password
 )
 
 from sendgrid_test.send_mail import send_mail
@@ -466,20 +468,25 @@ async def login(
 @app.post("/forgotPass")
 async def forgot_pass(
     c_email: str = Form(...),
+    db: Session = Depends(get_db)
 ):
-    email = (c_email or "").strip().lower()
-    async with users_lock:
-        user, idx, users = await get_user_and_index_by_email(USERS_PATH, email)
 
-    if not user:
-        return JSONResponse({"ok": False, "message": "Invalid email."}, status_code=401)
+    email = (c_email or "").strip().lower()    
+    user = get_user_by_email(db,email)
 
-    pswd = user.get("password")
-    status_code = send_mail(email, pswd)
+    uid = user.id
+    status_code = send_mail(email, uid)
     if 200 <= status_code < 300:
         return JSONResponse({"ok": True})
     return JSONResponse({"ok": False, "message": "Mail Sending Failed."})
 
+@app.post("/reset-password")
+async def reet_pass(payload: dict = Body(...),db: Session = Depends(get_db)):
+    password = payload["password"]
+    uid = payload["uid"]
+    user = get_user(db, uid)
+    user.hash_password = hash_password(password)
+    db.commit()
 
 @app.post("/search")
 async def search_users(payload: Dict[str, Any]):

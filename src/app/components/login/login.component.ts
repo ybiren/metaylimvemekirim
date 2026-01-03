@@ -40,7 +40,6 @@ export class LoginComponent {
     formData.append('c_email', this.email);
     formData.append('password', this.password);
 
-    console.log("apibase", environment.apibase);
     this.http.post(`${environment.apibase}/login`, formData).subscribe({
       next: (res: any) => {
         if (res) {
@@ -48,7 +47,6 @@ export class LoginComponent {
           console.log('Login success:', res);
           // Save user in localStorage
           localStorage.setItem('user', JSON.stringify(res));
-          this.usersSvc.users$.next((res.users ?? []));
           setTimeout(() => {
             this.router.navigate(['/home']);
           }, 500);
