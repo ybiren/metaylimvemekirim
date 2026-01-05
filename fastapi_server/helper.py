@@ -14,6 +14,8 @@ from models.chat_room import ChatRoom
 from passlib.context import CryptContext
 from sqlalchemy import and_, or_, select
 
+from cryptography.fernet import Fernet, InvalidToken
+
 
 def get_user(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id).first()
@@ -174,6 +176,34 @@ def upsert_user(db: Session, user_fields: Dict[str, Any]) -> Tuple[User, bool]:
     db.commit()
     db.refresh(user)
     return user, created
+
+
+fernet_generated_key = "Tugx8RapMBvTgNw1K0L8Q1MVLOgReBOXSv3hs-W-p3M="
+
+# init Fernet with the key
+fernet = Fernet(fernet_generated_key.encode())
+
+
+def encrypt_uid(uid: str) -> str:
+    """
+    Encrypt uid and return URL-safe token
+    """
+    token: bytes = fernet.encrypt(str(uid).encode())
+    return token.decode()
+
+
+def decrypt_uid(token: str, ttl_seconds: int = 3600) -> str:
+    """
+    Decrypt token back to uid (with TTL validation)
+    """
+    try:
+        uid_bytes: bytes = fernet.decrypt(
+            token.encode(),
+            ttl=ttl_seconds,
+        )
+        return uid_bytes.decode()
+    except InvalidToken:
+        raise ValueError("Invalid or expired token")
 
 # -----------------------------
 # Image helpers

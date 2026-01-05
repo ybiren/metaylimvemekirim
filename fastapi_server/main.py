@@ -19,6 +19,8 @@ from starlette.responses import FileResponse, JSONResponse
 from starlette.types import Scope
 
 from models.sendmessage_payload import SendMessagePayload
+from helper import decrypt_uid
+
 
 # import routers
 from routes.sms_updates import router2 as sms_updates_router
@@ -441,6 +443,7 @@ async def login(
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
+    
     c_email = (c_email or "").strip().lower()
     return get_user_by_email_pass(db, c_email, password)
 
@@ -483,9 +486,9 @@ async def forgot_pass(
 @app.post("/reset-password")
 async def reet_pass(payload: dict = Body(...),db: Session = Depends(get_db)):
     password = payload["password"]
-    uid = payload["uid"]
+    uid = decrypt_uid(payload["uid"])
     user = get_user(db, uid)
-    user.hash_password = hash_password(password)
+    user.password_hash = hash_password(password)
     db.commit()
 
 @app.post("/search")

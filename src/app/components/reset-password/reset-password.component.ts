@@ -4,7 +4,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
-
+import { RouterModule } from '@angular/router';
 
 function passwordMatchValidator(group: any) {
   const p1 = group.get('password')?.value;
@@ -20,7 +20,7 @@ function toInt(v: unknown): number | null {
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './reset-password.component.html',
   styleUrls: ['./reset-password.component.scss'],
 })
@@ -31,7 +31,7 @@ export class ResetPasswordComponent {
   private http = inject(HttpClient);
 
   // query: ?userId=123 (או ?uid=123)
-  readonly userId = signal<number | null>(null);
+  readonly userId = signal<string | null>(null);
 
   readonly loading = signal(false);
   readonly msg = signal<string>('');
@@ -45,11 +45,11 @@ export class ResetPasswordComponent {
     { validators: passwordMatchValidator }
   );
 
-  readonly canSubmit = computed(() => !!this.userId() && this.form.valid );
+  readonly canSubmit = computed(() => !!this.userId());  //&& this.form.valid
 
   constructor() {
     this.route.queryParamMap.subscribe((qp) => {
-      const id = toInt(qp.get('userId') ?? qp.get('uid'));
+      const id = qp.get('userId') ?? qp.get('uid');
       this.userId.set(id);
 
       if (!id) {
