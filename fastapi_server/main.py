@@ -21,7 +21,6 @@ from starlette.types import Scope
 from models.sendmessage_payload import SendMessagePayload
 from helper import decrypt_uid
 
-
 # import routers
 from routes.sms_updates import router2 as sms_updates_router
 from ws.notify import router as notify_router
@@ -50,7 +49,9 @@ from helper import (
     get_user_by_email_pass,
     apply_user_filters,
     get_user_by_email,
-    hash_password
+    hash_password,
+    block_user,
+    is_user_blocked
 )
 
 from sendgrid_test.send_mail import send_mail
@@ -552,39 +553,11 @@ async def search_users(payload: Dict[str, Any]):
 
 
 @app.patch("/block")
-async def block_user(payload: dict = Body(...)):
-    userId = payload["userId"]
-    blocked_userid = payload["blocked_userid"]
+def toggle_block(payload: dict = Body(...), db: Session = Depends(get_db)):
+    user_id = int(payload.get("userId", 0))
+    blocked_user_id = int(payload.get("blocked_userid", 0))
 
-    ensure_data_file(DATA_DIR, USERS_PATH)
-    users = await load_users(USERS_PATH)
-
-    idx = find_user_index_by_userid(users, userId)
-    if idx is None:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    user = users[idx]
-
-    if "block" not in user or not isinstance(user["block"], list):
-        user["block"] = []
-
-    if blocked_userid in user["block"]:
-        user["block"].remove(blocked_userid)
-        action = "unblocked"
-    else:
-        user["block"].append(blocked_userid)
-        action = "blocked"
-
-    users[idx] = user
-    await save_users(USERS_PATH, users)
-
-    return {
-        "ok": True,
-        "action": action,
-        "userID": userId,
-        "blocked_userID": blocked_userid,
-        "block_list": user["block"],
-    }
+    return block_user(db, user_id, blocked_user_id) 
 
 @app.patch("/like")
 async def like_user(payload: dict = Body(...)):
@@ -683,24 +656,11 @@ async def get_messages(
 
 
 @app.post("/is_blocked_by_peer")
-async def is_blocked(payload: dict = Body(...)):
-    userId = payload["userId"]
-    peerId = payload["peerId"]
-
-    ensure_data_file(DATA_DIR, USERS_PATH)
-    users = await load_users(USERS_PATH)
-
-    useridx = find_user_index_by_userid(users, userId)
-    if useridx is None:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    peeridx = find_user_index_by_userid(users, peerId)
-    if peeridx is None:
-        raise HTTPException(status_code=404, detail="Peer not found")
-
-    peer = users[peeridx]
-    is_blocked = peer.get("block") and userId in peer["block"]
-    return {"is_blocked": bool(is_blocked)}
+async def is_blocked(payload: dict = Body(...), db: Session = Depends(get_db)):
+    user_id = payload["userId"]
+    peer_id = payload["peerId"]
+    is_blocked = is_user_blocked(db, user_id, peer_id)
+    return is_blocked
 
 @app.get("/chat_rooms", response_model=List[ChatRoomOut2])
 async def list_chat_rooms(db: Session = Depends(get_db)):

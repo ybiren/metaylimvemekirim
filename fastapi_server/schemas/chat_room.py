@@ -7,5 +7,5 @@ class ChatRoomOut2(BaseModel):
     from_user_id: int
     to_user_id: int
 
-    class Config:
-        orm_mode = True
+class Config:
+    from_attributes = True

@@ -11,8 +11,10 @@ import bcrypt
 
 from models.user import User
 from models.chat_room import ChatRoom
+from models.user_blocks import UserBlock
 from passlib.context import CryptContext
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, or_, select, exists
+from sqlalchemy.exc import IntegrityError
 
 from cryptography.fernet import Fernet, InvalidToken
 
@@ -176,6 +178,51 @@ def upsert_user(db: Session, user_fields: Dict[str, Any]) -> Tuple[User, bool]:
     db.commit()
     db.refresh(user)
     return user, created
+
+def block_user(db: Session, user_id, blocked_user_id):
+
+    if user_id <= 0 or blocked_user_id <= 0:
+        raise HTTPException(status_code=400, detail="userId and blocked_userid are required")
+    if user_id == blocked_user_id:
+        raise HTTPException(status_code=400, detail="cannot block yourself")
+
+    # check if block exists
+    stmt = select(UserBlock).where(
+        UserBlock.user_id == user_id,
+        UserBlock.blocked_user_id == blocked_user_id,
+    )
+    existing = db.execute(stmt).scalar_one_or_none()
+
+    if existing:
+        # delete (toggle off)
+        db.delete(existing)
+        db.commit()
+        return {"blocked": False}
+    else:
+        # insert (toggle on)
+        db.add(UserBlock(user_id=user_id, blocked_user_id=blocked_user_id))
+        try:
+            db.commit()
+        except IntegrityError:
+            # In case of race condition (two requests at once)
+            db.rollback()
+            return {"blocked": True}
+
+        return {"blocked": True}
+
+def is_user_blocked(
+    db: Session,
+    user_id: int,
+    peer_id: int,
+) -> bool:
+    stmt = select(
+        exists().where(
+            (UserBlock.user_id == user_id) &
+            (UserBlock.blocked_user_id == peer_id)
+        )
+    )
+
+    return db.execute(stmt).scalar()
 
 
 fernet_generated_key = "Tugx8RapMBvTgNw1K0L8Q1MVLOgReBOXSv3hs-W-p3M="

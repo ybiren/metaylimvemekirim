@@ -42,13 +42,13 @@ export class UsersService {
 
   is_blockedByPeerSignal(userId: number, peerId: number) {
     
-    return toSignal(of({is_blocked: false}));
-    /*
-    return toSignal(
-      this.http.post<{ is_blocked: boolean }>(`${this.baseUrl}/is_blocked_by_peer`, { userId, peerId }),
-      { initialValue: null }
-    );*/
-  
+    if(peerId < 0 || userId < 0) {
+      return of(false);
+    } else {
+      return this.http.post<boolean>(`${this.baseUrl}/is_blocked_by_peer`, { userId, peerId });
+    }
+    
+    
   }  
   
   getName(userId: number): string {

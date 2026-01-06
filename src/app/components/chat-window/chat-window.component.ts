@@ -3,7 +3,8 @@ import {
   Input, inject,
   DestroyRef,
   Signal,
-  computed
+  computed,
+  signal
 } from '@angular/core';
 import { NgIf, NgFor, DatePipe, NgClass, NgStyle, AsyncPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -16,6 +17,7 @@ import { UsersService } from '../../services/users.service';
 import { getCurrentUserId } from '../../core/current-user';
 import { environment } from '../../../environments/environment';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   standalone: true,
@@ -52,7 +54,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   @ViewChild('scrollArea') scrollArea!: ElementRef<HTMLElement>;
 
   get peerName() { return this.usersSvc.getName(this.peerId!); }
-  isLoggedIUserBlockedByPeer: Signal<{is_blocked:boolean}>;
+  isLoggedIUserBlockedByPeer = signal<boolean>(null);
  
   roomName = "";
 
@@ -64,7 +66,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     // Resolve peerId from @Input or dialog data
     if (this.peerId == null) this.peerId = this.dlgData?.peerId;
     this.roomName =  this.dlgData?.roomName;
-    this.isLoggedIUserBlockedByPeer = this.usersSvc.is_blockedByPeerSignal(this.me, this.peerId);
   
   }
 
@@ -103,6 +104,9 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
 
     // quick presence snapshot (adjust if you have an observable in PresenceService)
     this.isPeerOnline = this.presenceSvc.isOnline(this.peerId);
+
+    this.isLoggedIUserBlockedByPeer.set(await firstValueFrom(this.usersSvc.is_blockedByPeerSignal(this.me, this.peerId)));
+
   }
 
 

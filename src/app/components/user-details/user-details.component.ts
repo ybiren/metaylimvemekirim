@@ -12,8 +12,9 @@ import { UsersService } from '../../services/users.service';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { ToastService } from '../../services/toast.service';
 import { ChatWindowComponent } from '../chat-window/chat-window.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { AlbumComponent } from '../album/album.component';
+import { firstValueFrom, of } from 'rxjs';
 
 @Component({
   selector: 'app-user-details',
@@ -38,7 +39,8 @@ export class UserDetailsComponent implements OnInit {
   error = signal<string>('');
   user = signal<IUser | null>(null);
   loggedInUser = signal<IUser | null>(null);
-  isLoggedIUserBlockedByPeer: Signal<{is_blocked:boolean}>;
+  isLoggedIUserBlockedByPeer = signal<boolean>(null);
+  isLoggedIUserBlocksPeer = signal<boolean>(null);
   isShowProfile = signal<boolean>(true);
   id = 0;
 
@@ -52,10 +54,11 @@ export class UserDetailsComponent implements OnInit {
       return;
     }
     this.fetchUser(this.id);
-    this.isLoggedIUserBlockedByPeer = this.usersSrv.is_blockedByPeerSignal(this.loggedInUser().userID, this.id);
   }
   
-  ngOnInit(): void {
+  async ngOnInit() {
+    this.isLoggedIUserBlockedByPeer.set(await firstValueFrom(this.usersSrv.is_blockedByPeerSignal(this.id, this.loggedInUser().id)));
+    this.isLoggedIUserBlocksPeer.set(await firstValueFrom(this.usersSrv.is_blockedByPeerSignal(this.loggedInUser().id, this.id )));   
   }
 
   fetchUser(id: number) {
@@ -123,22 +126,15 @@ export class UserDetailsComponent implements OnInit {
 
   // ✅ Block user function
   blockUser(blocked_userId: number) {
-    const userId = this.loggedInUser().userID;
-    this.usersSrv.block(userId, blocked_userId).subscribe({
-      next: (res: any) => {
+    this.usersSrv.block(this.loggedInUser().id, blocked_userId).subscribe({
+      next: async (res: any) => {
         this.toast.show('המשתמש נחסם / שוחרר בהצלחה ✓');
-        localStorage.setItem('user', JSON.stringify({...this.loggedInUser(),"block": [...res.block_list]}));
-        this.loggedInUser.set(JSON.parse(localStorage.getItem('user')) as IUser);
+        this.isLoggedIUserBlocksPeer.set(res.blocked);   
       } ,
       error: () => alert("שגיאה בעת חסימת המשתמש")
     });
   }
 
-  isBlocked = computed(() => {
-    const me = this.loggedInUser();
-    if (!this.id || !me) return false;
-    return me.block?.includes(this.id);
-  });
   
   
   openCompose() {
