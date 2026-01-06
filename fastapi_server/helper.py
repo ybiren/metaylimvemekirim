@@ -224,6 +224,55 @@ def is_user_blocked(
 
     return db.execute(stmt).scalar()
 
+def search_user(db: Session, c_gender, c_ff, c_country, c_smoking, c_tz, c_pic, c_ages1, c_ages2, c_name):
+
+  conds = []
+  if c_gender not in (None, 9, "9"):
+    conds.append(User.gender == int(c_gender))
+
+  if c_ff not in (None, 9, "9"):
+    conds.append(User.ff == int(c_ff))
+
+  if c_country not in (None, 0, "0"):
+    conds.append(User.country == int(c_country))
+
+  if c_smoking:
+    conds.append(User.smoking == int(c_smoking))
+
+  if c_tz not in (None, 0, "0"):
+    conds.append(User.c_tz == int(c_tz))
+
+  if c_pic:
+    conds.append(User.image_path.is_not(None))
+    conds.append(User.image_path != "")
+
+  min_age = None
+  max_age = None 
+  if c_ages1 or c_ages2:
+    current_year = date.today().year
+    min_age = int(c_ages1 or 0)
+    max_age = int(c_ages2 or 0)
+
+    conds.append(User.birth_year.is_not(None))
+    conds.append(User.birth_year > 0)
+
+    if min_age:
+      conds.append(User.birth_year <= current_year - min_age)
+    if max_age:
+      conds.append(User.birth_year >= current_year - max_age)
+
+  if c_name not in (None, 0, "0"):
+    name = str(c_name).strip()
+    if name:
+      conds.append(User.c_name.ilike(f"%{name}%"))
+
+  stmt = select(User)
+  if conds:
+    stmt = stmt.where(*conds)
+
+  users = db.execute(stmt).scalars().all()
+  return users
+
 
 fernet_generated_key = "Tugx8RapMBvTgNw1K0L8Q1MVLOgReBOXSv3hs-W-p3M="
 

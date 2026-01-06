@@ -390,7 +390,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
             c_birth_month: Number(current.birth_month ?? 0),
             c_birth_year: Number(current.birth_year ?? 0),
             c_country: Number(current.country ?? 0),
-            c_pcell: (current as any).pcell ?? '',
+            c_pcell: (current as any).phone ?? '',
             c_email: current.email ?? '',
             c_ff: Number(current.ff ?? 0),
             c_details: current.details ?? '',

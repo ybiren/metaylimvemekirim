@@ -79,7 +79,7 @@ export class SearchFiltersComponent implements OnInit{
   // c_gender: 9=הכל, 1=זכר, 0=נקבה
   form = this.fb.group({
     c_gender: [9],
-    c_phome: [''],          // עישון: '' | 'מעשן' | 'לא מעשן'
+    c_smoking: [''],          // עישון: '' | 'מעשן' | 'לא מעשן'
     c_tz: [0],              // גובה: 0=הכל, otherwise CM
     c_ages1: [0],           // מגיל (0 = no min)
     c_ages2: [0],           // עד גיל (0 = no max)
@@ -107,10 +107,10 @@ export class SearchFiltersComponent implements OnInit{
     if (this.form.invalid) return;
 
     this.searchService.search(this.form.value).subscribe({
-      next: (res) => {
-        this.foundedUsers.set(res.users);
-        console.log('Search results:', res.users);
-        if(!res.users.length) {
+      next: (users) => {
+        this.foundedUsers.set(users);
+        console.log('Search results:', users);
+        if(!users.length) {
           alert("לא נמצאו חברים");
         }
       },
@@ -123,7 +123,7 @@ export class SearchFiltersComponent implements OnInit{
   reset() {
     this.form.reset({
       c_gender: 9,
-      c_phome: '',
+      c_smoking: '',
       c_tz: 0,
       c_ages1: 0,
       c_ages2: 0,

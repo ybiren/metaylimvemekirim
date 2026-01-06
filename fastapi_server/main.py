@@ -51,7 +51,8 @@ from helper import (
     get_user_by_email,
     hash_password,
     block_user,
-    is_user_blocked
+    is_user_blocked,
+    search_user
 )
 
 from sendgrid_test.send_mail import send_mail
@@ -283,7 +284,7 @@ async def register(
         "birth_month": to_int(c_birth_month),
         "birth_year": to_int(c_birth_year),
         "country": to_int(c_country),
-        "pcell": c_pcell,
+        "phone": c_pcell,
         "email": c_email,
         "ff": to_int(c_ff),
         "details": c_details,
@@ -492,65 +493,23 @@ async def reet_pass(payload: dict = Body(...),db: Session = Depends(get_db)):
     user.password_hash = hash_password(password)
     db.commit()
 
-@app.post("/search")
-async def search_users(payload: Dict[str, Any]):
-    users = await load_users(USERS_PATH)
-    results = []
+@app.post("/search", response_model=list[UserBase])
+async def search_users(payload: Dict[str, Any], db: Session = Depends(get_db)):
+    
+    c_gender = payload.get("c_gender")
+    c_ff = payload.get("c_ff")
+    c_country = payload.get("c_country") 
+    c_smoking = payload.get("c_smoking")
+    c_tz = payload.get("c_tz")
+    c_pic = payload.get("c_pic")
+    c_ages1 = payload.get("c_ages1") 
+    c_ages2 =  payload.get("c_ages2")
+    c_name = payload.get("c_name")
 
-    for u in users:
-        ok = True
-
-        if payload.get("c_gender") not in (None, 9, "9"):
-            if str(u.get("c_gender")) != str(payload["c_gender"]):
-                ok = False
-
-        if ok and payload.get("c_ff") not in (None, 9, "9"):
-            if str(u.get("c_ff")) != str(payload["c_ff"]):
-                ok = False
-
-        if ok and payload.get("c_country") not in (None, 0, "0"):
-            if str(u.get("c_country")) != str(payload["c_country"]):
-                ok = False
-
-        if ok and payload.get("c_phome"):
-            if u.get("c_phome") != payload["c_phome"]:
-                ok = False
-
-        if ok and payload.get("c_tz") not in (None, 0, "0"):
-            if str(u.get("c_tz")) != str(payload["c_tz"]):
-                ok = False
-
-        if ok and payload.get("c_pic"):
-            if not u.get("image_path"):
-                ok = False
-
-        if ok and (payload.get("c_ages1") or payload.get("c_ages2")):
-            try:
-                y = int(u.get("c_birth_year", 0))
-                if y:
-                    age = 2025 - y
-                    min_age = int(payload.get("c_ages1") or 0)
-                    max_age = int(payload.get("c_ages2") or 0)
-                    if (min_age and age < min_age) or (max_age and age > max_age):
-                        ok = False
-            except Exception:
-                pass
-
-        if ok and payload.get("c_name") not in (None, 0, "0"):
-            name_db = (str(u.get("c_name")) or "").strip().lower()
-            name_payload = (str(payload.get("c_name")) or "").strip().lower()
-            if name_payload not in name_db:
-                ok = False
-
-        loggedin_user_idx = find_user_index_by_userid(users, payload.get("userId"))
-        if loggedin_user_idx is None:
-            raise HTTPException(status_code=404, detail="User not found")
+    return search_user(db, c_gender, c_ff, c_country, c_smoking, c_tz, c_pic, c_ages1, c_ages2, c_name)
         
-        if ok and pass_filter(u, users[loggedin_user_idx]):
-            results.append(u)
-
-    return {"ok": True, "count": len(results), "users": results}
-
+       
+    
 
 @app.patch("/block")
 def toggle_block(payload: dict = Body(...), db: Session = Depends(get_db)):
