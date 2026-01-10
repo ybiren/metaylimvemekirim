@@ -14,6 +14,8 @@ export type ChatMsg = {
   sentAt: string;
   deliveredAt?: string | null;
   readAt?: string | null;
+  type: string;
+  date: string
 };
 
 export type ThreadRow = {

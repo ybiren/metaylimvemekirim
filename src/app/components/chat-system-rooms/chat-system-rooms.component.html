@@ -1,21 +1,55 @@
 <section class="rooms" dir="rtl">
-  <h2 class="rooms__title">חדרים מערכתיים</h2>
+  <header class="rooms__header">
+    <div class="rooms__head">
+      <h2 class="rooms__title">חדרים מערכתיים</h2>
+      <p class="rooms__subtitle">בחר חדר כדי לפתוח צ׳אט</p>
+    </div>
+
+    <button
+      type="button"
+      class="rooms__refresh"
+      (click)="reload()"
+      [disabled]="loading()"
+      title="רענן"
+    >
+      ↻
+    </button>
+  </header>
 
   @if (loading()) {
-    <div class="state">טוען חדרים…</div>
+    <div class="state state--loading">
+      <span class="spinner" aria-hidden="true"></span>
+      טוען חדרים…
+    </div>
   } @else if (error()) {
-    <div class="state state--error">{{ error() }}</div>
+    <div class="state state--error">
+      <div class="state__title">לא הצלחנו לטעון חדרים</div>
+      <div class="state__msg">{{ error() }}</div>
+      <button type="button" class="state__action" (click)="reload()">נסה שוב</button>
+    </div>
   } @else if (rooms().length === 0) {
-    <div class="state">אין חדרים להצגה</div>
+    <div class="state state--empty">
+      אין חדרים להצגה
+      <button type="button" class="state__action" (click)="reload()">רענן</button>
+    </div>
   } @else {
-    <div class="rooms-grid">
+    <div class="rooms__grid" role="list">
       <button
         class="room"
+        role="listitem"
         *ngFor="let r of rooms(); trackBy: trackById"
         type="button"
         (click)="openChat(r.id, r.room_id)"
+        [attr.aria-label]="'פתח חדר ' + r.room_id"
       >
-        {{ r.room_id }}
+        <span class="room__icon" aria-hidden="true">#</span>
+
+        <span class="room__content">
+          <span class="room__title">{{ r.room_id }}</span>
+          <span class="room__meta">צ׳אט מערכת</span>
+        </span>
+
+        <span class="room__chev" aria-hidden="true">›</span>
       </button>
     </div>
   }

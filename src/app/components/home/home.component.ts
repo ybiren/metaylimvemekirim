@@ -5,6 +5,8 @@ import { environment } from '../../../environments/environment';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { REGIONS_TOKEN } from '../../consts/regions.consts';
+import { firstValueFrom } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 
 @Component({
@@ -26,26 +28,28 @@ export class HomeComponent implements OnInit{
   }
   imageUrl = computed(() => {
     const rand = Math.floor(Math.random() * 1_000_000);
-    return (u: IUser) => `${this.apiBase}/images/${u.userID}?id=${rand}`;
+    return (u: IUser) => `${this.apiBase}/images/${u.id}?id=${rand}`;
   });
 
  calcAge(u: IUser): number {
-   const year = Number(u.c_birth_year);
+   const year = Number(u.birth_year);
    return year ? new Date().getFullYear() - year : 0;
  }
  
- getRandomUsers(): any[] {
-   const list = [...this.users()]; // copy (do NOT mutate signal)
+ private allUsers = toSignal(this.usersSvc.getAllUsers(), { initialValue: [] as IUser[] });
+ randomUsers = computed(() => {
+    const list = this.allUsers();
+    const arr = [...list];
 
-   // Fisher–Yates shuffle
-   for (let i = list.length - 1; i > 0; i--) {
-     const j = Math.floor(Math.random() * (i + 1));
-     [list[i], list[j]] = [list[j], list[i]];
-   }
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
 
-   // if more than 2 → return n-1
-   return list.length > 2 ? list.slice(0, list.length - 1) : list;
- }
+    return arr.length > 2 ? arr.slice(0, arr.length - 1) : arr;
+  });
+
+  
 
  ngOnInit(): void {
     this.usersSvc.users$.subscribe( (users) => {

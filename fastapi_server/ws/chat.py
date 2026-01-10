@@ -132,6 +132,30 @@ async def _broadcast_presence(room_key: str) -> None:
         {"type": "presence", "roomId": room_key, "users": users, "count": len(users)},
     )
 
+def _with_date_separators(messages):
+    """
+    messages must be sorted DESC by sentAt
+    """
+    result = []
+    last_date = None
+
+    for m in reversed(messages):  # process oldest → newest
+        dt = datetime.fromisoformat(m["sentAt"]).astimezone(timezone.utc)
+        cur_date = dt.date().isoformat()
+
+        if cur_date != last_date:
+            result.append({
+                "type": "date",
+                "date": cur_date,
+            })
+            last_date = cur_date
+
+        m2 = dict(m)
+        m2["type"] = "message"
+        result.append(m2)
+
+    return list(reversed(result))  # keep DESC for UI
+
 
 # =========================
 # HTTP
@@ -166,6 +190,7 @@ async def chat_history(
             reverse=True,
         )[:limit]
 
+    msgs = _with_date_separators(msgs)
     return {"ok": True, "roomId": rid, "messages": msgs}
 
 

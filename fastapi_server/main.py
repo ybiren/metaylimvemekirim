@@ -150,6 +150,10 @@ def serve_root():
     return FileResponse(ANGULAR_DIR / "index.html", media_type="text/html")
 
 
+@app.get("/user/{userid}")
+def serve_root():
+    return FileResponse(ANGULAR_DIR / "index.html", media_type="text/html")
+
 
 # ---------------------------------------------------------------------
 # API routes
@@ -171,7 +175,8 @@ async def get_user_image(user_id: int, db: Session = Depends(get_db)):
     '''
     path = get_user(db, user_id).image_path
     if not path:
-        raise HTTPException(status_code=404, detail="Image not found")
+        path = "data/images/default-avatar.jpg"
+        #raise HTTPException(status_code=404, detail="Image not found")
     
     media_type = mimetypes.guess_type(str(path))[0] or "application/octet-stream"
     return FileResponse(path, media_type=media_type)
@@ -625,7 +630,7 @@ async def is_blocked(payload: dict = Body(...), db: Session = Depends(get_db)):
 async def list_chat_rooms(db: Session = Depends(get_db)):
     return get_system_chat_rooms(db)
 
-@app.get("/user/{userid}", response_model=UserBase)
+@app.post("/user/{userid}", response_model=UserBase)
 async def get_user_by_id(userid: int, db: Session = Depends(get_db)):
   return get_user(db,userid)
 

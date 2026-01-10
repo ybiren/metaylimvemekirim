@@ -16,7 +16,7 @@ lsof -i :8000
 
 
 1. Copy server code
-rsync -avz --exclude ".venv/" --exclude "__pycache__/" --delete /mnt/f/yossi/angular/metaylimvemekirim/fastapi_server  root@194.36.90.119:/root
+rsync -avz --exclude ".venv/" --exclude "__pycache__/" --exclude "data/" --delete /mnt/f/yossi/angular/metaylimvemekirim/fastapi_server  root@194.36.90.119:/root
 
 2. copy bundles
 rsync -avz --delete /mnt/f/yossi/angular/metaylimvemekirim/dist/metaylimvemekirim/browser/ root@194.36.90.119:/root/dist/metaylimvemekirim/browser

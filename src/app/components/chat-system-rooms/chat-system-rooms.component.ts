@@ -66,7 +66,10 @@ export class ChatSystemRoomsComponent {
         });
  
   }
-  
+ 
+  reload(): void {
+    this.loadRooms();
+  }
  
   trackById = (_: number, r: ChatRoom) => r.id;
 }

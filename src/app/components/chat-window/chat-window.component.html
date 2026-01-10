@@ -1,20 +1,16 @@
-<div class="chat" dir="rtl" (click)="menuOpen = false">
+<div class="chat" dir="rtl" (click)="closePopups()">
+
   <!-- Header -->
   <header class="chat__header" (click)="$event.stopPropagation()">
-    <!-- Right side (RTL): close + title -->
     <div class="chat__header-right">
       <button type="button" class="chat__close" (click)="close()" aria-label="סגור">✕</button>
 
       <div class="chat__head">
         <div class="chat__name">
-          @if (peerId > 0) {
-            צ'אט עם {{ peerName }}
-          } @else {
-            {{ roomName }}
-          }
+          @if (peerIdResolved > 0) { צ'אט עם {{ peerName }} } @else { {{ roomName }} }
         </div>
 
-        @if (peerId > 0) {
+        @if (peerIdResolved > 0) {
           <div class="chat__status" [class.online]="isPeerOnline">
             {{ isPeerOnline ? 'מחובר/ת' : 'לא מחובר/ת' }}
           </div>
@@ -22,8 +18,8 @@
       </div>
     </div>
 
-    <!-- Left side (RTL): menu (rooms only) -->
-    @if (peerId <= 0) {
+    <!-- Rooms menu -->
+    @if (peerIdResolved <= 0) {
       <div class="chat__menu" (click)="$event.stopPropagation()">
         <button
           type="button"
@@ -44,36 +40,38 @@
             <div class="chat__menu-title">משתתפים</div>
 
             <div class="chat__menu-list">
-              <button
-                type="button"
+              <div
                 class="chat__menu-user"
                 role="menuitem"
                 *ngFor="let u of roomUsers; trackBy: trackByUserId"
-                (click)="openUserFromMenu(u)"
                 [class.is-me]="u.userId === me"
               >
-                <img
-                  class="chat__menu-avatar"
-                  [src]="imageUrl()(u.userId)"
-                  [alt]="u.name"
-                  loading="lazy"
-                />
+                <button
+                  type="button"
+                  class="chat__menu-user-main"
+                  (click)="openUserFromMenu(u)"
+                >
+                  <img
+                    class="chat__menu-avatar"
+                    [src]="imageUrl()(u.userId)"
+                    [alt]="u.name"
+                    loading="lazy"
+                  />
 
-                <span class="chat__menu-name">
-                  {{ u.name }}
-                  <span class="chat__menu-me" *ngIf="u.userId === me">(אני)</span>
-                </span>
+                  <span class="chat__menu-name">
+                    {{ u.name }}
+                    <span class="chat__menu-me" *ngIf="u.userId === me">(אני)</span>
+                  </span>
+                </button>
 
-                <a
+                <button
+                  type="button"
                   class="chat__menu-profile"
-                  href=""
                   (click)="goToProfile(u.userId, $event)"
                 >
                   הצג פרופיל
-                </a>
-
-
-              </button>
+                </button>
+              </div>
 
               <div class="chat__menu-empty" *ngIf="!roomUsers || roomUsers.length === 0">
                 אין משתתפים להצגה
@@ -91,38 +89,87 @@
       אין הודעות עדיין
     </div>
 
-    <div
-      *ngFor="let m of messages; trackBy: trackById"
-      class="msg"
-      [class.msg--me]="m.fromUserId === me"
-      [class.msg--peer]="m.fromUserId !== me"
-    >
-      <div class="msg__sender" *ngIf="m.fromUserId !== me">
-        {{ m.fromUserName }}
+    <!-- WhatsApp-style list with date separators -->
+    <ng-container *ngFor="let m of messages; trackBy: trackById">
+      <!-- Date separator (works if you inserted type:'date' in backend) -->
+      <div *ngIf="m.type === 'date'" class="chat__date">
+        {{ formatChatDate(m.date) }}
       </div>
 
-      <div class="msg__body">
-        <span class="msg__text">{{ m.content }}</span>
+      <!-- Normal message -->
+      <div
+        *ngIf="m.type !== 'date'"
+        class="msg"
+        [class.msg--me]="m.fromUserId === me"
+        [class.msg--peer]="m.fromUserId !== me"
+      >
+        <div class="msg__sender" *ngIf="m.fromUserId !== me && peerIdResolved <= 0">
+          {{ m.fromUserName }}
+        </div>
 
-        <span class="msg__meta">
-          <span class="msg__time">{{ m.sentAt | date : 'HH:mm' }}</span>
-          <span
-            class="msg__ticks"
-            [class.delivered]="!!m.deliveredAt"
-            [class.read]="!!m.readAt"
-          >
-            ✓✓
-          </span>
-        </span>
+        <div class="msg__row">
+          <div class="msg__text">{{ m.content }}</div>
+
+          <div class="msg__meta">
+            <span class="msg__time">{{ m.sentAt | date : 'HH:mm' }}</span>
+            <span
+              class="msg__ticks"
+              [class.delivered]="!!m.deliveredAt"
+              [class.read]="!!m.readAt"
+              aria-hidden="true"
+            >
+              ✓✓
+            </span>
+          </div>
+        </div>
       </div>
-    </div>
+    </ng-container>
 
     <div class="chat__typing" *ngIf="typing$ | async">מקליד/ה…</div>
   </main>
 
   <!-- Composer -->
   @if (!isLoggedIUserBlockedByPeer()) {
-    <footer class="chat__composer">
+    <footer class="chat__composer" (click)="$event.stopPropagation()">
+
+      <div class="chat__emoji" (click)="$event.stopPropagation()">
+        <button
+          type="button"
+          class="chat__emoji-btn"
+          aria-label="אימוג׳ים"
+          [attr.aria-expanded]="emojiOpen"
+          (click)="toggleEmoji()"
+        >
+          🙂
+        </button>
+
+        @if (emojiOpen) {
+          <div class="chat__emoji-pop" role="dialog" aria-label="בחר אימוג׳י">
+            <input
+              class="chat__emoji-search"
+              type="text"
+              dir="rtl"
+              placeholder="חפש…"
+              [(ngModel)]="emojiQuery"
+              (keydown.escape)="closeEmoji()"
+            />
+
+            <div class="chat__emoji-grid" role="list">
+              <button
+                type="button"
+                class="chat__emoji-item"
+                role="listitem"
+                *ngFor="let e of filteredEmojis(); trackBy: trackByEmoji"
+                (click)="pickEmoji(e)"
+                [title]="e.name"
+              >
+                {{ e.char }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
       <input
         #input
         class="chat__input"
@@ -131,6 +178,7 @@
         placeholder="כתוב הודעה…"
         [(ngModel)]="draft"
         (keydown.enter)="send()"
+        (keydown.escape)="closePopups()"
         (input)="onTyping()"
       />
 

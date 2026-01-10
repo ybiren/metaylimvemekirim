@@ -17,14 +17,13 @@
               'slide-right': swipeDirection() === 'right'
             }"
           >
-            <img
-              [src]="imageUrl()(u)"
-              alt="user photo"
-              class="avatar"
-            />
-
-            <a [routerLink]="['/user', u.id]" class="name">
-              {{ u.c_name }}
+           <a [routerLink]="['/user', u.id]" class="a-name">
+             <img
+               [src]="imageUrl()(u)"
+               alt="user photo"
+               class="avatar"
+             />
+             <span class="name">{{ u.name }}</span>
             </a>
 
             <div class="actions">
@@ -69,16 +68,14 @@
         *ngFor="let u of users(); trackBy: trackByUserId"
       >
         <div class="user-card__inner">
-          <img
-            [src]="imageUrl()(u)"
-            alt="user photo"
-            class="avatar"
-          />
-
-          <a [routerLink]="['/user', u.id]" class="name">
-            {{ u.name }}
+          <a [routerLink]="['/user', u.id]" class="a-name">
+            <img
+              [src]="imageUrl()(u)"
+              alt="user photo"
+              class="avatar"
+            />
+            <span class="name">{{ u.name }}</span>
           </a>
-
           <div class="actions">
             <button
               class="like-btn"

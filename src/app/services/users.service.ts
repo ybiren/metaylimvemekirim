@@ -65,7 +65,7 @@ export class UsersService {
 
 
   getUser(userId: number): Observable<any> {
-    return this.http.get<any[]>(`${this.baseApi}/user/${userId}`);
+    return this.http.post<any[]>(`${this.baseApi}/user/${userId}`,{});
   }
 
   getAllUsers() {

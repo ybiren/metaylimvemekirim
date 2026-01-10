@@ -48,13 +48,13 @@
   <div class="people-grid">
     
     <a
-      *ngFor="let u of getRandomUsers(); trackBy: trackByUserId"
+      *ngFor="let u of randomUsers(); trackBy: trackByUserId"
       class="people-grid__item tooltip"
-      [routerLink]="['/user', u.userID]"
+      [routerLink]="['/user', u.id]"
     >
       <img [src]="imageUrl()(u)" alt="user photo" />
       <span class="tooltip__content">
-       <div>{{ u.c_name }} | {{ calcAge(u) }} | {{regions[u.c_country].txt}}</div>
+       <div>{{ u.name }} | {{ calcAge(u) }} | {{regions[u.country]?.txt}}</div>
       </span>
     </a>
   </div>

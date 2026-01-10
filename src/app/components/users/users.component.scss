@@ -86,14 +86,17 @@
    TEXT / ACTIONS (BIGGER)
 ===================================================== */
 
+.a-name {
+  text-decoration: none;
+} 
 .name {
   display: block;
   margin-bottom: 8px;
   font-size: 1.15rem;
   font-weight: 700;
   color: #222;
-  text-decoration: none;
 }
+
 
 .actions {
   display: flex;
