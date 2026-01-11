@@ -155,4 +155,32 @@ export class AlbumComponent implements OnInit {
   isLiked = computed(() => this.loggedInUser().like?.includes(this.userId()))
   
   
+  private touchStartX = 0;
+private touchStartY = 0;
+
+onTouchStart(ev: TouchEvent) {
+  const t = ev.changedTouches[0];
+  this.touchStartX = t.clientX;
+  this.touchStartY = t.clientY;
+}
+
+onTouchEnd(ev: TouchEvent) {
+  const t = ev.changedTouches[0];
+  const dx = t.clientX - this.touchStartX;
+  const dy = t.clientY - this.touchStartY;
+
+  // ignore mostly-vertical gestures (so page scroll works)
+  if (Math.abs(dy) > Math.abs(dx)) return;
+
+  const THRESHOLD = 40; // px
+  if (Math.abs(dx) < THRESHOLD) return;
+
+  // "mobile way": swipe left -> next, swipe right -> prev
+  if (dx < 0) this.next();
+  else this.prev();
+}
+
+
+
+
 }

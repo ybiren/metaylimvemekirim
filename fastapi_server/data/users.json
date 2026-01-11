@@ -81,7 +81,8 @@
       4,
       3,
       1,
-      5
+      5,
+      2
     ]
   },
   {
@@ -173,7 +174,8 @@
     "image_size": 10183,
     "like": [
       2,
-      4
+      4,
+      5
     ]
   },
   {
@@ -207,7 +209,10 @@
     "filter_smoking_status": "0",
     "image_path": "data\\images\\6.jpg",
     "image_content_type": "image/jpeg",
-    "image_size": 13737
+    "image_size": 13737,
+    "like": [
+      6
+    ]
   },
   {
     "userID": 7,

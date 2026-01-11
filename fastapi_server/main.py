@@ -525,7 +525,7 @@ def toggle_block(payload: dict = Body(...), db: Session = Depends(get_db)):
 
 @app.patch("/like")
 async def like_user(payload: dict = Body(...)):
-    userId = payload["userId"]
+    userId = payload["liked_userid"]
     liked_userid = payload["liked_userid"]
 
     ensure_data_file(DATA_DIR, USERS_PATH)

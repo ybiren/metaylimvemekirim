@@ -126,3 +126,58 @@
 .msg-btn {
   background: gray;
 }
+
+/* ===========================
+   Heart button (minimal)
+   =========================== */
+
+.album__header{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0 14px;
+}
+
+.album__title{
+  justify-self: end;      /* RTL: title on the right */
+  font-weight: 800;
+  color: #111827;
+}
+
+.album__like{
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  margin-top: 16px;
+  display: grid;
+  place-items: center;
+
+  font-size: 32px;      /* ⬅️ BIGGER HEART */
+  color: #9ca3af;
+
+  transition: transform .12s ease, background .15s ease, color .15s ease;
+}
+
+.album__like::before{
+  content: "❤";
+}
+
+.album__like:hover{
+  background: rgba(0,0,0,.04);
+}
+
+.album__like:active{
+  transform: scale(.9);
+}
+
+/* liked */
+.album__like.active{
+  color: #ef4444;
+  background: rgba(239,68,68,.12);
+}
+
+.album__like.active::before{
+  content: "❤";
+}

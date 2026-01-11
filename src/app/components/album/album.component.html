@@ -6,22 +6,25 @@
         {{ index() + 1 }} / {{ count() }}
       </div>
     </div>
-    
-    @if(loggedInUser().userID !== userId()) {
-    <button
-      class="like-btn"
-      type="button"
-      (click)="toggleLike()"
-      [attr.aria-pressed]="isLiked() ? 'true' : 'false'"
-      aria-label="Like"
-      title="Like"
-   >
-      <span class="heart" [class.liked]="isLiked()">❤</span>
-    </button>
-   }
-    <button type="button" class="btn" (click)="refresh()" [disabled]="loading()">
-      רענן
-    </button>
+
+    <div class="actions">
+      @if (loggedInUser().userID !== userId()) {
+        <button
+          class="like-btn"
+          type="button"
+          (click)="toggleLike()"
+          [attr.aria-pressed]="isLiked() ? 'true' : 'false'"
+          aria-label="Like"
+          title="Like"
+        >
+          <span class="heart" [class.liked]="isLiked()">❤</span>
+        </button>
+      }
+
+      <button type="button" class="btn" (click)="refresh()" [disabled]="loading()">
+        רענן
+      </button>
+    </div>
   </header>
 
   <div class="state" *ngIf="loading()">טוען...</div>
@@ -32,23 +35,37 @@
   </div>
 
   <ng-container *ngIf="!loading() && !errorMsg() && current() as img">
-    <div class="viewer">
-      <button type="button" class="nav" (click)="prev()" [disabled]="count() <= 1" aria-label="הקודם">
+    <div
+      class="viewer"
+      (touchstart)="onTouchStart($event)"
+      (touchend)="onTouchEnd($event)"
+    >
+      <button
+        type="button"
+        class="nav"
+        (click)="prev()"
+        [disabled]="count() <= 1"
+        aria-label="הקודם"
+      >
         ‹
       </button>
 
       <div class="stage">
-        <!-- NATURAL SIZE: no width/height attributes, no forced sizing -->
         <img class="photo" [src]="img.absoluteUrl" [alt]="img.filename || 'תמונה'" />
         <div class="caption" *ngIf="img.filename">{{ img.filename }}</div>
       </div>
 
-      <button type="button" class="nav" (click)="next()" [disabled]="count() <= 1" aria-label="הבא">
+      <button
+        type="button"
+        class="nav"
+        (click)="next()"
+        [disabled]="count() <= 1"
+        aria-label="הבא"
+      >
         ›
       </button>
     </div>
 
-    <!-- Optional dots navigation -->
     <div class="dots" *ngIf="count() > 1">
       <button
         type="button"

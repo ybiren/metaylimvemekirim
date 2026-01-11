@@ -43,11 +43,28 @@
       <p *ngIf="u.details1">{{ u.details1 }}</p>
     </div>
 
-    <!-- ✅ Block Button -->
-    <button class="btn block-btn" [ngClass]="{'unblock-btn' : isLoggedIUserBlocksPeer() }" (click)="blockUser(this.id)"></button>
+  
+    <div style="display: flex">
+    <!-- Block -->
+    <button class="btn block-btn"
+        [ngClass]="{'unblock-btn' : isLoggedIUserBlocksPeer() }"
+        (click)="blockUser(this.id)">
+    </button>
+
     @if(!isLoggedIUserBlockedByPeer()) {
-    <button class="btn msg-btn" (click)="openCompose()">הודעה</button>
+      <button class="btn msg-btn" (click)="openCompose()">הודעה</button>
     }
+  
+    <button
+      type="button"
+      class="album__like"
+      [class.active]="liked"
+      (click)="liked = !liked; $event.stopPropagation()"
+      aria-label="אהבתי"
+      title="אהבתי"
+    ></button>
+  </div>
+  
   </div>
   } @else {
     <app-album [userId]="id"></app-album>    

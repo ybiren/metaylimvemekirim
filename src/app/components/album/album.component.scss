@@ -29,6 +29,7 @@
 .titles {
   display: grid;
   gap: 2px;
+  min-width: 0;
 }
 
 .title {
@@ -40,6 +41,12 @@
 .sub {
   font-size: 0.9rem;
   color: var(--muted);
+}
+
+.actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 
 /* Buttons */
@@ -56,6 +63,7 @@
   padding: 0.4rem 0.9rem;
   cursor: pointer;
   transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+  white-space: nowrap;
 }
 
 .btn:hover {
@@ -69,6 +77,41 @@
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Like */
+.like-btn {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: var(--soft);
+  border-radius: 999px;
+  width: 44px;
+  height: 44px;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 120ms ease, transform 120ms ease;
+  padding: 0;
+}
+
+.like-btn:hover {
+  background: #f2f2f2;
+}
+
+.like-btn:active {
+  transform: translateY(1px);
+}
+
+.heart {
+  font-size: 24px;
+  line-height: 1;
+  opacity: 0.45;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.heart.liked {
+  opacity: 1;
+  transform: scale(1.15);
+  color: red;
 }
 
 /* States */
@@ -89,15 +132,15 @@
   background: #f3f7ff;
 }
 
-/* Viewer layout */
+/* Viewer layout (desktop/tablet) */
 .viewer {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 44px; /* minmax(0,1fr) prevents overflow */
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
   gap: 10px;
   align-items: center;
 }
 
-/* Prev/Next buttons */
+/* Prev/Next */
 .nav {
   height: 44px;
   width: 44px;
@@ -108,6 +151,8 @@
   font-size: 22px;
   line-height: 1;
   transition: background 120ms ease, transform 120ms ease;
+  display: grid;
+  place-items: center;
 }
 
 .nav:hover {
@@ -123,7 +168,7 @@
   cursor: not-allowed;
 }
 
-/* Image stage */
+/* Stage */
 .stage {
   display: grid;
   justify-items: center;
@@ -135,26 +180,18 @@
   background: var(--soft);
   border: 1px solid var(--border);
 
-  /* key: prevents image from overflowing the album */
   max-width: 100%;
   overflow: hidden;
 }
 
-/*
-  Natural size (no width/height on <img>),
-  but never overflow container.
-*/
 .photo {
   display: block;
-
-  max-width: 100%;  /* key: cap to stage width */
-  height: auto;     /* keep intrinsic aspect ratio */
-
+  max-width: 100%;
+  height: auto;
   object-fit: contain;
   background: transparent;
 }
 
-/* Optional caption */
 .caption {
   font-size: 0.9rem;
   color: var(--muted);
@@ -190,26 +227,42 @@
   background: rgba(0, 0, 0, 0.55);
 }
 
-.like-btn {
-  border: none;
-  background: none;
-  cursor: pointer;
-  padding: 0;
-}
+/* Mobile: no arrows, image full width, swipe-friendly */
+@media (max-width: 640px) {
+  .card {
+    padding: 0.85rem;
+  }
 
-.heart {
-  font-size: 26px;
-  opacity: 0.4;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
+  .title {
+    font-size: 1.05rem;
+  }
 
-.heart.liked {
-  opacity: 1;
-  transform: scale(1.15);
-  color: red;
-}
+  .viewer {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
 
-.like-label {
-  font-size: 1.05rem;
-  font-weight: 500;
+  .nav {
+    display: none;
+  }
+
+  .stage {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    border-radius: 12px;
+  }
+
+  .photo {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* allow vertical scroll while we handle horizontal swipe */
+  .stage,
+  .photo {
+    touch-action: pan-y;
+  }
 }

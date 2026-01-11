@@ -43,6 +43,7 @@ export class UserDetailsComponent implements OnInit {
   isLoggedIUserBlocksPeer = signal<boolean>(null);
   isShowProfile = signal<boolean>(true);
   id = 0;
+  liked = false;
 
   constructor() {
 
@@ -61,6 +62,19 @@ export class UserDetailsComponent implements OnInit {
     this.isLoggedIUserBlocksPeer.set(await firstValueFrom(this.usersSrv.is_blockedByPeerSignal(this.loggedInUser().id, this.id )));   
   }
 
+
+isLiked(): boolean {
+  return this.liked;
+}
+
+toggleLike(): void {
+  this.liked = !this.liked;
+
+  // TODO later:
+  // call API to persist like
+}
+  
+  
   fetchUser(id: number) {
     this.loading.set(true);
     this.error.set('');
