@@ -87,9 +87,8 @@
                 אין הודעות
               </span>
             </header>
-
             <ul class="list">
-              <li *ngFor="let t of threads" (click)="openChat(t.peerId, t.lastPreview)">
+              <li *ngFor="let t of threads" (click)="openChat(t.peerId, t.lastPreview, t.peerName)">
                 <div class="row">
                   <div class="avatar">
                     <span>
@@ -98,7 +97,7 @@
                   </div>
                   <div class="meta">
                     <div class="top">
-                      <span class="name">{{ nameFor(t.peerId) }}</span>
+                      <span class="name">{{ t.peerName }}</span>
                       <span *ngIf="isOnline(t.peerId)" class="online">כרגע באתר</span>
                       <span class="time">
                         <span class="preview">{{ t.lastPreview }}</span>

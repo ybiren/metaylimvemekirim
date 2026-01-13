@@ -18,7 +18,7 @@ from fastapi.encoders import jsonable_encoder
 from starlette.responses import FileResponse, JSONResponse
 from starlette.types import Scope
 
-from models.sendmessage_payload import SendMessagePayload
+from models.payloads.sendmessage_payload import SendMessagePayload
 from helper import decrypt_uid
 
 # import routers
@@ -559,26 +559,45 @@ async def like_user(payload: dict = Body(...)):
     }
 
 
-
 @app.post("/addMessage")
-async def add_message(payload: SendMessagePayload):
+async def add_message(
+    payload: SendMessagePayload,
+    db: session = Depends(get_db),
+):
     if payload.fromId == payload.toId:
-        raise HTTPException(status_code=400, detail="fromId and toId must differ")
+        raise HTTPException(
+            status_code=400,
+            detail="fromId and toId must differ",
+        )
 
-    message = {
-        "id": uuid.uuid4().hex,
-        "fromId": payload.fromId,
-        "toId": payload.toId,
-        "body": payload.body,
-        "sentAt": payload.sentAt.isoformat(),
+    async with db.begin():  # 🔒 single transaction
+        await get_or_create_room(db, payload.room_id)
+
+        message = ChatMessage(
+            id=uuid.uuid4().hex,
+            room_id=payload.room_id,
+            from_user_id=payload.fromId,
+            to_user_id=payload.toId,
+            content=payload.body,
+            sent_at=payload.sentAt,
+        )
+
+        db.add(message)
+
+    # no explicit commit needed — handled by `begin()`
+
+    return {
+        "ok": True,
+        "message": {
+            "id": message.id,
+            "room_id": message.room_id,
+            "fromId": message.from_user_id,
+            "toId": message.to_user_id,
+            "body": message.content,
+            "sentAt": message.sent_at.isoformat(),
+        },
     }
 
-    async with messages_lock:
-        msgs = await load_messages(MESSAGES_PATH)
-        msgs.append(message)
-        await save_messages(MESSAGES_PATH, msgs)
-
-    return {"ok": True, "message": message, "count": len(msgs)}
 
 
 @app.get("/messages")

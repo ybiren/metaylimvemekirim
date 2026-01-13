@@ -45,6 +45,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   roomUsers: any[] = [];
 
   roomName = '';
+  peerName= '';
   apiBase = environment.apibase;
 
   // resolved peerId to use safely in template
@@ -86,7 +87,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   private destroyRef = inject(DestroyRef);
 
   private dlgData = inject(DIALOG_DATA, { optional: true }) as
-    | { peerId?: number; roomName?: string }
+    | { peerId?: number; roomName?: string, peerName?: string }
     | null;
 
   // -------------------------
@@ -107,10 +108,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   // -------------------------
   // Derived helpers
   // -------------------------
-  get peerName(): string {
-    return this.usersSvc.getName(this.peerIdResolved);
-  }
-
+  
   imageUrl = computed(() => {
     const rand = Math.floor(Math.random() * 1_000_000);
     return (userId: number) => `${this.apiBase}/images/${userId}?id=${rand}`;
@@ -123,6 +121,8 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     // Resolve peerId and room name from @Input or dialog data
     if (this.peerId == null) this.peerId = this.dlgData?.peerId;
     this.roomName = this.dlgData?.roomName ?? '';
+    this.peerName = this.dlgData?.peerName ?? '';
+
 
     this.peerIdResolved = typeof this.peerId === 'number' ? this.peerId : -1;
   }

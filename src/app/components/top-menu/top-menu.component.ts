@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, OnDestroy, computed } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Subscription, interval, fromEvent } from 'rxjs';
+import { Subscription, interval, fromEvent, firstValueFrom } from 'rxjs';
 import { IUser } from '../../interfaces';
 import { ChatService, ThreadRow } from '../../services/chat.service';
 import { PresenceService } from '../../services/presence.service';
@@ -89,13 +89,13 @@ export class TopMenuComponent implements OnInit, OnDestroy {
     if (this.open) this.chat.refreshThreads();
   }
 
-  openChat(peerId: number, lastPreview: string) {
+  openChat(peerId: number, lastPreview: string, peerName: string) {
     const isMobile = window.innerWidth < 600;
     if(lastPreview.includes("קבלת לייק מ")) {
       this.router.navigate([`/user/${peerId}`]);
     } else {
       this.dialog.open(ChatWindowComponent, {
-        data: { peerId },
+        data: { peerId, peerName },
         panelClass: isMobile ? 'im-dialog--mobile' : 'im-dialog--desktop',
         ...(isMobile
           ? { width: '100vw', height: '100vh' }
@@ -122,10 +122,7 @@ export class TopMenuComponent implements OnInit, OnDestroy {
     return this.presence.isOnline(peerId);
   }
 
-  nameFor(peerId: number) {
-    return this.usersSrv.getName(peerId);
-  }
-
+  
   // 🔽 Mobile menu helpers
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;

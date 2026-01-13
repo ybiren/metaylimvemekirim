@@ -21,6 +21,7 @@ export type ChatMsg = {
 export type ThreadRow = {
   roomId: string;
   peerId: number;
+  peerName: string;
   lastAt: string;
   lastFromUserId: number | null;
   lastPreview: string;
