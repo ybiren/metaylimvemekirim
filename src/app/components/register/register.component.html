@@ -31,9 +31,12 @@
     @if (user()) {
       <label class="label" for="c_height">גובה</label>
       <div class="field">
-        <div class="inline-note">
+        <!--<div class="inline-note">
           <input id="c_height" type="number" formControlName="c_height" placeholder="0" />&nbsp;בסנטימטרים
-        </div>
+        </div>-->
+        <select id="c_height" formControlName="c_height">
+          <option *ngFor="let h of heights" [value]="h">{{ h }}</option>
+        </select>
       </div>
     }
 
@@ -318,7 +321,7 @@
   </details>
 
   <label class="accept-terms">
-    <input type="checkbox" formControlName="acceptTerms" />
+    <input type="checkbox" formControlName="acceptTerms" checked />
     אני מאשר/ת שקראתי את תנאי השימוש
   </label>
   <div class="errors" *ngIf="f.acceptTerms.touched && f.acceptTerms.invalid">

@@ -7,7 +7,11 @@
 
       <div class="chat__head">
         <div class="chat__name">
-          @if (peerIdResolved > 0) { צ'אט עם {{ peerName }} } @else { {{ roomName }} }
+          @if (peerIdResolved > 0) { 
+            צ'אט עם <a (click)="goToProfile(peerIdResolved, $event)" href="#">{{ peerName }}</a>  
+          } @else {
+             {{ roomName }} 
+          }
         </div>
 
         @if (peerIdResolved > 0) {

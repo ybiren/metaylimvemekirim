@@ -64,6 +64,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
     1994, 1995,
   ];
 
+  heights = [145, 150, 155, 160, 165, 170, 175, 180,185,190,195,200,205,210,215,220];
+
   sessionID = signal<string>(Math.floor(Math.random() * 1_000_000_000).toString());
   submitting = signal<boolean>(false);
   serverMsg = signal<string>('');
@@ -402,7 +404,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
             c_smoking: Number(current.smoking ?? 0),
             c_url: current.url ?? '',
             c_fb: current.fb ?? '',
-
+            acceptTerms: current ? true: false,
             filter_height_min: Number((current as any).filter_height_min ?? 145),
             filter_height_max: Number((current as any).filter_height_max ?? 200),
             filter_age_min: Number((current as any).filter_age_min ?? 25),

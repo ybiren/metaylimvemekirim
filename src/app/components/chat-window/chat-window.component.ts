@@ -16,19 +16,19 @@ import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
-
 import { ChatService, ChatMsg } from '../../services/chat.service';
 import { PresenceService } from '../../services/presence.service';
 import { UsersService } from '../../services/users.service';
 import { getCurrentUserId } from '../../core/current-user';
 import { environment } from '../../../environments/environment';
+import { RouterLink } from '@angular/router';
 
 type EmojiItem = { char: string; name: string; keywords: string[] };
 
 @Component({
   standalone: true,
   selector: 'app-chat-window',
-  imports: [NgIf, NgFor, DatePipe, FormsModule, AsyncPipe],
+  imports: [NgIf, NgFor, DatePipe, FormsModule, AsyncPipe, RouterLink],
   templateUrl: './chat-window.component.html',
   styleUrls: ['./chat-window.component.scss'],
 })

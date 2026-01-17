@@ -65,6 +65,9 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  a {
+    color: #fff;
+  }
 }
 .chat__status { font-size: 12px; opacity: .85; }
 .chat__status.online { opacity: 1; }
