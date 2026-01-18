@@ -272,9 +272,16 @@
   <div class="grid card">
     <label class="label" for="filter_height_min">מגובה עד גובה</label>
     <div class="field range-row">
-      <input id="filter_height_min" type="number" formControlName="filter_height_min" placeholder='מגובה (ס"מ)' />
+      <!--<input id="filter_height_min" type="number" formControlName="filter_height_min" placeholder='מגובה (ס"מ)' />-->
+      <select id="filter_height_min" formControlName="filter_height_min">
+        <option *ngFor="let h of heights" [value]="h">{{ h }}</option>
+      </select>
       <span class="range-separator">עד</span>
-      <input id="filter_height_max" type="number" formControlName="filter_height_max" placeholder='עד גובה (ס"מ)' />
+      <!--<input id="filter_height_max" type="number" formControlName="filter_height_max" placeholder='עד גובה (ס"מ)' />-->
+      <select id="filter_height_max" formControlName="filter_height_max">
+        <option *ngFor="let h of heights" [value]="h">{{ h }}</option>
+      </select>
+      <span class="label">בסנטימטרים</span>
       <div class="errors" *ngIf="form.errors?.heightRangeInvalid && (form.touched || form.dirty)">
         <small>טווח גבהים לא תקין (מגובה גדול מ"עד גובה").</small>
       </div>

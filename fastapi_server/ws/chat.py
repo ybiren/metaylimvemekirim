@@ -264,7 +264,6 @@ async def chat_history(
     limit: int = Query(200, ge=1, le=2000),
     db: Session = Depends(get_db),
 ):
-    print("chat history")
     # Global room history (in-memory)
     if _is_global(user2):
         rid = str(user2)
@@ -274,6 +273,7 @@ async def chat_history(
                 key=lambda m: m["sentAt"],
                 reverse=True,
             )[:limit]
+            msgs = _with_date_separators(msgs)
         return {"ok": True, "roomId": user2, "messages": msgs}
 
     # DM history (DB)

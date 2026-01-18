@@ -51,6 +51,14 @@
         (click)="onNavLinkClick()"
         >sms</a
       >
+ 
+      @if (!loggedInUser) {  
+      <a
+        routerLink="/"
+        (click)="onNavLinkClick()"
+        >התחברות לאתר</a
+      >
+      } 
 
       @if (loggedInUser) {
         
