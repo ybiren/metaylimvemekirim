@@ -196,10 +196,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     this.menuOpen = !this.menuOpen;
     if (this.menuOpen) this.emojiOpen = false;
   }
-
-  openUserFromMenu(_u: { userId: number }) {
-    this.menuOpen = false;
-  }
+  
 
   // -------------------------
   // Emoji panel

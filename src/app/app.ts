@@ -45,12 +45,12 @@ export class App implements OnInit, OnDestroy{
   constructor() {
     // 🚀 1) Check if user already logged in
     const userID = getCurrentUserId();
-    if (userID) {
+    const params = new URLSearchParams(window.location.search);
+    if (userID && !params.get("shareprofile")) {
       this.presenceSub = this.presence.start(25_000, userID); // match HEARTBEAT_SEC
        // Navigate immediately to /users
       this.router.navigateByUrl('/home');
     } else {
-      const params = new URLSearchParams(window.location.search);
       if(params.get("uid")) {
         const uid = params.get("uid");
         this.router.navigateByUrl(`/reset-password?uid=${uid}`);

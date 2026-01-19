@@ -117,7 +117,8 @@
     "filter_age_min": "0",
     "filter_age_max": "100",
     "filter_family_status": "1,3",
-    "filter_smoking_status": "0"
+    "filter_smoking_status": "0",
+    "like": []
   },
   {
     "userID": 4,
