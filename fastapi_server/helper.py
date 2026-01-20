@@ -264,7 +264,7 @@ def search_user(db: Session, c_gender, c_ff, c_country, c_smoking, c_tz, c_pic, 
   if c_name not in (None, 0, "0"):
     name = str(c_name).strip()
     if name:
-      conds.append(User.c_name.ilike(f"%{name}%"))
+      conds.append(User.name.ilike(f"%{name}%"))
 
   stmt = select(User)
   if conds:
