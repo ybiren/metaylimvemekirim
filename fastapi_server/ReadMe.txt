@@ -107,3 +107,37 @@ systemctl enable --now crond
 
   for checking if port is open:
   sudo ss -tulpn | grep :5050
+
+
+
+
+
+  domain issues on linux:
+  this is conf file
+  /etc/nginx/conf.d
+
+  edit metaylimvemekirim.conf:
+
+  ''''''''''''''''''''''''''''''''''''''''''''''
+  server {
+
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name metaylimvemekirim.co.il www.metaylimvemekirim.co.il _;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+  }
+  ''''''''''''''''''''''''''''''''''''''''''''''''
+
+  
+  finally run:
+  sudo nginx -t
+  sudo systemctl reload nginx
+
+
