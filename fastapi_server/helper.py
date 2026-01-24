@@ -66,8 +66,7 @@ def apply_user_filters(q, me):
     q = q.filter(User.id != me.id)
 
     my_height = me.height
-
-    if my_height is not None:
+    if my_height is not None and my_height > 0:
         q = q.filter(
           or_(
                 User.filter_height_min.is_(None),
@@ -80,7 +79,7 @@ def apply_user_filters(q, me):
         )
     else:
        pass
-
+    
 
     my_age = calc_age_py(me.birth_day, me.birth_month, me.birth_year)
     if my_age is not None:
@@ -96,7 +95,7 @@ def apply_user_filters(q, me):
        )
     else:
        pass
-
+    
     my_ff = me.ff
     if my_ff is not None:
         q = q.filter(
@@ -109,8 +108,7 @@ def apply_user_filters(q, me):
         )
     else:
         pass
-
-
+    
     my_smoking = me.smoking
     if my_smoking is not None:
         q = q.filter(
@@ -123,6 +121,7 @@ def apply_user_filters(q, me):
     else:
         pass
 
+    
     return q
 
 
@@ -224,54 +223,64 @@ def is_user_blocked(
 
     return db.execute(stmt).scalar()
 
-def search_user(db: Session, c_gender, c_ff, c_country, c_smoking, c_tz, c_pic, c_ages1, c_ages2, c_name):
+from datetime import date
+from sqlalchemy.orm import Session
 
-  conds = []
-  if c_gender not in (None, 9, "9"):
-    conds.append(User.gender == int(c_gender))
+def search_user(
+    db: Session,
+    c_gender, c_ff, c_country, c_smoking,
+    c_tz, c_pic, c_ages1, c_ages2, c_name
+):
+    query = db.query(User)
 
-  if c_ff not in (None, 9, "9"):
-    conds.append(User.ff == int(c_ff))
+    if c_gender not in (None, 9, "9"):
+        query = query.filter(User.gender == int(c_gender))
 
-  if c_country not in (None, 0, "0"):
-    conds.append(User.country == int(c_country))
+    if c_ff not in (None, 9, "9"):
+        query = query.filter(User.ff == int(c_ff))
 
-  if c_smoking:
-    conds.append(User.smoking == int(c_smoking))
+    if c_country not in (None, 0, "0"):
+        query = query.filter(User.country == int(c_country))
 
-  if c_tz not in (None, 0, "0"):
-    conds.append(User.c_tz == int(c_tz))
+    if c_smoking:
+        query = query.filter(User.smoking == int(c_smoking))
 
-  if c_pic:
-    conds.append(User.image_path.is_not(None))
-    conds.append(User.image_path != "")
+    if c_tz not in (None, 0, "0"):
+        query = query.filter(User.c_tz == int(c_tz))
 
-  min_age = None
-  max_age = None 
-  if c_ages1 or c_ages2:
-    current_year = date.today().year
-    min_age = int(c_ages1 or 0)
-    max_age = int(c_ages2 or 0)
+    if c_pic:
+        query = query.filter(
+            User.image_path.is_not(None),
+            User.image_path != ""
+        )
 
-    conds.append(User.birth_year.is_not(None))
-    conds.append(User.birth_year > 0)
+    if c_ages1 or c_ages2:
+        current_year = date.today().year
+        min_age = int(c_ages1 or 0)
+        max_age = int(c_ages2 or 0)
 
-    if min_age:
-      conds.append(User.birth_year <= current_year - min_age)
-    if max_age:
-      conds.append(User.birth_year >= current_year - max_age)
+        query = query.filter(
+            User.birth_year.is_not(None),
+            User.birth_year > 0
+        )
 
-  if c_name not in (None, 0, "0"):
-    name = str(c_name).strip()
-    if name:
-      conds.append(User.name.ilike(f"%{name}%"))
+        if min_age:
+            query = query.filter(
+                User.birth_year <= current_year - min_age
+            )
+        if max_age:
+            query = query.filter(
+                User.birth_year >= current_year - max_age
+            )
 
-  stmt = select(User)
-  if conds:
-    stmt = stmt.where(*conds)
+    if c_name not in (None, 0, "0"):
+        name = str(c_name).strip()
+        if name:
+            query = query.filter(
+                User.name.ilike(f"%{name}%")
+            )
 
-  users = db.execute(stmt).scalars().all()
-  return users
+    return query
 
 
 fernet_generated_key = "Tugx8RapMBvTgNw1K0L8Q1MVLOgReBOXSv3hs-W-p3M="

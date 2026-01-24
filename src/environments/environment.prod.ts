@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
   apibase: "",
-  basews: ""
+  basews: "ws://194.36.90.119:8000"
 };

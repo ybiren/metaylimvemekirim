@@ -6,7 +6,7 @@ import { getCurrentUserId } from '../../core/current-user';
 import { IUser } from '../../interfaces';
 import { UsersService } from '../../services/users.service';
 import { ToastService } from '../../services/toast.service';
-import { filter, take } from 'rxjs';
+import { filter, firstValueFrom, take } from 'rxjs';
 import { ChatService } from '../../services/chat.service';
 
 type UiImage = {
@@ -28,7 +28,7 @@ export class AlbumComponent implements OnInit {
   private usersSvc = inject(UsersService);
   private toast = inject(ToastService);
   private chat = inject(ChatService);
-      
+     
   userId = input<number>(getCurrentUserId());
   
   loading = signal(false);
@@ -36,6 +36,7 @@ export class AlbumComponent implements OnInit {
   images = signal<UiImage[]>([]);
   index = signal(0);
   loggedInUser = signal<IUser | null>(null);
+  isLoggedIUserLikesPeer = signal<boolean>(null);
   
   count = computed(() => this.images().length);
   hasImages = computed(() => this.count() > 0);
@@ -52,8 +53,9 @@ export class AlbumComponent implements OnInit {
     this.loggedInUser.set(JSON.parse(localStorage.getItem('user')) as IUser)
   }
   
-  ngOnInit(): void {
+  async ngOnInit() {
     this.refresh();
+    this.isLoggedIUserLikesPeer.set(await firstValueFrom(this.usersSvc.isLiked(this.loggedInUser().id, this.userId()))); 
   }
 
   refresh(): void {
@@ -126,33 +128,22 @@ export class AlbumComponent implements OnInit {
   }
 
   toggleLike() {
-      const userId = this.loggedInUser().userID;
-      this.usersSvc.like(userId, this.userId()).subscribe({
-        next: (res: any) => {
-          this.toast.show('הוספת like ✓');
-          localStorage.setItem('user', JSON.stringify({...this.loggedInUser(),"like": [...res.like_list]}));
-          this.loggedInUser.set(JSON.parse(localStorage.getItem('user')) as IUser);
-          if(this.loggedInUser().like?.includes(this.userId())) {
-            this.chat.setActivePeer(this.userId());
-            this.chat.connect(this.userId());
-            this.chat.statusChanged$
-            .pipe(
-              filter(stat => stat === WebSocket.OPEN),
-              take(1),
-              takeUntilDestroyed(this.destroyRef)
-            )
-            .subscribe(() => {
-              this.chat.send(`קבלת לייק מ ${this.loggedInUser().c_name}`);
-              this.chat.setActivePeer(null);
-              this.chat.disconnect();
-            });
-          }
-        },
-        error: () => alert("אירעה שגיאה")
-      });
+    this.toast.show('הוספת like ✓');
+    this.chat.setActivePeer(this.userId());
+    this.chat.connect(this.userId());
+    this.chat.statusChanged$
+    .pipe(
+      filter(stat => stat === WebSocket.OPEN),
+      take(1),
+      takeUntilDestroyed(this.destroyRef)
+    )
+    .subscribe(() => {
+      this.chat.send(`קבלת לייק מ ${this.loggedInUser().name}`);
+      this.chat.setActivePeer(null);
+      this.chat.disconnect();
+    });
   }
 
-  isLiked = computed(() => this.loggedInUser().like?.includes(this.userId()))
   
   
   private touchStartX = 0;

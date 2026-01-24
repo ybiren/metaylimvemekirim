@@ -1,306 +1,240 @@
 :host {
   display: block;
   direction: rtl;
-  padding: 0 8px 24px;
-  background: #f0f2f5;
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f0f2f5;
+  padding: 12px 0 24px;
 }
 
 /* =====================================================
-   DESKTOP GRID (MAX 3 PER ROW)
+   PAGE WRAPPER
 ===================================================== */
 
-.users-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+.users-page {
   max-width: 980px;
   margin: 0 auto;
-  align-items: start;
-}
-
-@media (max-width: 1024px) {
-  .users-grid {
-    grid-template-columns: repeat(2, 1fr);
-    max-width: 720px;
-  }
-}
-
-@media (max-width: 600px) {
-  .users-grid {
-    grid-template-columns: 1fr;
-    max-width: 420px;
-  }
 }
 
 /* =====================================================
-   CARD (DEFAULT – GRID / DESKTOP)
+   USERS LIST (TABLE-LIKE)
 ===================================================== */
 
-.user-card {
-  display: flex;
-  align-items: stretch;
-}
-
-.user-card__inner {
-  width: 100%;
-  margin: 0 auto;
-  padding: 16px;
-
-  background: #fff;
-  border-radius: 16px;
+.users-list {
+  background: #ffffff;
+  border-radius: 14px;
   border: 1.5px solid #d0d3d8;
+  overflow: hidden;
 
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.12),
     0 6px 18px rgba(0, 0, 0, 0.08);
-
-  text-align: center;
-  transition: transform 0.25s ease, opacity 0.25s ease, box-shadow 0.25s ease;
-}
-
-@media (min-width: 900px) {
-  .user-card__inner {
-    max-width: 260px;
-    padding: 14px;
-  }
-}
-
-/* Avatar – NORMAL MODE (circle) */
-.avatar {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  object-fit: cover;
-  display: block;
-  margin: 0 auto 8px;
-}
-
-@media (min-width: 900px) {
-  .avatar {
-    width: 84px;
-    height: 84px;
-  }
 }
 
 /* =====================================================
-   TEXT / ACTIONS (BIGGER)
+   ROWS (AVOID .row COLLISION)
 ===================================================== */
 
-.a-name {
-  text-decoration: none;
-} 
-.name {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 1.15rem;
+.u-row {
+  display: grid;
+  grid-template-columns: 72px 100px 90px 1fr 130px;
+  align-items: center;
+  column-gap: 12px;
+
+  padding: 10px 12px;
+  border-bottom: 1px solid #e6e6e6;
+}
+
+.u-row:last-child {
+  border-bottom: none;
+}
+
+/* header */
+.u-row--head {
+  background-color: #f0f2f5;
   font-weight: 700;
   color: #222;
 }
 
+/* =====================================================
+   CELLS
+===================================================== */
 
-.actions {
+.u-cell {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  margin-top: 6px;
 }
 
-.like-btn {
-  border: none;
-  background: none;
-  cursor: pointer;
-  padding: 0;
+/* alignment per column */
+.u-pic {
+  justify-content: center;
 }
 
-.heart {
-  font-size: 26px;
-  opacity: 0.4;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+.u-age {
+  font-weight: 700;
 }
 
-.heart.liked {
-  opacity: 1;
-  transform: scale(1.15);
-  color: red;
+.u-name {
+  flex-direction: row;
+  gap: 8px;
 }
 
-.like-label {
-  font-size: 1.05rem;
-  font-weight: 500;
+.u-action {
+  justify-content: flex-start;
 }
 
-.blink {
-  margin-top: 10px;
-  font-size: 0.9rem;
+/* =====================================================
+   AVATAR
+===================================================== */
+
+.avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #dcdcdc;
+}
+
+/* =====================================================
+   TEXT
+===================================================== */
+
+.name {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #222;
+  white-space: nowrap;
+}
+
+.age {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+}
+
+.online {
+  font-size: 12.5px;
+  font-weight: 700;
   color: #0a7a0a;
+  white-space: nowrap;
   animation: blinkAnimation 1.2s infinite;
 }
 
-/* default index (desktop grid) */
-.user-index-indicator {
-  margin-top: 10px;
-  font-size: 0.9rem;
-  opacity: 0.7;
-  font-weight: 600;
+/* =====================================================
+   PROFILE BUTTON
+===================================================== */
+
+.btn-profile {
+  height: 36px;
+  padding: 0 14px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+  border: 1px solid #c9cdd3;
+  background-color: #ffffff;
+
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #222;
+  text-decoration: none;
+
+  cursor: pointer;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
+
+.btn-profile:hover {
+  background-color: #f7f7f7;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* =====================================================
+   PAGINATION
+===================================================== */
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.pager-btn {
+  height: 38px;
+  padding: 0 14px;
+
+  border-radius: 10px;
+  border: 1px solid #c9cdd3;
+  background-color: #ffffff;
+
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.pager-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pager-info {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+}
+
+/* =====================================================
+   STATES
+===================================================== */
 
 .loading,
 .no-users {
   text-align: center;
   padding: 24px 0;
-}
-
-@media (max-width: 600px) {
-  .user-card__inner {
-    border-width: 2px;
-    box-shadow:
-      0 2px 4px rgba(0,0,0,.14),
-      0 10px 26px rgba(0,0,0,.12);
-  }
+  font-size: 15px;
 }
 
 /* =====================================================
-   SWIPE MODE (MOBILE / TABLET ONLY)
+   RESPONSIVE (SAME UI – SMALLER)
 ===================================================== */
 
-.single-user-wrapper {
-  width: 100%;
-  touch-action: none;
-  overflow: hidden;
-}
-
-@media (max-width: 1024px) {
-  :host {
-    padding-bottom: 0;
+@media (max-width: 520px) {
+  .u-row {
+    grid-template-columns: 70px 70px 40px 100px 40px;
+    padding: 5px;
   }
 
-  /* container fills viewport minus header (=72px) */
-  .single-user-wrapper {
-    height: calc(100dvh - 72px);
-    min-height: calc(100vh - 72px);
-    display: flex;
-    justify-content: center;
-    align-items: stretch;
-  }
-
-  .user-card.user-card--single {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: stretch;
-  }
-
-  .user-card.user-card--single .user-card__inner {
-    width: 100%;
-    max-width: 420px;
-    height: 100%;
-
-    margin: 12px auto;
-    padding: 0;
-
-    display: flex;
-    flex-direction: column;
-
-    border-radius: 16px;
-    overflow: hidden;
-
-    background: #fff;
-  }
-
-  /* HERO image (full width, not circle) */
-  .user-card--single .avatar {
-    width: 100%;
-    height: 55%;
-    min-height: 240px;
-
-    margin: 0;
-    border-radius: 0;
-    object-fit: cover;
-    display: block;
-  }
-
-  /* Swipe typography a bit bigger */
-  .user-card--single .name {
-    font-size: 1.25rem;
-    padding: 10px 16px 6px;
-    text-align: center;
-  }
-
-  .user-card--single .actions {
-    padding: 0 16px 8px;
-  }
-
-  .user-card--single .like-label {
-    font-size: 1.1rem;
-  }
-
-  .user-card--single .blink {
-    padding: 0 16px 10px;
-    text-align: center;
-  }
-
-  /* ✅ COUNTER UNDER LIKE (NOT ABSOLUTE) */
-  .user-card--single .user-index-indicator {
-    position: static;
-    transform: none;
-    bottom: auto;
-    left: auto;
-    right: auto;
-
-    margin: 10px 0 0;
-    padding: 0 16px 14px;
-
-    font-size: 0.95rem;
-    font-weight: 600;
-    opacity: 0.7;
-    color: #444;
-
-    background: none;
-    border: none;
-    box-shadow: none;
-    text-align: center;
-  }
-
-  /* small separator line above the counter */
-  .user-card--single .user-index-indicator::before {
-    content: '';
-    display: block;
+  .avatar {
     width: 46px;
-    height: 1px;
-    background: #ddd;
-    margin: 8px auto 10px;
+    height: 46px;
+  }
+
+  .name {
+    font-size: 14.5px;
+  }
+
+  .age {
+    font-size: 14px;
+  }
+
+  .btn-profile {
+    height: 34px;
+    font-size: 13.5px;
+    padding: 0 10px;
   }
 }
 
 /* =====================================================
-   SWIPE ANIMATIONS
-===================================================== */
-
-.slide-left {
-  animation: slideInFromRight 0.25s ease;
-}
-
-.slide-right {
-  animation: slideInFromLeft 0.25s ease;
-}
-
-@keyframes slideInFromRight {
-  from { transform: translateX(40px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes slideInFromLeft {
-  from { transform: translateX(-40px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-/* =====================================================
-   BLINK
+   ONLINE BLINK
 ===================================================== */
 
 @keyframes blinkAnimation {
-  0% { opacity: 1; }
-  50% { opacity: 0; }
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
   100% { opacity: 1; }
 }

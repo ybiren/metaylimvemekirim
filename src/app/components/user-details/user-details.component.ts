@@ -14,8 +14,10 @@ import { ToastService } from '../../services/toast.service';
 import { ChatWindowComponent } from '../chat-window/chat-window.component';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { AlbumComponent } from '../album/album.component';
-import { firstValueFrom, of } from 'rxjs';
+import { filter, firstValueFrom, of, take } from 'rxjs';
 import { ShareProfileDialogComponent, ShareChannel } from './share-profile-dialog.component';
+import { ShareUrlService } from '../../services/share-url.service';
+import { ChatService } from '../../services/chat.service';
 
 
 @Component({
@@ -34,6 +36,9 @@ export class UserDetailsComponent implements OnInit {
   dialog = inject(Dialog);
   toast = inject(ToastService);
   private destroyRef = inject(DestroyRef);
+  private shareUrlService  = inject(ShareUrlService);
+  private chat = inject(ChatService);
+    
 
   apiBase = environment.apibase;
 
@@ -44,6 +49,7 @@ export class UserDetailsComponent implements OnInit {
   isLoggedIUserBlockedByPeer = signal<boolean>(null);
   isLoggedIUserBlocksPeer = signal<boolean>(null);
   isShowProfile = signal<boolean>(true);
+  isLoggedIUserLikesPeer = signal<boolean>(null);
   id = 0;
   liked = false;
 
@@ -63,21 +69,27 @@ export class UserDetailsComponent implements OnInit {
     if(this.loggedInUser()) {
       this.isLoggedIUserBlockedByPeer.set(await firstValueFrom(this.usersSrv.is_blockedByPeerSignal(this.id, this.loggedInUser().id)));
       this.isLoggedIUserBlocksPeer.set(await firstValueFrom(this.usersSrv.is_blockedByPeerSignal(this.loggedInUser().id, this.id )));   
+      this.isLoggedIUserLikesPeer.set(await firstValueFrom(this.usersSrv.isLiked(this.loggedInUser().id, this.id))); 
     }
   }
 
-
-isLiked(): boolean {
-  return this.liked;
-}
-
-toggleLike(): void {
-  this.liked = !this.liked;
-
-  // TODO later:
-  // call API to persist like
-}
-  
+  toggleLike() {
+    this.toast.show('הוספת like ✓');
+    this.chat.setActivePeer(this.id);
+    this.chat.connect(this.id);
+    this.chat.statusChanged$
+    .pipe(
+      filter(stat => stat === WebSocket.OPEN),
+      take(1),
+      takeUntilDestroyed(this.destroyRef)
+     )
+     .subscribe(() => {
+       this.chat.send(`קבלת לייק מ ${this.loggedInUser().name}`);
+       this.chat.setActivePeer(null);
+       this.chat.disconnect();
+     });
+  }
+      
   
   fetchUser(id: number) {
     this.loading.set(true);
@@ -172,95 +184,11 @@ toggleLike(): void {
     this.isShowProfile.set(isShowProfile);
   }
 
-
-
-
-private isMobile(): boolean {
-  return window.matchMedia('(max-width: 600px)').matches;
-}
-
-get profileUrl(): string {
-  return `${window.location.origin}/user/${this.id}?shareprofile=1`;
-}
-
-openShareDialog() {
-  const u = this.user();
-  const isMobile = this.isMobile();
-
-  const title = 'שיתוף פרופיל:';
-  const subject = 'שיתוף פרופיל';
-
-  const ref = this.dialog.open(ShareProfileDialogComponent, {
-  data: {
-    profileUrl: this.profileUrl,
-    title,
-    subject,
-    name: u?.name ?? '',
-    isMobile
-  },
-  panelClass: isMobile ? 'im-sheet' : 'im-dialog',
-
-  hasBackdrop: true,
-  backdropClass: 'share-backdrop',   // ⭐ חשוב
-});
-
-
-  ref.closed.subscribe(async (choice) => {
-    if (!choice || choice === 'cancel') return;
-
-    if (choice === 'native') await this.shareNative(title);
-    if (choice === 'whatsapp') this.shareWhatsapp(title);
-    if (choice === 'email') this.shareEmail(subject, title);
-    if (choice === 'copy') this.copyLink();
-  });
-}
-
-private async shareNative(title: string) {
-  const share = (navigator as any).share;
-  if (!share) {
-    // fallback אם אין תמיכה
-    this.shareWhatsapp(title);
-    return;
+   openShareDialog(){
+    const sharedUrl = `${window.location.origin}/user/${this.id}?shareprofile=1`;
+    const sharedUserName = this.user().name;  
+    this.shareUrlService.openShareDialog(sharedUrl, sharedUserName);
   }
-
-  try {
-    await share({
-      title: 'פרופיל',
-      text: `${title} ${this.profileUrl}`,
-      url: this.profileUrl,
-    });
-  } catch(e) {
-    alert(JSON.stringify(e));
-    // user canceled / blocked → לא מציגים שגיאה
-  }
-}
-
-private shareWhatsapp(title: string) {
-  const text = `${title}\n${this.profileUrl}`;
-  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
-}
-
-private shareEmail(subject: string, title: string) {
-  const body = `${title}\n${this.profileUrl}`;
-  window.location.href =
-    `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-}
-
-private async copyLink() {
-  try {
-    await navigator.clipboard.writeText(this.profileUrl);
-    this.toast.show('הקישור הועתק 📋');
-  } catch {
-    const el = document.createElement('textarea');
-    el.value = this.profileUrl;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-    this.toast.show('הקישור הועתק 📋');
-  }
-}
-
 
 
 }

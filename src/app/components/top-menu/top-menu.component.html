@@ -144,16 +144,9 @@
           routerLink="/users"
           routerLinkActive="active"
           (click)="onNavLinkClick()"
-          >כל החברים</a
+          >חברים שאהבו</a
         >
-              
-        <a
-          routerLink="/album"
-          routerLinkActive="active"
-          (click)="onNavLinkClick()"
-        >אלבומים</a
-      >
-
+          
       <a
           routerLink="/chat-system-rooms"
           routerLinkActive="active"
@@ -161,6 +154,8 @@
         >חדרי צ'אט</a
       >
 
+      <a (click)="openShareDialog()" >שתף אתר</a>
+      
       <a
           routerLink="/help"
           routerLinkActive="active"

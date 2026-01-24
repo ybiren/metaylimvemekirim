@@ -44,7 +44,7 @@
     </div>
 
   
-    @if (loggedInUser()) {
+    @if (loggedInUser() && loggedInUser().id!==id) {
     <div style="display: flex">
       <button class="btn block-btn"
         [ngClass]="{'unblock-btn' : isLoggedIUserBlocksPeer() }"
@@ -60,8 +60,8 @@
       <button
         type="button"
         class="album__like"
-        [class.active]="liked"
-        (click)="liked = !liked; $event.stopPropagation()"
+        [class.active]="isLoggedIUserLikesPeer()"
+        (click)="toggleLike()"
         aria-label="אהבתי"
         title="אהבתי"
       ></button>

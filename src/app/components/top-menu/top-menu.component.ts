@@ -11,6 +11,8 @@ import { UsersService } from '../../services/users.service';
 import { getCurrentUserId } from '../../core/current-user';
 import { SendReminderComponent } from '../send-reminder/send-reminder.component';
 import { environment } from '../../../environments/environment';
+import { ShareUrlService } from '../../services/share-url.service';
+
 
 @Component({
   selector: 'app-top-menu',
@@ -30,6 +32,7 @@ export class TopMenuComponent implements OnInit, OnDestroy {
   isMenuOpen = false;
 
   private usersSrv = inject(UsersService);
+  private shareUrlService  = inject(ShareUrlService);
 
   private subs: Subscription[] = [];
   apiBase = environment.apibase;
@@ -137,5 +140,9 @@ export class TopMenuComponent implements OnInit, OnDestroy {
     const rand = Math.floor(Math.random() * 1_000_000);
     return (userID) => `${this.apiBase}/images/${userID}?id=${rand}`;
   });
+
+  openShareDialog() {
+    this.shareUrlService.openShareDialog("http://metaylimvemekirim.co.il","");
+  }
 
 }

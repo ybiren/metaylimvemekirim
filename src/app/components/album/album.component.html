@@ -8,16 +8,16 @@
     </div>
 
     <div class="actions">
-      @if (loggedInUser() && loggedInUser().userID !== userId()) {
+      @if (loggedInUser() && loggedInUser().id !== userId()) {
         <button
           class="like-btn"
           type="button"
           (click)="toggleLike()"
-          [attr.aria-pressed]="isLiked() ? 'true' : 'false'"
+          [attr.aria-pressed]="isLoggedIUserLikesPeer() ? 'true' : 'false'"
           aria-label="Like"
           title="Like"
         >
-          <span class="heart" [class.liked]="isLiked()">❤</span>
+          <span class="heart" [class.liked]="isLoggedIUserLikesPeer()">❤</span>
         </button>
       }
 

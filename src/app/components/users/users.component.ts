@@ -12,7 +12,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
-import { IUser } from '../../interfaces';
+import { IOption, IUser } from '../../interfaces';
 import { environment } from '../../../environments/environment';
 import { PresenceService } from '../../services/presence.service';
 import { getCurrentUserId } from '../../core/current-user';
@@ -22,6 +22,7 @@ import { ToastService } from '../../services/toast.service';
 import { ChatService } from '../../services/chat.service';
 import { filter, take, takeWhile } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { REGIONS_TOKEN } from '../../consts/regions.consts';
 
 
 @Component({
@@ -54,10 +55,13 @@ export class UsersComponent implements OnInit, OnDestroy {
   private toast = inject(ToastService);
   private chat = inject(ChatService);
   private destroyRef = inject(DestroyRef);
-    
+  regions: ReadonlyArray<IOption> = inject(REGIONS_TOKEN);
+  
+  
   apiBase = environment.apibase;
   private me = getCurrentUserId();
   loggedInUser = signal<IUser | null>(null);
+    
   
 
 
@@ -102,7 +106,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     if (!this.inputUsers()) {
       // main users page: subscribe to service
-      this.usersSvc.getAllUsers().subscribe((users) => this.users.set(users));
+      this.usersSvc.getAllUsers(true).subscribe((users) => this.users.set(users));
     } else {
       // embedded mode: exclude myself
       this.users.set(this.inputUsers()!.filter((u) => u.id !== this.me));
@@ -157,7 +161,7 @@ export class UsersComponent implements OnInit, OnDestroy {
             takeUntilDestroyed(this.destroyRef)
           )
           .subscribe(() => {
-            this.chat.send(`קבלת לייק מ ${this.loggedInUser().c_name}`);
+            this.chat.send(`קבלת לייק מ ${this.loggedInUser().name}`);
             this.chat.setActivePeer(null);
             this.chat.disconnect();
           });
@@ -231,4 +235,35 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.currentIndex.set((idx - 1 + len) % len);
     this.startSwipeAnimation('right');
   }
+
+
+
+
+  pageSize = 10;
+  pageIndex = signal(0);
+
+  totalPages = computed(() => Math.max(1, Math.ceil(this.users().length / this.pageSize)));
+
+  pagedUsers = computed(() => {
+    const start = this.pageIndex() * this.pageSize;
+    return this.users().slice(start, start + this.pageSize);
+  });
+
+  nextPage() {
+    this.pageIndex.update(p => Math.min(p + 1, this.totalPages() - 1));
+  }
+
+  prevPage() {
+    this.pageIndex.update(p => Math.max(p - 1, 0));
+  }
+
+ calcAge(u: IUser): number {
+   const year = Number(u.birth_year);
+   return year ? new Date().getFullYear() - year : 0;
+ }
+
+
+
+
+
 }

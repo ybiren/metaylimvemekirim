@@ -64,12 +64,16 @@ export class UsersService {
   }
 
 
+  isLiked(from_user_id: number,to_user_id: number) {
+    return this.http.post<boolean>(`${this.baseUrl}/isLiked`, {from_user_id, to_user_id});
+  }
+
   getUser(userId: number): Observable<any> {
     return this.http.post<any[]>(`${this.baseApi}/user/${userId}`,{});
   }
 
-  getAllUsers() {
-     return this.http.post<IUser[]>(`${this.baseUrl}/users`,{userId: getCurrentUserId()});
+  getAllUsers(onlyUsersThatLikedMe = false) {
+     return this.http.post<IUser[]>(`${this.baseUrl}/users`,{userId: getCurrentUserId(), onlyUsersThatLikedMe});
   }
 
 

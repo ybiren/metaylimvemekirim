@@ -1,106 +1,70 @@
-<section *ngIf="!loading(); else loadingTpl">
+<section class="users-page" *ngIf="!loading(); else loadingTpl">
 
-  <!-- MOBILE / TABLET: single full-width swipeable card -->
-  <ng-container *ngIf="isMobileOrTablet(); else desktopUsers">
-    <div
-      class="single-user-wrapper"
-      (touchstart)="onTouchStart($event)"
-      (touchmove)="onTouchMove($event)"
-      (touchend)="onTouchEnd($event)"
-    >
-      <ng-container *ngIf="currentUser() as u; else noUsers">
-        <div class="user-card user-card--single">
-          <div
-            class="user-card__inner"
-            [ngClass]="{
-              'slide-left': swipeDirection() === 'left',
-              'slide-right': swipeDirection() === 'right'
-            }"
-          >
-           <a [routerLink]="['/user', u.id]" class="a-name">
-             <img
-               [src]="imageUrl()(u)"
-               alt="user photo"
-               class="avatar"
-             />
-             <span class="name">{{ u.name }}</span>
-            </a>
+  <ng-container *ngIf="pagedUsers().length; else noUsers">
 
-            <div class="actions">
-              <button
-                class="like-btn"
-                type="button"
-                (click)="toggleLike(u)"
-                [attr.aria-pressed]="isLiked()(u.id) ? 'true' : 'false'"
-                aria-label="Like"
-                title="Like"
-              >
-                <span class="heart" [class.liked]="isLiked()(u.id)">❤</span>
-              </button>
-              <span class="like-label">
-                {{ isLiked()(u.id) ? 'Liked' : 'Like' }}
-              </span>
-            
-            </div>
+    <div class="users-list" role="table" aria-label="Users list">
 
-            @if (isOnline()(u.id)) {
-              <div class="blink">כרגע באתר</div>
-            }
+      <!-- Header -->
+      <div class="u-row u-row--head" role="row">
+        <div class="u-cell u-pic" role="columnheader">תמונה</div>
+        <div class="u-cell u-name" role="columnheader">שם</div>
+        <div class="u-cell u-age" role="columnheader">גיל</div>
+        <div class="u-cell u-age" role="columnheader">אזור מגורים</div>
+        <div class="u-cell u-action" role="columnheader">&nbsp;</div>
+      </div>
 
-            <div class="user-index-indicator">
-              {{ currentIndex() + 1 }} / {{ users().length }}
-            </div>
-          </div>
+      <!-- Rows -->
+      <div class="u-row" role="row" *ngFor="let u of pagedUsers(); trackBy: trackByUserId">
+        <div class="u-cell u-pic" role="cell">
+          <img class="avatar" [src]="imageUrl()(u)" alt="user photo" />
         </div>
-      </ng-container>
-    </div>
 
-    <ng-template #noUsers>
-      <p class="no-users">אין משתמשים להצגה.</p>
-    </ng-template>
-  </ng-container>
+        <div class="u-cell u-name" role="cell">
+          <span class="name">
+            {{ u.name }}
+            @if (isOnline()(u.id)) {
+              <span class="online">כרגע באתר</span>
+            }
+          </span>
+        </div>
 
-  <!-- DESKTOP: grid of users -->
-  <ng-template #desktopUsers>
-    <section class="users-grid">
-      <div
-        class="user-card"
-        *ngFor="let u of users(); trackBy: trackByUserId"
-      >
-        <div class="user-card__inner">
-          <a [routerLink]="['/user', u.id]" class="a-name">
-            <img
-              [src]="imageUrl()(u)"
-              alt="user photo"
-              class="avatar"
-            />
-            <span class="name">{{ u.name }}</span>
-          </a>
-          <div class="actions">
-            <button
-              class="like-btn"
-              type="button"
-              (click)="toggleLike(u)"
-              [attr.aria-pressed]="isLiked()(u.id) ? 'true' : 'false'"
-              aria-label="Like"
-              title="Like"
-            >
-              <span class="heart" [class.liked]="isLiked()(u.id)">❤</span>
-            </button>
-            <span class="like-label">
-              {{ isLiked()(u.id) ? 'Liked' : 'Like' }}
-            </span>
-          </div>
+        <div class="u-cell u-age" role="cell">
+          <span class="age">{{ calcAge(u) }}</span>
+        </div>
 
-          @if (isOnline()(u.id)) {
-            <div class="blink">כרגע באתר</div>
-          }
+        <div class="u-cell u-name" role="cell">
+          <span class="name">{{ regions[u.country]?.txt }}</span>
+        </div>
+   
+        
+        <div class="u-cell u-action" role="cell">
+          <a class="btn-profile" [routerLink]="['/user', u.id]">הצג</a>
         </div>
       </div>
-    </section>
-  </ng-template>
 
+    </div>
+
+    <!-- Pagination -->
+    <div class="pager">
+      <button type="button" class="pager-btn" (click)="prevPage()" [disabled]="pageIndex() === 0">
+        &rarr; הקודם
+      </button>
+
+      <div class="pager-info">
+        {{ pageIndex() + 1 }} / {{ totalPages() }}
+      </div>
+
+      <button type="button" class="pager-btn" (click)="nextPage()" [disabled]="pageIndex() >= totalPages() - 1">
+        הבא &larr;
+      </button>
+    </div>
+
+  </ng-container>
 </section>
+
+<ng-template #noUsers>
+  <p class="no-users">אין משתמשים להצגה.</p>
+</ng-template>
 
 <ng-template #loadingTpl>
   <p class="loading">טוען משתמשים...</p>

@@ -9,7 +9,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from sqlalchemy import exists,and_
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile, Query, Body, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -60,6 +60,7 @@ from schemas.chat_room import ChatRoomOut2
 from schemas.user import UserBase
 from db import get_db
 from models.user import User
+from models.chat_message import ChatMessage
 
 # ---------------------------------------------------------------------
 # Config & Logging
@@ -420,7 +421,7 @@ async def register(
 @app.post("/users", response_model=list[UserBase])
 async def get_users(payload: dict = Body(...), db: Session = Depends(get_db)):
     # accept either userId or userid
-    user_id = payload.get("userId", payload.get("userid"))
+    user_id = payload.get("userId")
     if not user_id:
         raise HTTPException(status_code=400, detail="Missing userId")
 
@@ -430,6 +431,20 @@ async def get_users(payload: dict = Body(...), db: Session = Depends(get_db)):
 
     q = db.query(User)
     q = apply_user_filters(q, me)
+
+    onlyUsersThatLikedMe = payload.get("onlyUsersThatLikedMe")
+    
+    if onlyUsersThatLikedMe: 
+      q = q.filter(
+        exists().where(
+            and_(
+                ChatMessage.from_user_id == User.id,
+                ChatMessage.to_user_id == me.id,
+                ChatMessage.content.like("%קבלת לייק מ%")
+            )
+        )
+      )
+
 
     return q.all()
     '''
@@ -500,6 +515,13 @@ async def reet_pass(payload: dict = Body(...),db: Session = Depends(get_db)):
 
 @app.post("/search", response_model=list[UserBase])
 async def search_users(payload: Dict[str, Any], db: Session = Depends(get_db)):
+    user_id = payload.get("userId")
+    if not user_id:
+        raise HTTPException(status_code=400, detail="Missing userId")
+
+    me = db.query(User).filter(User.id == int(user_id)).first()
+    if not me:
+        raise HTTPException(status_code=404, detail="User not found")
     
     c_gender = payload.get("c_gender")
     c_ff = payload.get("c_ff")
@@ -511,10 +533,25 @@ async def search_users(payload: Dict[str, Any], db: Session = Depends(get_db)):
     c_ages2 =  payload.get("c_ages2")
     c_name = payload.get("c_name")
 
-    return search_user(db, c_gender, c_ff, c_country, c_smoking, c_tz, c_pic, c_ages1, c_ages2, c_name)
-        
+    q=search_user(db, c_gender, c_ff, c_country, c_smoking, c_tz, c_pic, c_ages1, c_ages2, c_name)
+    return apply_user_filters(q,me)    
        
+
+@app.post("/isLiked")
+async def is_liked(payload: dict = Body(...), db: Session = Depends(get_db)) :
+    from_user_id = payload.get("from_user_id")
+    to_user_id = payload.get("to_user_id")
+    return db.query(
+        exists().where(
+            and_(
+                ChatMessage.from_user_id == from_user_id,
+                ChatMessage.to_user_id == to_user_id,
+                ChatMessage.content.like("%קבלת לייק מ%")
+            )
+        )
+    ).scalar()
     
+
 
 @app.patch("/block")
 def toggle_block(payload: dict = Body(...), db: Session = Depends(get_db)):
@@ -522,6 +559,8 @@ def toggle_block(payload: dict = Body(...), db: Session = Depends(get_db)):
     blocked_user_id = int(payload.get("blocked_userid", 0))
 
     return block_user(db, user_id, blocked_user_id) 
+
+
 
 @app.patch("/like")
 async def like_user(payload: dict = Body(...)):
