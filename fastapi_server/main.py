@@ -52,7 +52,9 @@ from helper import (
     hash_password,
     block_user,
     is_user_blocked,
-    search_user
+    is_user_liked,
+    search_user,
+    like_user
 )
 
 from sendgrid_test.send_mail import send_mail
@@ -539,63 +541,25 @@ async def search_users(payload: Dict[str, Any], db: Session = Depends(get_db)):
 
 @app.post("/isLiked")
 async def is_liked(payload: dict = Body(...), db: Session = Depends(get_db)) :
-    from_user_id = payload.get("from_user_id")
-    to_user_id = payload.get("to_user_id")
-    return db.query(
-        exists().where(
-            and_(
-                ChatMessage.from_user_id == from_user_id,
-                ChatMessage.to_user_id == to_user_id,
-                ChatMessage.content.like("%קבלת לייק מ%")
-            )
-        )
-    ).scalar()
-    
+    user_id = payload.get("from_user_id")
+    peer_id = payload.get("to_user_id")
+    is_liked = is_user_liked(db, user_id, peer_id)
+    return is_liked
+
 
 
 @app.patch("/block")
 def toggle_block(payload: dict = Body(...), db: Session = Depends(get_db)):
     user_id = int(payload.get("userId", 0))
     blocked_user_id = int(payload.get("blocked_userid", 0))
-
     return block_user(db, user_id, blocked_user_id) 
 
 
-
 @app.patch("/like")
-async def like_user(payload: dict = Body(...)):
-    userId = payload["liked_userid"]
-    liked_userid = payload["liked_userid"]
-
-    ensure_data_file(DATA_DIR, USERS_PATH)
-    users = await load_users(USERS_PATH)
-
-    idx = find_user_index_by_userid(users, userId)
-    if idx is None:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    user = users[idx]
-
-    if "like" not in user or not isinstance(user["like"], list):
-        user["like"] = []
-
-    if liked_userid in user["like"]:
-        user["like"].remove(liked_userid)
-        action = "unblocked"
-    else:
-        user["like"].append(liked_userid)
-        action = "liked"
-
-    users[idx] = user
-    await save_users(USERS_PATH, users)
-
-    return {
-        "ok": True,
-        "action": action,
-        "userID": userId,
-        "liked_userID": liked_userid,
-        "like_list": user["like"]
-    }
+async def toggle_like(payload: dict = Body(...), db: Session = Depends(get_db)):
+    user_id = int(payload.get("userId", 0))
+    liked_user_id = int(payload.get("liked_userid", 0))
+    return like_user(db, user_id, liked_user_id) 
 
 
 @app.post("/addMessage")

@@ -1,17 +1,16 @@
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class UserBlockBase(BaseModel):
+class UserLikekBase(BaseModel):
     user_id: int = Field(..., ge=1)
-    blocked_user_id: int = Field(..., ge=1)
+    liked_user_id: int = Field(..., ge=1)
 
 
 
-class UserBlockCreate(UserBlockBase):
+class UserLikeCreate(UserLikekBase):
     pass
 
 
-class UserBlockRead(UserBlockBase):
+class UserLIkekRead(UserLikekBase):
     model_config = ConfigDict(from_attributes=True)
-
     id: int

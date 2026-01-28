@@ -74,20 +74,26 @@ export class UserDetailsComponent implements OnInit {
   }
 
   toggleLike() {
-    this.toast.show('הוספת like ✓');
-    this.chat.setActivePeer(this.id);
-    this.chat.connect(this.id);
-    this.chat.statusChanged$
-    .pipe(
-      filter(stat => stat === WebSocket.OPEN),
-      take(1),
-      takeUntilDestroyed(this.destroyRef)
-     )
-     .subscribe(() => {
-       this.chat.send(`קבלת לייק מ ${this.loggedInUser().name}`);
-       this.chat.setActivePeer(null);
-       this.chat.disconnect();
-     });
+    this.usersSrv.like(this.loggedInUser().id, this.id).subscribe({
+      next: (res:any) => {
+        this.toast.show('הוספת like ✓');
+        this.isLoggedIUserLikesPeer.set(res.liked);
+        this.chat.setActivePeer(this.id);
+        this.chat.connect(this.id);
+        this.chat.statusChanged$
+        .pipe(
+          filter(stat => stat === WebSocket.OPEN),
+          take(1),
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe(() => {
+          this.chat.send(`קבלת לייק מ ${this.loggedInUser().name}`);
+          this.chat.setActivePeer(null);
+          this.chat.disconnect();
+        });   
+      }
+    });
+   
   }
       
   

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import ForeignKey, Integer, UniqueConstraint, Index
+from sqlalchemy import ForeignKey, Integer, UniqueConstraint, Index,Column,DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
 
 
@@ -25,5 +25,6 @@ class UserBlock(Base):
     )
 
     blocked_user_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    sent_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     

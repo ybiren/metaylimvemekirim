@@ -128,25 +128,29 @@ export class AlbumComponent implements OnInit {
   }
 
   toggleLike() {
-    this.toast.show('הוספת like ✓');
-    this.chat.setActivePeer(this.userId());
-    this.chat.connect(this.userId());
-    this.chat.statusChanged$
-    .pipe(
-      filter(stat => stat === WebSocket.OPEN),
-      take(1),
-      takeUntilDestroyed(this.destroyRef)
-    )
-    .subscribe(() => {
-      this.chat.send(`קבלת לייק מ ${this.loggedInUser().name}`);
-      this.chat.setActivePeer(null);
-      this.chat.disconnect();
+    this.usersSvc.like(this.loggedInUser().id, this.userId()).subscribe({
+      next: (res:any) => {
+        this.toast.show('הוספת like ✓');
+        this.isLoggedIUserLikesPeer.set(res.liked);
+        this.chat.setActivePeer(this.userId());
+        this.chat.connect(this.userId());
+        this.chat.statusChanged$
+        .pipe(
+          filter(stat => stat === WebSocket.OPEN),
+          take(1),
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe(() => {
+          this.chat.send(`קבלת לייק מ ${this.loggedInUser().name}`);
+          this.chat.setActivePeer(null);
+          this.chat.disconnect();
+        });
+      }
     });
   }
-
+    
   
-  
-  private touchStartX = 0;
+private touchStartX = 0;
 private touchStartY = 0;
 
 onTouchStart(ev: TouchEvent) {

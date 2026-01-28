@@ -8,15 +8,15 @@ from typing import Any, Dict, List, Optional, Tuple
 from fastapi import HTTPException, UploadFile, Depends, status
 from datetime import date
 import bcrypt
-
 from models.user import User
 from models.chat_room import ChatRoom
 from models.user_blocks import UserBlock
+from models.user_likes  import UserLike
 from passlib.context import CryptContext
 from sqlalchemy import and_, or_, select, exists
 from sqlalchemy.exc import IntegrityError
-
 from cryptography.fernet import Fernet, InvalidToken
+from sqlalchemy.orm import Session
 
 
 def get_user(db: Session, user_id: int):
@@ -178,6 +178,7 @@ def upsert_user(db: Session, user_fields: Dict[str, Any]) -> Tuple[User, bool]:
     db.refresh(user)
     return user, created
 
+####################################################################
 def block_user(db: Session, user_id, blocked_user_id):
 
     if user_id <= 0 or blocked_user_id <= 0:
@@ -209,6 +210,40 @@ def block_user(db: Session, user_id, blocked_user_id):
 
         return {"blocked": True}
 
+
+####################################################################
+def like_user(db: Session, user_id, liked_user_id):
+
+    if user_id <= 0 or liked_user_id <= 0:
+        raise HTTPException(status_code=400, detail="userId and liked_userid are required")
+    if user_id == liked_user_id:
+        raise HTTPException(status_code=400, detail="cannot like yourself")
+
+    # check if block exists
+    stmt = select(UserLike).where(
+        UserLike.user_id == user_id,
+        UserLike.liked_user_id == liked_user_id,
+    )
+    existing = db.execute(stmt).scalar_one_or_none()
+
+    if existing:
+        # delete (toggle off)
+        db.delete(existing)
+        db.commit()
+        return {"liked": False}
+    else:
+        # insert (toggle on)
+        db.add(UserLike(user_id=user_id, liked_user_id=liked_user_id))
+        try:
+            db.commit()
+        except IntegrityError:
+            # In case of race condition (two requests at once)
+            db.rollback()
+            return {"liked": True}
+
+        return {"liked": True}
+        
+####################################################################
 def is_user_blocked(
     db: Session,
     user_id: int,
@@ -223,9 +258,22 @@ def is_user_blocked(
 
     return db.execute(stmt).scalar()
 
-from datetime import date
-from sqlalchemy.orm import Session
+####################################################################
+def is_user_liked(
+    db: Session,
+    user_id: int,
+    peer_id: int,
+) -> bool:
+    stmt = select(
+        exists().where(
+            (UserLike.user_id == user_id) &
+            (UserLike.liked_user_id == peer_id)
+        )
+    )
 
+    return db.execute(stmt).scalar()
+
+####################################################################
 def search_user(
     db: Session,
     c_gender, c_ff, c_country, c_smoking,
@@ -282,13 +330,12 @@ def search_user(
 
     return query
 
-
+####################################################################
 fernet_generated_key = "Tugx8RapMBvTgNw1K0L8Q1MVLOgReBOXSv3hs-W-p3M="
-
 # init Fernet with the key
 fernet = Fernet(fernet_generated_key.encode())
 
-
+####################################################################
 def encrypt_uid(uid: str) -> str:
     """
     Encrypt uid and return URL-safe token
@@ -297,6 +344,7 @@ def encrypt_uid(uid: str) -> str:
     return token.decode()
 
 
+####################################################################
 def decrypt_uid(token: str, ttl_seconds: int = 3600) -> str:
     """
     Decrypt token back to uid (with TTL validation)

@@ -22,7 +22,7 @@ export class PwaInstallComponent {
       this.deferred = e;           // stash the event
       this.show.set(true);         // show the button
     });
-    window.addEventListener('appinstalled', () => this.show.set(false));
+    window.addEventListener('appinstalled', () => { this.show.set(false); });
   }
 
   canInstall() { return this.show(); }

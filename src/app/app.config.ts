@@ -34,10 +34,6 @@ export const appConfig: ApplicationConfig = {
             enabled: !isDevMode(),
             registrationStrategy: 'registerWhenStable:30000'
           }),
-    provideServiceWorker('ngsw-worker.js', {
-      enabled: !isDevMode(),
-      registrationStrategy: 'registerWhenStable:30000',
-    }),      
     importProvidersFrom(NgxSpinnerModule),
     { provide: HTTP_INTERCEPTORS, useClass: LoadingInterceptor, multi: true },
      provideAnimations(),
