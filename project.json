@@ -22,7 +22,8 @@
             "glob": "**/*",
             "input": "public"
           },
-          "src/assets"
+          "src/assets",
+          "src/custom-sw.js"
         ],
         "styles": ["./src/styles.scss"],
         "serviceWorker": true,

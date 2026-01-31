@@ -1,0 +1,22 @@
+<section class="wrap" dir="rtl">
+  <div class="fb-tabs">
+    <a
+      class="fb-tab"
+      [class.active]="isILike()"
+      (click)="showProfile(false)">
+חברים שמחבבים אותי        
+    </a>
+
+    <a
+      class="fb-tab"
+      [class.active]="!isILike()"
+      (click)="showProfile(true)">
+      חברים שאני מחבב
+    </a>
+  </div>
+  @if(isILike()) {
+    <app-users [inputUsers]="usersThatLikesMe()" />
+  } @else {
+    <app-users [inputUsers]="usersThatILike()" />
+  }
+</section>

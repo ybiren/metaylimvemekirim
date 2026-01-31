@@ -72,7 +72,7 @@ export class UsersService {
     return this.http.post<any[]>(`${this.baseApi}/user/${userId}`,{});
   }
 
-  getAllUsers(onlyUsersThatLikedMe = false) {
+  getAllUsers(onlyUsersThatLikedMe = null) {
      return this.http.post<IUser[]>(`${this.baseUrl}/users`,{userId: getCurrentUserId(), onlyUsersThatLikedMe});
   }
 

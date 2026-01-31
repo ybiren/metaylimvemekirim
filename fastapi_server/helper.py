@@ -12,12 +12,14 @@ from models.user import User
 from models.chat_room import ChatRoom
 from models.user_blocks import UserBlock
 from models.user_likes  import UserLike
+from models.push_subscription import PushSubscription
 from passlib.context import CryptContext
 from sqlalchemy import and_, or_, select, exists
 from sqlalchemy.exc import IntegrityError
 from cryptography.fernet import Fernet, InvalidToken
 from sqlalchemy.orm import Session
-
+from pywebpush import webpush, WebPushException
+import os
 
 def get_user(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id).first()
@@ -234,6 +236,7 @@ def like_user(db: Session, user_id, liked_user_id):
     else:
         # insert (toggle on)
         db.add(UserLike(user_id=user_id, liked_user_id=liked_user_id))
+        send_push(db,liked_user_id,"מישהו מחבב אותך","מישהו מחבב אותך")
         try:
             db.commit()
         except IntegrityError:
@@ -329,6 +332,64 @@ def search_user(
             )
 
     return query
+
+
+####################################################################
+def insert_push_subscription(
+    db: Session,
+    user_id: int,
+    subscription: dict,
+    user_agent: str | None = None,
+) -> PushSubscription:
+    endpoint = subscription.get("endpoint")
+    if not endpoint:
+        raise ValueError("subscription.endpoint is missing")
+
+    # 1) אם כבר קיים endpoint → עדכון
+    existing = db.execute(
+        select(PushSubscription).where(PushSubscription.endpoint == endpoint)
+    ).scalar_one_or_none()
+
+    if existing:
+        existing.user_id = user_id
+        existing.subscription = subscription
+        existing.user_agent = user_agent
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            raise
+        db.refresh(existing)
+        return existing
+
+    # 2) אחרת → יצירה
+    row = PushSubscription(
+        user_id=user_id,
+        endpoint=endpoint,
+        subscription=subscription,
+        user_agent=user_agent,
+    )
+
+    db.add(row)
+    try:
+        db.commit()
+    except IntegrityError:
+        # Race condition: מישהו אחר הכניס את אותו endpoint רגע לפני commit
+        db.rollback()
+        existing = db.execute(
+            select(PushSubscription).where(PushSubscription.endpoint == endpoint)
+        ).scalar_one()
+
+        existing.user_id = user_id
+        existing.subscription = subscription
+        existing.user_agent = user_agent
+
+        db.commit()
+        db.refresh(existing)
+        return existing
+
+    db.refresh(row)
+    return row
 
 ####################################################################
 fernet_generated_key = "Tugx8RapMBvTgNw1K0L8Q1MVLOgReBOXSv3hs-W-p3M="
@@ -661,3 +722,76 @@ async def save_messages(path: Path, messages: list[dict]) -> None:
     with tmp.open("w", encoding="utf-8") as f:
         json.dump(messages, f, ensure_ascii=False, indent=2)
     tmp.replace(path)
+
+
+#-----------------------
+# Send Push
+#----------------------
+def get_user_subscriptions(db: Session, user_id: int) -> list[PushSubscription]:
+    return db.execute(
+        select(PushSubscription).where(PushSubscription.user_id == user_id)
+    ).scalars().all()
+
+
+def delete_subscription_by_endpoint(db: Session, endpoint: str) -> None:
+    db.query(PushSubscription).filter(
+        PushSubscription.endpoint == endpoint
+    ).delete()
+    db.commit()
+
+VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "qgga9O0iJ4DwNhuhO5wUqdddUYnUtGUZbhOIyysWCV0")
+VAPID_SUBJECT = os.getenv("VAPID_SUBJECT", "mailto:admin@metaylimvemekirim.co.il")
+
+def send_push(
+    db: Session,
+    user_id: int,
+    title: str,
+    body: str
+) -> dict:
+    """
+    Send push notification to ALL subscriptions of a user.
+    Automatically deletes dead subscriptions (404 / 410).
+    """
+
+    payload = {
+        "title": title,
+        "body": body,
+         "data": {
+           "url": f"/user/{user_id}"
+        },
+    }
+
+    subs = get_user_subscriptions(db, user_id)
+
+    if not subs:
+        return {"sent": 0, "deleted": 0}
+
+    sent = 0
+    deleted = 0
+
+    for sub in subs:
+        try:
+            webpush(
+                subscription_info=sub.subscription,
+                data=json.dumps(payload),
+                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_claims={"sub": VAPID_SUBJECT},
+            )
+            sent += 1
+
+        except WebPushException as e:
+            status = getattr(e.response, "status_code", None)
+
+            # 🔥 subscription is dead → delete it
+            if status in (404, 410):
+                delete_subscription_by_endpoint(db, sub.endpoint)
+                deleted += 1
+            else:
+                # keep subscription, just log error
+                print("Push failed:", repr(e))
+
+    return {
+        "sent": sent,
+        "deleted": deleted,
+        "total": len(subs),
+    }

@@ -11,3 +11,4 @@ sendgrid==6.12.5
 sqlalchemy
 psycopg2-binary
 passlib[bcrypt]
+pywebpush

@@ -23,6 +23,7 @@ from helper import decrypt_uid
 
 # import routers
 from routes.sms_updates import router2 as sms_updates_router
+from routes.push import router3 as push_router
 from ws.notify import router as notify_router
 from ws.chat import router as chat_router
 
@@ -63,6 +64,8 @@ from schemas.user import UserBase
 from db import get_db
 from models.user import User
 from models.chat_message import ChatMessage
+from models.user_likes import UserLike
+
 
 # ---------------------------------------------------------------------
 # Config & Logging
@@ -106,6 +109,7 @@ app.add_middleware(
 app.include_router(notify_router)
 app.include_router(chat_router)
 app.include_router(sms_updates_router)
+app.include_router(push_router, prefix="/api")
 
 # ---------------------------------------------------------------------
 # Locks
@@ -436,18 +440,28 @@ async def get_users(payload: dict = Body(...), db: Session = Depends(get_db)):
 
     onlyUsersThatLikedMe = payload.get("onlyUsersThatLikedMe")
     
-    if onlyUsersThatLikedMe: 
+    #if  onlyUsersThatLikedMe is None , there is no filter
+
+    if onlyUsersThatLikedMe is True: 
       q = q.filter(
         exists().where(
             and_(
-                ChatMessage.from_user_id == User.id,
-                ChatMessage.to_user_id == me.id,
-                ChatMessage.content.like("%קבלת לייק מ%")
+                UserLike.user_id == User.id,
+                UserLike.liked_user_id == me.id
             )
         )
       )
-
-
+    
+    elif onlyUsersThatLikedMe is False:
+      q = q.filter(
+        exists().where(
+            and_(
+                UserLike.user_id == me.id,
+                UserLike.liked_user_id == User.id
+            )
+        )
+      )
+     
     return q.all()
     '''
     ensure_data_file(DATA_DIR, USERS_PATH)
