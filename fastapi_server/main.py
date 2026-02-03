@@ -181,7 +181,7 @@ async def get_user_image(user_id: int, db: Session = Depends(get_db)):
     )
     '''
     path = get_user(db, user_id).image_path
-    if not path:
+    if (not path) or (not Path(path).exists()):
         path = "data/images/default-avatar.jpg"
         #raise HTTPException(status_code=404, detail="Image not found")
     

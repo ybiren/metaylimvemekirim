@@ -12,19 +12,25 @@ export class PushService {
   private readonly VAPID_PUBLIC_KEY = environment.vapidPublicKey;
 
   async enableAndRegister(userId?: number): Promise<void> {
+    alert(`this.swPush.isEnabled= ${this.swPush.isEnabled}`);
     if (!this.swPush.isEnabled) return;
-
+    alert("after swPush.isEnableddfdfdfsdsds");
     const sub = await this.swPush.requestSubscription({
       serverPublicKey: this.VAPID_PUBLIC_KEY,
     });
 
-    await firstValueFrom(
+    alert("after request subscription");
+
+    const xx = await firstValueFrom(
       this.http.post('/api/push/subscribe', {
         userId,
         subscription: sub,
         userAgent: navigator.userAgent,
       })
     );
+  
+    alert(JSON.stringify(xx));
+
   }
 
   async disable(userId?: number): Promise<void> {

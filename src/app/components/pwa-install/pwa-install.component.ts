@@ -40,9 +40,9 @@ export class PwaInstallComponent {
       // OPTION A: auto-prompt for notifications right after install
       // (Some people prefer a button instead)
       try {
-        console.log("AAAAA");
+        alert("before enableAndRegister");
         await this.push.enableAndRegister(this.loggedInUser().id);
-        console.log("BBBBB");
+        alert("after enableAndRegister");
       } catch (err) {
         alert(JSON.stringify(err));
         console.warn('Push enable failed:', err);
