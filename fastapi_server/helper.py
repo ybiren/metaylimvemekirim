@@ -14,7 +14,7 @@ from models.user_blocks import UserBlock
 from models.user_likes  import UserLike
 from models.push_subscription import PushSubscription
 from passlib.context import CryptContext
-from sqlalchemy import and_, or_, select, exists
+from sqlalchemy import and_, or_, select, exists, func
 from sqlalchemy.exc import IntegrityError
 from cryptography.fernet import Fernet, InvalidToken
 from sqlalchemy.orm import Session
@@ -37,7 +37,7 @@ pwd_context = CryptContext(
     deprecated="auto")
 
 def get_user_by_email_pass(db, c_email: str, password: str):
-    user = db.query(User).filter(User.email == c_email).first()
+    user = db.query(User).filter(User.email == c_email, User.isfreezed == False).first()
     if not user:
       raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Bad credentials")
     if not pwd_context.verify(password, user.password_hash):
@@ -333,6 +333,19 @@ def search_user(
 
     return query
 
+####################################################################
+def freeze_user_db(db: Session, user_id: int) -> User:
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.isfreezed = True
+
+    db.commit()
+    db.refresh(user)
+
+    return user
 
 ####################################################################
 def insert_push_subscription(
@@ -351,12 +364,15 @@ def insert_push_subscription(
     ).scalar_one_or_none()
 
     if existing:
+        print("existing")
         existing.user_id = user_id
         existing.subscription = subscription
         existing.user_agent = user_agent
+        existing.updated_at = func.now()
         try:
             db.commit()
         except IntegrityError:
+            print("IntegrityError 1")
             db.rollback()
             raise
         db.refresh(existing)
@@ -369,11 +385,12 @@ def insert_push_subscription(
         subscription=subscription,
         user_agent=user_agent,
     )
-
+    print("adding")
     db.add(row)
     try:
         db.commit()
     except IntegrityError:
+        print("IntegrityError 2")
         # Race condition: מישהו אחר הכניס את אותו endpoint רגע לפני commit
         db.rollback()
         existing = db.execute(
@@ -383,7 +400,7 @@ def insert_push_subscription(
         existing.user_id = user_id
         existing.subscription = subscription
         existing.user_agent = user_agent
-
+        existing.updated_at = func.now()    
         db.commit()
         db.refresh(existing)
         return existing

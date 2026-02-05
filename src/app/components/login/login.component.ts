@@ -6,6 +6,8 @@ import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { RouterModule } from '@angular/router';
 import { UsersService } from '../../services/users.service';
+import { LoginService } from '../../services/login.service';
+
 
 @Component({
   selector: 'app-login',
@@ -23,6 +25,7 @@ export class LoginComponent {
   http = inject(HttpClient);
   router = inject(Router);
   usersSvc = inject(UsersService);
+  loginService = inject(LoginService);
 
   constructor() {}
 
@@ -40,13 +43,14 @@ export class LoginComponent {
     formData.append('c_email', this.email);
     formData.append('password', this.password);
 
-    this.http.post(`${environment.apibase}/login`, formData).subscribe({
+    this.loginService.doLogin(formData).subscribe({
       next: (res: any) => {
         if (res) {
           this.success = 'ברוך הבא!';
           console.log('Login success:', res);
           // Save user in localStorage
           localStorage.setItem('user', JSON.stringify(res));
+          this.loginService.onLogin();
           setTimeout(() => {
             this.router.navigate(['/home']);
           }, 500);
@@ -58,7 +62,8 @@ export class LoginComponent {
         console.error('Login error:', err);
         this.error = 'שגיאה בכניסה, בדוק דוא"ל או סיסמה.';
       },
-    });
+    })
+  
   }
 
   goToRegister() {

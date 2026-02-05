@@ -71,8 +71,9 @@
   }
 </style>
 
-<pwa-install></pwa-install>
-
+<div [style.visibility]="userID() ? 'visible' : 'hidden'">
+ <pwa-install></pwa-install>
+</div>
 
 <!-- ✅ show container only on default (home) route -->
 @if(isHome()) {

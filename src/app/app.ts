@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -8,9 +8,10 @@ import { TopMenuComponent } from './components/top-menu/top-menu.component';
 import { NgxSpinnerModule } from 'ngx-spinner';
 import { PresenceService } from './services/presence.service';
 import { Subscription } from 'rxjs';
-import { IUser } from './interfaces';
 import { UsersService } from './services/users.service';
 import { getCurrentUserId } from './core/current-user';
+import { LoginService } from './services/login.service';
+
 
 @Component({
   selector: 'app-root',
@@ -32,7 +33,7 @@ export class App implements OnInit, OnDestroy{
   private presence = inject(PresenceService);
   private presenceSub?: Subscription;
   private usersSvc = inject(UsersService);
-  private activatedRoute = inject(ActivatedRoute);
+  private loginService = inject(LoginService);
 
   spinnerTplHtml = `
     <div class="lds-dual-ring"></div>
@@ -41,13 +42,23 @@ export class App implements OnInit, OnDestroy{
 
   // reactive state
   isHome = signal(false);
+  userID = signal(null);
+  
 
   constructor() {
     // 🚀 1) Check if user already logged in
-    const userID = getCurrentUserId();
+    this.userID.set(getCurrentUserId());
+      this.loginService.onLogin$.subscribe((isLoggedin) => {
+      this.userID.set(isLoggedin || getCurrentUserId() ? getCurrentUserId() : null) ;
+    }); 
+     
+  
+    
+    
+    
     const params = new URLSearchParams(window.location.search);
-    if (userID && !params.get("shareprofile")) {
-      this.presenceSub = this.presence.start(25_000, userID); // match HEARTBEAT_SEC
+    if (this.userID() && !params.get("shareprofile")) {
+      this.presenceSub = this.presence.start(25_000, this.userID()); // match HEARTBEAT_SEC
        // Navigate immediately to /users
       this.router.navigateByUrl('/home');
     } else {

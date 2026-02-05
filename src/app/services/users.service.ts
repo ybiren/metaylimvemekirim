@@ -1,10 +1,12 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { IUser } from '../interfaces';
 import { BehaviorSubject, firstValueFrom, Observable, of } from 'rxjs';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { getCurrentUserId } from '../core/current-user';
+import { FreezeProfileDialogComponent, FreezeProfileResult } from '../components/user-details/freeze-profile-dialog.component';
+import { Dialog } from '@angular/cdk/dialog';
+
 
 @Injectable({ providedIn: 'root' })
 
@@ -13,7 +15,7 @@ export class UsersService {
   private baseUrl = environment.apibase;
   readonly users$ = new BehaviorSubject<IUser[]>([]); 
   private baseApi = environment.apibase;
-  
+  dialog = inject(Dialog);  
 
   constructor(private http: HttpClient) {}
 
@@ -76,5 +78,9 @@ export class UsersService {
      return this.http.post<IUser[]>(`${this.baseUrl}/users`,{userId: getCurrentUserId(), onlyUsersThatLikedMe});
   }
 
+  freezeProfile() {
+      return this.http.post<boolean>(`${this.baseUrl}/freeze_user`, {userId: getCurrentUserId()});
+  }
+  
 
 }

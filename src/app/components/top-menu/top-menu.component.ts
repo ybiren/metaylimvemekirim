@@ -12,6 +12,8 @@ import { getCurrentUserId } from '../../core/current-user';
 import { SendReminderComponent } from '../send-reminder/send-reminder.component';
 import { environment } from '../../../environments/environment';
 import { ShareUrlService } from '../../services/share-url.service';
+import { LoginService } from '../../services/login.service';
+import { FreezeProfileDialogComponent, FreezeProfileResult } from '../user-details/freeze-profile-dialog.component';
 
 
 @Component({
@@ -36,7 +38,8 @@ export class TopMenuComponent implements OnInit, OnDestroy {
 
   private subs: Subscription[] = [];
   apiBase = environment.apibase;
-   
+  private loginService = inject(LoginService);
+     
 
   constructor(
     private router: Router,
@@ -66,7 +69,6 @@ export class TopMenuComponent implements OnInit, OnDestroy {
     this.usersSrv.users$.subscribe(() => {
       this.loggedInUser = localStorage.getItem('user') ?  JSON.parse(localStorage.getItem('user')) : null;
     }); 
-    
   }
 
   ngOnDestroy(): void {
@@ -77,6 +79,7 @@ export class TopMenuComponent implements OnInit, OnDestroy {
   logout(): void {
     localStorage.clear();
     this.isMenuOpen = false;
+    this.loginService.onLogout();
     this.router.navigateByUrl('/');
   }
 
@@ -143,6 +146,18 @@ export class TopMenuComponent implements OnInit, OnDestroy {
 
   openShareDialog() {
     this.shareUrlService.openShareDialog("http://metaylimvemekirim.co.il","");
+  }
+
+  openFreezeProfileDialog() {
+   this.dialog.open<FreezeProfileResult>(FreezeProfileDialogComponent)
+   .closed.subscribe(async (result) => {
+     if (result === 'yes') {
+       const res:any= await firstValueFrom(this.usersSrv.freezeProfile());
+       if(res?.ok) {
+          this.logout();
+       }
+     }
+   });
   }
 
 }

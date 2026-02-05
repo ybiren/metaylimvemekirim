@@ -55,7 +55,8 @@ from helper import (
     is_user_blocked,
     is_user_liked,
     search_user,
-    like_user
+    like_user,
+    freeze_user_db
 )
 
 from sendgrid_test.send_mail import send_mail
@@ -669,6 +670,16 @@ async def list_chat_rooms(db: Session = Depends(get_db)):
 @app.post("/user/{userid}", response_model=UserBase)
 async def get_user_by_id(userid: int, db: Session = Depends(get_db)):
   return get_user(db,userid)
+
+@app.post("/freeze_user")
+async def freeze_user(payload: dict = Body(...), db: Session = Depends(get_db)):
+    user_id = payload["userId"]
+    user = freeze_user_db(db, user_id)
+    print(user)
+    return {"ok": True}
+
+
+
 
 # ---------------------------------------------------------------------
 # SPA + static (mount LAST)

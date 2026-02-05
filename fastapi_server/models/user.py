@@ -7,6 +7,7 @@ from sqlalchemy import (
     String,
     Text,
     func,
+    Boolean
 )
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.dialects.postgresql import JSONB
@@ -64,6 +65,8 @@ class User(Base):
 
     filter_family_status = Column(String(100))
     filter_smoking_status = Column(String(20))
+
+    isfreezed = Column("isfreezed", Boolean)
 
     extra_images = Column(
         JSONB,

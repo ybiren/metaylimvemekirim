@@ -130,8 +130,13 @@ export class AlbumComponent implements OnInit {
   toggleLike() {
     this.usersSvc.like(this.loggedInUser().id, this.userId()).subscribe({
       next: (res:any) => {
-        this.toast.show('הוספת like ✓');
         this.isLoggedIUserLikesPeer.set(res.liked);
+        if(this.isLoggedIUserLikesPeer()) {
+          this.toast.show('הוספת like ✓');
+        } else {
+          this.toast.show('הסרת like ✓');
+        }
+        /*
         this.chat.setActivePeer(this.userId());
         this.chat.connect(this.userId());
         this.chat.statusChanged$
@@ -145,6 +150,7 @@ export class AlbumComponent implements OnInit {
           this.chat.setActivePeer(null);
           this.chat.disconnect();
         });
+        */
       }
     });
   }

@@ -76,8 +76,13 @@ export class UserDetailsComponent implements OnInit {
   toggleLike() {
     this.usersSrv.like(this.loggedInUser().id, this.id).subscribe({
       next: (res:any) => {
-        this.toast.show('הוספת like ✓');
         this.isLoggedIUserLikesPeer.set(res.liked);
+        if(this.isLoggedIUserLikesPeer()) {
+          this.toast.show('הוספת like ✓');
+        } else {
+          this.toast.show('הסרת like ✓');
+        }
+        /*
         this.chat.setActivePeer(this.id);
         this.chat.connect(this.id);
         this.chat.statusChanged$
@@ -91,6 +96,7 @@ export class UserDetailsComponent implements OnInit {
           this.chat.setActivePeer(null);
           this.chat.disconnect();
         });   
+        */
       }
     });
    

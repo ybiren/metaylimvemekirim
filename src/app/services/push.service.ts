@@ -15,22 +15,30 @@ export class PushService {
     alert(`this.swPush.isEnabled= ${this.swPush.isEnabled}`);
     if (!this.swPush.isEnabled) return;
     alert("after swPush.isEnableddfdfdfsdsds");
-    const sub = await this.swPush.requestSubscription({
-      serverPublicKey: this.VAPID_PUBLIC_KEY,
-    });
+    try {
+      const sub = await this.swPush.requestSubscription({
+        serverPublicKey: this.VAPID_PUBLIC_KEY,
+      });
 
-    alert("after request subscription");
+      const res = await firstValueFrom(
+        this.http.post('/api/push/subscribe', {
+          userId,
+          subscription: sub,
+          userAgent: navigator.userAgent,
+        })
+      );
 
-    const xx = await firstValueFrom(
-      this.http.post('/api/push/subscribe', {
-        userId,
-        subscription: sub,
-        userAgent: navigator.userAgent,
-      })
-    );
-  
-    alert(JSON.stringify(xx));
-
+      alert("Subscribed OK: " + JSON.stringify(res));
+    } catch (e: any) {
+      const msg =
+        `requestSubscription FAILED\n` +
+        `name: ${e?.name}\n` +
+        `message: ${e?.message}\n` +
+        `stack: ${e?.stack ?? 'n/a'}\n` +
+        `raw: ${JSON.stringify(e)}`;
+      alert(msg);
+      console.error(e);
+    }
   }
 
   async disable(userId?: number): Promise<void> {
