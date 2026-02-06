@@ -61,4 +61,31 @@
     color: green;
     font-size: 0.9em;
   }
+
+  .password-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+  }
+
+  .password-wrapper input {
+    width: 100%;
+    padding-right: 42px; // space for the eye
+  } 
+
+.eye {
+  position: absolute;
+  right: 10px;   // RTL
+  cursor: pointer;
+  color: #777;
+  user-select: none;
+  transition: 0.2s;
+}
+
+.eye:hover {
+  color: #222;
+}
+
+
 }

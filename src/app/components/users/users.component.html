@@ -16,16 +16,18 @@
       <!-- Rows -->
       <div class="u-row" role="row" *ngFor="let u of pagedUsers(); trackBy: trackByUserId">
         <div class="u-cell u-pic" role="cell">
-          <img class="avatar" [src]="imageUrl()(u)" alt="user photo" />
+          <a [routerLink]="['/user', u.id]"><img class="avatar" [src]="imageUrl()(u)" alt="user photo" /></a>
         </div>
 
         <div class="u-cell u-name" role="cell">
-          <span class="name">
+          <a [routerLink]="['/user', u.id]">
+            <span class="name">
             {{ u.name }}
             @if (isOnline()(u.id)) {
               <span class="online">כרגע באתר</span>
             }
-          </span>
+            </span>
+          </a>
         </div>
 
         <div class="u-cell u-age" role="cell">

@@ -15,6 +15,14 @@ export class PushService {
     alert(`this.swPush.isEnabled= ${this.swPush.isEnabled}`);
     if (!this.swPush.isEnabled) return;
     alert("after swPush.isEnableddfdfdfsdsds");
+    
+    alert(`notification permission=${Notification.permission}`);
+    if (Notification.permission !== 'granted') {
+      const perm = await Notification.requestPermission();
+      alert("after request permission");
+    }
+    
+    
     try {
       const sub = await this.swPush.requestSubscription({
         serverPublicKey: this.VAPID_PUBLIC_KEY,

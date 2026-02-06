@@ -180,7 +180,8 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   // -------------------------
   // TrackBy
   // -------------------------
-  trackById = (_: number, m: ChatMsg) => m.id;
+  //trackById = (_: number, m: ChatMsg) => m.id;
+  trackById = (i: number, m: any) => m.id ?? (m.type === 'date' ? `date:${m.date}` : i);
   trackByUserId = (_: number, u: { userId: number }) => u.userId;
   trackByEmoji = (_: number, e: EmojiItem) => e.char;
 
@@ -294,26 +295,32 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   }
 
   formatChatDate(isoDate: string): string {
-    const d = new Date(isoDate);
-    const today = new Date();
+    // isoDate from backend is "YYYY-MM-DD" (UTC date key)
+    const [y, m, d] = isoDate.split('-').map(Number);
 
-    const yesterday = new Date();
-    yesterday.setDate(today.getDate() - 1);
+    // build a Date at UTC midnight
+    const dateUtc = new Date(Date.UTC(y, m - 1, d));
 
-    const sameDay = (a: Date, b: Date) =>
-      a.getFullYear() === b.getFullYear() &&
-      a.getMonth() === b.getMonth() &&
-      a.getDate() === b.getDate();
+    const now = new Date();
+    const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const yestUtc = new Date(todayUtc);
+    yestUtc.setUTCDate(todayUtc.getUTCDate() - 1);
 
-    if (sameDay(d, today)) return 'היום';
-    if (sameDay(d, yesterday)) return 'אתמול';
+    const sameUtcDay = (a: Date, b: Date) =>
+      a.getUTCFullYear() === b.getUTCFullYear() &&
+      a.getUTCMonth() === b.getUTCMonth() &&
+      a.getUTCDate() === b.getUTCDate();
 
-    return d.toLocaleDateString('he-IL', {
+    if (sameUtcDay(dateUtc, todayUtc)) return 'היום';
+    if (sameUtcDay(dateUtc, yestUtc)) return 'אתמול';
+
+    // format in Hebrew (local display), but based on that date
+    return dateUtc.toLocaleDateString('he-IL', {
       weekday: 'short',
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
     });
-   }
+  }
 
 }

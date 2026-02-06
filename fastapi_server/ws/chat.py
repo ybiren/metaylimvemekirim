@@ -7,16 +7,13 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional, Set
 
 from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
-from sqlalchemy import func, or_, select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func, or_, select, and_
 from sqlalchemy.orm import Session
 
 from db import get_db
 from helper import get_user
-
-# ✅ Adjust these imports to your project structure if needed
 from models.chat_message import ChatMessage
-from models.chat_room import ChatRoom
+from models.chat_room import ChatRoom  # kept import (safe), but unused now
 
 router = APIRouter()
 
@@ -40,6 +37,12 @@ GLOBAL_ROOMS_LOCK = asyncio.Lock()
 GLOBAL_ROOMS_USERS: Dict[str, Dict[int, str]] = {}  # roomId(str) -> {userId: userName}
 USER_CURRENT_GLOBAL_ROOM: Dict[int, str] = {}  # userId -> roomId(str)
 
+# =========================
+# Date separators for LIVE WS
+# =========================
+ROOM_LAST_DATE: Dict[str, str] = {}  # roomKey -> "YYYY-MM-DD"
+ROOM_LAST_DATE_LOCK = asyncio.Lock()
+
 
 # ---------- utils ----------
 
@@ -48,7 +51,6 @@ def _now_iso() -> str:
 
 
 def _room_id(u1: int, u2: int) -> str:
-    """Your client-visible DM room string"""
     a, b = sorted([u1, u2])
     return f"dm:{a}:{b}"
 
@@ -58,7 +60,6 @@ def _is_global(peer_id: int) -> bool:
 
 
 def _resolve_room(user_id: int, peer_id: int) -> str:
-    """Room key used by websockets dict. Globals use str(peerId)."""
     if _is_global(peer_id):
         return str(peer_id)
     return _room_id(user_id, peer_id)
@@ -82,45 +83,68 @@ def _serialize_dm_message(m: ChatMessage) -> dict:
     }
 
 
-def _room_int_id(u1: int, u2: int) -> int:
-    """
-    DB room_id is INTEGER.
-    This creates a deterministic int for a DM pair.
+# --------- date helpers ---------
 
-    ⚠️ If your user IDs can exceed 999,999 or you already have a different chat_rooms schema,
-    change this function (or better: store user1_id/user2_id in chat_rooms with UNIQUE).
-    """
-    a, b = sorted([u1, u2])
-    return (a * 1_000_000) + b
+def _iso_date_utc(iso_ts: str) -> str:
+    dt = datetime.fromisoformat(iso_ts)
+    return dt.astimezone(timezone.utc).date().isoformat()
 
 
-def _get_or_create_dm_room(db: Session, user_id: int, peer_id: int) -> int:
-    room_id = _room_int_id(user_id, peer_id)
+async def _broadcast_date_if_needed(room_key: str, room_id_for_client, sent_at_iso: str) -> None:
+    date_key = _iso_date_utc(sent_at_iso)
 
-    room = db.get(ChatRoom, room_id)
-    if room:
-        return room_id
+    async with ROOM_LAST_DATE_LOCK:
+        last = ROOM_LAST_DATE.get(room_key)
+        need = (last != date_key)
+        if need:
+            ROOM_LAST_DATE[room_key] = date_key
 
-    db.add(ChatRoom(id=room_id))
-    try:
-        db.flush()  # ensure FK exists before inserting message
-    except IntegrityError:
-        db.rollback()
-        room = db.get(ChatRoom, room_id)
-        if room:
-            return room_id
-        raise
+    if need:
+        await _broadcast(
+            room_key,
+            {
+                "type": "message",
+                "roomId": room_id_for_client,
+                "msg": {"type": "date", "date": date_key, "id": f"date:{date_key}"},
+            },
+        )
 
-    return room_id
 
+def _seed_last_date_from_dm(db: Session, user1: int, user2: int) -> Optional[str]:
+    last_dt = db.execute(
+        select(func.max(ChatMessage.sent_at)).where(
+            or_(
+                and_(ChatMessage.from_user_id == user1, ChatMessage.to_user_id == user2),
+                and_(ChatMessage.from_user_id == user2, ChatMessage.to_user_id == user1),
+            )
+        )
+    ).scalar_one_or_none()
+
+    if not last_dt:
+        return None
+    return last_dt.astimezone(timezone.utc).date().isoformat()
+
+
+async def _seed_last_date(room_key: str, date_key: Optional[str]) -> None:
+    if not date_key:
+        return
+    async with ROOM_LAST_DATE_LOCK:
+        ROOM_LAST_DATE[room_key] = date_key
+
+
+# -------------------------
+# DB helpers (DM)
+# -------------------------
 
 def _load_dm_messages(db: Session, user1: int, user2: int, limit: int) -> list[dict]:
-    
-    room_id = _room_int_id(user1, user2)
-
     rows = db.execute(
         select(ChatMessage)
-        .where(ChatMessage.from_user_id == user1, ChatMessage.to_user_id == user2)
+        .where(
+            or_(
+                and_(ChatMessage.from_user_id == user1, ChatMessage.to_user_id == user2),
+                and_(ChatMessage.from_user_id == user2, ChatMessage.to_user_id == user1),
+            )
+        )
         .order_by(ChatMessage.sent_at.desc())
         .limit(limit)
     ).scalars().all()
@@ -136,7 +160,7 @@ def _insert_dm_message(
     sent_at: datetime,
     msg_id: str | None = None,
 ) -> dict:
-
+    # ✅ CHANGED: no chat_rooms insert anymore
     m = ChatMessage(
         id=msg_id or str(uuid.uuid4()),
         from_user_id=user_id,
@@ -153,12 +177,11 @@ def _insert_dm_message(
 
 
 def _mark_dm_delivered_for_user(db: Session, user_id: int, peer_id: int) -> list[str]:
-    room_id = _room_int_id(user_id, peer_id)
-    print(room_id)
     now = datetime.now(timezone.utc)
 
     ids = db.execute(
         select(ChatMessage.id).where(
+            ChatMessage.from_user_id == peer_id,
             ChatMessage.to_user_id == user_id,
             ChatMessage.delivered_at.is_(None),
         )
@@ -167,13 +190,11 @@ def _mark_dm_delivered_for_user(db: Session, user_id: int, peer_id: int) -> list
     if not ids:
         return []
 
-    print("before db execute")
     db.execute(
         ChatMessage.__table__.update()
         .where(ChatMessage.id.in_(ids))
         .values(delivered_at=now)
     )
-    print("after db execute")
     return list(ids)
 
 
@@ -182,8 +203,8 @@ def _mark_dm_read_for_user(db: Session, user_id: int, peer_id: int) -> list[str]
 
     ids = db.execute(
         select(ChatMessage.id).where(
-            ChatMessage.from_user_id == user_id,
-            ChatMessage.to_user_id == peer_id,
+            ChatMessage.from_user_id == peer_id,
+            ChatMessage.to_user_id == user_id,
             ChatMessage.read_at.is_(None),
         )
     ).scalars().all()
@@ -215,11 +236,6 @@ def _global_append(room_key: str, msg: dict) -> None:
 
 
 async def _broadcast_presence(room_key: str) -> None:
-    """
-    Presence snapshot for a global room.
-    Sends:
-      {"type":"presence","roomId":"-1000","users":[{"userId":1,"name":"Yossi"}],"count":N}
-    """
     async with GLOBAL_ROOMS_LOCK:
         m = GLOBAL_ROOMS_USERS.get(room_key, {})
         users = [{"userId": uid, "name": name} for uid, name in m.items()]
@@ -232,13 +248,10 @@ async def _broadcast_presence(room_key: str) -> None:
 
 
 def _with_date_separators(messages: list[dict]) -> list[dict]:
-    """
-    messages must be sorted DESC by sentAt (ISO string)
-    """
     result = []
     last_date = None
 
-    for m in reversed(messages):  # oldest → newest
+    for m in reversed(messages):
         dt = datetime.fromisoformat(m["sentAt"]).astimezone(timezone.utc)
         cur_date = dt.date().isoformat()
 
@@ -250,7 +263,7 @@ def _with_date_separators(messages: list[dict]) -> list[dict]:
         m2["type"] = "message"
         result.append(m2)
 
-    return list(reversed(result))  # keep DESC for UI
+    return list(reversed(result))
 
 
 # =========================
@@ -264,19 +277,13 @@ async def chat_history(
     limit: int = Query(200, ge=1, le=2000),
     db: Session = Depends(get_db),
 ):
-    # Global room history (in-memory)
     if _is_global(user2):
         rid = str(user2)
         async with GLOBAL_LOCK:
-            msgs = sorted(
-                GLOBAL_MESSAGES.get(rid, []),
-                key=lambda m: m["sentAt"],
-                reverse=True,
-            )[:limit]
+            msgs = sorted(GLOBAL_MESSAGES.get(rid, []), key=lambda m: m["sentAt"], reverse=True)[:limit]
             msgs = _with_date_separators(msgs)
         return {"ok": True, "roomId": user2, "messages": msgs}
 
-    # DM history (DB)
     msgs = _load_dm_messages(db, user1, user2, limit)
     msgs = _with_date_separators(msgs)
     return {"ok": True, "roomId": _room_id(user1, user2), "messages": msgs}
@@ -288,7 +295,6 @@ async def mark_read(
     peerId: int = Query(...),
     db: Session = Depends(get_db),
 ):
-    # Globals: no read tracking
     if _is_global(peerId):
         return {"ok": True, "updated": []}
 
@@ -320,13 +326,8 @@ async def chat_threads(
     user = userId
     items: List[Dict] = []
 
-    # ---- DM threads (DB) ----
-    # With your current schema (chat_rooms has only id),
-    # we infer room list from messages.
     from_user_ids = db.execute(
-        select(ChatMessage.from_user_id)
-        .where(ChatMessage.to_user_id == user)
-        .distinct()
+        select(ChatMessage.from_user_id).where(ChatMessage.to_user_id == user).distinct()
     ).scalars().all()
 
     for from_user_id in from_user_ids:
@@ -353,16 +354,14 @@ async def chat_threads(
         ).scalar_one()
 
         count = db.execute(
-            select(func.count())
-            .select_from(ChatMessage)
-            .where(ChatMessage.from_user_id == from_user_id)
+            select(func.count()).select_from(ChatMessage).where(ChatMessage.from_user_id == from_user_id)
         ).scalar_one()
 
         items.append(
             {
                 "roomId": _room_id(user, peer),
                 "peerId": peer,
-                "peerName": get_user(db,peer).name,
+                "peerName": get_user(db, peer).name,
                 "lastAt": _dt_to_iso_utc(last_msg.sent_at) or "",
                 "lastFromUserId": last_msg.from_user_id,
                 "lastPreview": (last_msg.content[:120] if last_msg.content else ""),
@@ -371,7 +370,6 @@ async def chat_threads(
             }
         )
 
-    # ---- Global threads (in-memory) ----
     if includeGlobal:
         async with GLOBAL_LOCK:
             for rid, msgs in GLOBAL_MESSAGES.items():
@@ -380,8 +378,8 @@ async def chat_threads(
                 last = max(msgs, key=lambda m: m["sentAt"], default=None)
                 items.append(
                     {
-                        "roomId": rid,        # "-1000" etc.
-                        "peerId": int(rid),   # compatibility with your client
+                        "roomId": rid,
+                        "peerId": int(rid),
                         "lastAt": last["sentAt"] if last else "",
                         "lastFromUserId": last.get("fromUserId") if last else None,
                         "lastPreview": (last["content"][:120] if last else ""),
@@ -408,12 +406,21 @@ async def ws_chat(
 ):
     await ws.accept()
 
-    print(userId)
-    print(peerId)
     rid = _resolve_room(userId, peerId)
     ROOM_SOCKETS.setdefault(rid, set()).add(ws)
 
-    # ---- GLOBAL presence JOIN (single global room per user) ----
+    # seed date on join (prevents duplicate "היום")
+    if _is_global(peerId):
+        gr = str(peerId)
+        async with GLOBAL_LOCK:
+            msgs = GLOBAL_MESSAGES.get(gr, [])
+            if msgs:
+                last = max(msgs, key=lambda m: m["sentAt"])
+                await _seed_last_date(gr, _iso_date_utc(last["sentAt"]))
+    else:
+        await _seed_last_date(rid, _seed_last_date_from_dm(db, userId, peerId))
+
+    # GLOBAL presence JOIN
     prev_global: Optional[str] = None
     if _is_global(peerId):
         target = str(peerId)
@@ -424,7 +431,6 @@ async def ws_chat(
         async with GLOBAL_ROOMS_LOCK:
             prev_global = USER_CURRENT_GLOBAL_ROOM.get(userId)
 
-            # remove from previous room if different
             if prev_global and prev_global != target:
                 old_map = GLOBAL_ROOMS_USERS.get(prev_global)
                 if old_map:
@@ -432,28 +438,23 @@ async def ws_chat(
                     if not old_map:
                         GLOBAL_ROOMS_USERS.pop(prev_global, None)
 
-            # add/update in target
             GLOBAL_ROOMS_USERS.setdefault(target, {})[userId] = user_name
             USER_CURRENT_GLOBAL_ROOM[userId] = target
 
-        # broadcast presence updates
         if prev_global and prev_global != target:
             await _broadcast_presence(prev_global)
         await _broadcast_presence(target)
 
-        # Send immediate snapshot to the newly joined socket
         async with GLOBAL_ROOMS_LOCK:
             m = GLOBAL_ROOMS_USERS.get(target, {})
             users_snapshot = [{"userId": uid, "name": name} for uid, name in m.items()]
         users_snapshot.sort(key=lambda x: ((x.get("name") or "").strip().lower(), x["userId"]))
         try:
-            await ws.send_json(
-                {"type": "presence", "roomId": target, "users": users_snapshot, "count": len(users_snapshot)}
-            )
+            await ws.send_json({"type": "presence", "roomId": target, "users": users_snapshot, "count": len(users_snapshot)})
         except Exception:
             pass
 
-    # Mark as delivered for DMs (DB)
+    # Mark delivered for DMs
     if not _is_global(peerId):
         try:
             delivered_ids = _mark_dm_delivered_for_user(db, userId, peerId)
@@ -466,17 +467,12 @@ async def ws_chat(
             raise
 
         if delivered_ids:
-            await _broadcast(
-                rid,
-                {"type": "delivered", "ids": delivered_ids, "roomId": rid},
-            )
+            await _broadcast(rid, {"type": "delivered", "ids": delivered_ids, "roomId": rid})
 
     try:
         while True:
             packet = await ws.receive_json()
-            ptype = packet.get("type")
-
-            if ptype != "message":
+            if packet.get("type") != "message":
                 continue
 
             content = (packet.get("content") or "").strip()
@@ -486,7 +482,7 @@ async def ws_chat(
             u = get_user(db, userId)
             from_name = getattr(u, "name", None) if u else None
 
-            # Global room message (in-memory)
+            # Global room
             if _is_global(peerId):
                 msg = {
                     "id": str(uuid.uuid4()),
@@ -500,6 +496,7 @@ async def ws_chat(
                 async with GLOBAL_LOCK:
                     _global_append(gr, msg)
 
+                await _broadcast_date_if_needed(gr, peerId, msg["sentAt"])
                 await _broadcast(gr, {"type": "message", "roomId": peerId, "msg": msg})
                 continue
 
@@ -508,14 +505,7 @@ async def ws_chat(
             msg_id = str(uuid.uuid4())
 
             try:
-                saved = _insert_dm_message(
-                    db=db,
-                    user_id=userId,
-                    peer_id=peerId,
-                    content=content,
-                    sent_at=sent_dt,
-                    msg_id=msg_id,
-                )
+                saved = _insert_dm_message(db=db, user_id=userId, peer_id=peerId, content=content, sent_at=sent_dt, msg_id=msg_id)
                 db.commit()
             except Exception:
                 db.rollback()
@@ -532,17 +522,16 @@ async def ws_chat(
                 "readAt": saved["readAt"],
             }
 
+            await _broadcast_date_if_needed(rid, rid, msg["sentAt"])
             await _broadcast(rid, {"type": "message", "roomId": rid, "msg": msg})
 
     except WebSocketDisconnect:
         pass
     finally:
-        # socket cleanup
         ROOM_SOCKETS.get(rid, set()).discard(ws)
         if not ROOM_SOCKETS.get(rid):
             ROOM_SOCKETS.pop(rid, None)
 
-        # ---- GLOBAL presence LEAVE ----
         if _is_global(peerId):
             room_key = str(peerId)
             async with GLOBAL_ROOMS_LOCK:

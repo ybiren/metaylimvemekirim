@@ -26,6 +26,7 @@ export class LoginComponent {
   router = inject(Router);
   usersSvc = inject(UsersService);
   loginService = inject(LoginService);
+  showPassword = false;
 
   constructor() {}
 

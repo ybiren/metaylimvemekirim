@@ -5,7 +5,23 @@
   <input id="email" type="email" name="email" [(ngModel)]="email" required />
 
   <label for="password">סיסמה:</label>
-  <input id="password" type="password" name="password" [(ngModel)]="password" required />
+  <div class="password-wrapper">
+  <input
+    id="password"
+    [type]="showPassword ? 'text' : 'password'"
+    name="password"
+    [(ngModel)]="password"
+    required
+  />
+
+  <span
+    class="material-icons eye"
+    (click)="showPassword = !showPassword"
+  >
+    {{ showPassword ? 'visibility_off' : 'visibility' }}
+  </span>
+</div>
+
 
   <div class="buttons">
     <button type="submit" [disabled]="!loginForm.valid">כניסה עם דוא"ל וסיסמא</button>
