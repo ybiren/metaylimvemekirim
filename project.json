@@ -25,7 +25,8 @@
           "src/assets",
           "src/custom-sw.js"
         ],
-        "styles": ["./src/styles.scss"],
+        "styles": ["./src/styles.scss", "node_modules/quill/dist/quill.snow.css"
+                  ],
         "serviceWorker": true,
         "ngswConfigPath": "ngsw-config.json"
       },

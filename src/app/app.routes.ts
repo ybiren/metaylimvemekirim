@@ -15,6 +15,8 @@ import { ResetPasswordComponent } from './components/reset-password/reset-passwo
 import { SmsUpdatesSignalFormComponent } from './components/sms-updates-signal-form/sms-updates-signal-form.component';
 import { ChatSystemRoomsComponent } from './components/chat-system-rooms/chat-system-rooms.component';
 import { LikesContainerComponent } from './components/likes-container/likes-container.component';
+import { AdminDashboardComponent } from './admin/dashboard/admin-dashboard.component';
+
 
 export const appRoutes: Route[] = [
   { path: 'home', component: HomeComponent },
@@ -34,4 +36,18 @@ export const appRoutes: Route[] = [
   { path: 'sms', component: SmsUpdatesSignalFormComponent },
   { path: 'chat-system-rooms', component: ChatSystemRoomsComponent },
   { path: 'likes', component: LikesContainerComponent },
+
+
+   // ✅ admin area
+  {
+    path: 'admin',
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+
+      { path: 'dashboard', loadComponent: () => import('./admin/dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent) },
+      { path: 'pages', loadComponent: () => import('./admin/admin-pages.component').then(m => m.AdminPagesComponent) }
+    ]
+  } 
+   
+
 ];

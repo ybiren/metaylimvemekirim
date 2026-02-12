@@ -5,8 +5,9 @@ import { environment } from '../../../environments/environment';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { REGIONS_TOKEN } from '../../consts/regions.consts';
-import { firstValueFrom } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { PageTemplateService } from '../../services/page-template.service';
+import { firstValueFrom } from 'rxjs';
 
 
 @Component({
@@ -21,7 +22,8 @@ export class HomeComponent implements OnInit{
   private usersSvc = inject(UsersService)
   apiBase = environment.apibase;
   regions: ReadonlyArray<IOption> = inject(REGIONS_TOKEN);
-      
+  private pageTemplateService = inject(PageTemplateService);      
+  mainPageTemplate = signal(null);
 
   trackByUserId(index: number, u: IUser): number {
     return u.userID;
@@ -47,13 +49,14 @@ export class HomeComponent implements OnInit{
     }
     return arr;
   });
-
   
 
- ngOnInit(): void {
-    this.usersSvc.users$.subscribe( (users) => {
+ async ngOnInit() {
+  this.usersSvc.users$.subscribe( (users) => {
         this.users.set(users)
     });
+    const pageTemplate = await firstValueFrom(this.pageTemplateService.load("main"));
+    this.mainPageTemplate.set(pageTemplate);
   }    
 }
 

@@ -26,6 +26,8 @@ from routes.sms_updates import router2 as sms_updates_router
 from routes.push import router3 as push_router
 from ws.notify import router as notify_router
 from ws.chat import router as chat_router
+from routes.admin import admin_router
+from routes.admin_pages import public_pages_router,admin_pages_router
 
 from helper import (
     ensure_image_content_type,
@@ -111,6 +113,10 @@ app.include_router(notify_router)
 app.include_router(chat_router)
 app.include_router(sms_updates_router)
 app.include_router(push_router, prefix="/api")
+app.include_router(admin_router)
+app.include_router(public_pages_router)
+app.include_router(admin_pages_router)
+
 
 # ---------------------------------------------------------------------
 # Locks

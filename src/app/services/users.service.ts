@@ -1,10 +1,9 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { IUser } from '../interfaces';
 import { BehaviorSubject, firstValueFrom, Observable, of } from 'rxjs';
 import { getCurrentUserId } from '../core/current-user';
-import { FreezeProfileDialogComponent, FreezeProfileResult } from '../components/user-details/freeze-profile-dialog.component';
 import { Dialog } from '@angular/cdk/dialog';
 
 

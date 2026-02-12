@@ -1,39 +1,89 @@
 /* =========================
-   LAYOUT
+   HOME PAGE
+   Bottom row pinned to bottom (within router content area)
+   Boxes share the same height
    ========================= */
 
 :host {
+  /* sizing knobs */
+  --bottom-gap: 20px;
+  --bottom-pad: 20px;
+
+  --box-header-h: 20px;
+  --people-body-h: 150px;
+  --box-h: calc(var(--box-header-h) + var(--people-body-h));
+
+  /* important: the page should behave like a full-height column */
+  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  gap: 10px;
-  padding-top: 20px;
+  min-height: 0; /* prevents flex overflow issues */
+}
+
+/* This row is what we push to the bottom */
+.home-bottom {
+  position: absolute;
+  bottom: 0;
+  margin-top: auto; /* ✅ pushes to bottom of page area */
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-end;
+
+  gap: var(--bottom-gap);
+  padding: 0 16px var(--bottom-pad);
+
+  direction: rtl;
+}
+
+/* Responsive: stack vertically */
+@media (max-width: 600px) {
+  :host {
+    --people-body-h: 170px; /* optional: a bit more room */
+  }
+
+  .home-bottom {
+    flex-direction: column;
+    align-items: center;
+  }
 }
 
 /* =========================
    UPDATES BOX (marquee)
+   Matches People box height
    ========================= */
 
 .updates-box {
-  display: grid;
-  grid-template-rows: auto 1fr;
-  width: 227px;
+  width: 260px;
+  height: var(--box-h);
+
   border-radius: 4px;
   overflow: hidden;
+
+  display: flex;
+  flex-direction: column; /* header + body */
 }
 
 .updates-box__header {
+  height: var(--box-header-h);
+
   background: #31adff;
   text-align: center;
-  padding: 4px 8px;
+
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .updates-box__body {
   background: #caeaff;
+  flex: 1;
+  min-height: 0; /* important so the inner area sizes correctly */
 }
 
 .updates-box__scroll {
-  height: 40vh;
+  height: 100%;
   overflow: hidden;
   position: relative;
 }
@@ -72,27 +122,33 @@
 
 /* =========================
    PEOPLE BOX
+   Defines the shared box size
    ========================= */
 
 .people-box {
-  width: 100%;
+  width: 260px;
   max-width: 260px;
+  height: var(--box-h);
+
   border-radius: 2px;
-  overflow: visible;     /* ✅ allow tooltip to escape */
   font-size: 13px;
 
-  position: relative;    /* ✅ stacking context support */
+  overflow: visible; /* allow tooltip to escape */
+  position: relative;
   z-index: 10;
 }
 
 .people-box__header {
+  height: var(--box-header-h);
+
   background: #b7bbc1;
   text-align: center;
-  height: 20px;
+
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -107,11 +163,12 @@
 }
 
 .people-box__body {
+  height: var(--people-body-h);
+
   background: #e5e5e5;
-  height: 150px;
   padding: 4px 0;
 
-  overflow: visible;     /* ✅ allow tooltip to escape */
+  overflow: visible; /* tooltip not clipped */
   position: relative;
   z-index: 10;
 }
@@ -130,14 +187,16 @@
 .people-grid__item {
   width: 42px;
   height: 42px;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   cursor: pointer;
   transition: background-color 0.2s;
 
-  position: relative;    /* ✅ tooltip anchor */
-  overflow: visible;     /* ✅ tooltip not clipped */
+  position: relative; /* tooltip anchor */
+  overflow: visible;
   z-index: 20;
 }
 
@@ -152,8 +211,7 @@
 }
 
 /* =========================
-   TOOLTIP (ONE LINE, UNDER IMAGE)
-   White bg + black text
+   TOOLTIP (one line under image)
    ========================= */
 
 .people-grid__item .tooltip__content {
@@ -162,21 +220,20 @@
   left: 50%;
   transform: translateX(-50%) translateY(0);
 
-  background: #ffffff;       /* ✅ white */
-  color: #000000;            /* ✅ black */
+  background: #ffffff;
+  color: #000000;
 
-  padding: 10px 6px;         /* ✅ reduced horizontal padding */
+  padding: 10px 6px;
   border-radius: 8px;
 
-  border: 1px solid #cfcfcf; /* ✅ helps on light backgrounds */
+  border: 1px solid #cfcfcf;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 
   font-size: 13px;
   line-height: 1.2;
   text-align: center;
 
-  white-space: nowrap;       /* ✅ one line */
-  max-width: none;
+  white-space: nowrap;
 
   opacity: 0;
   visibility: hidden;
@@ -192,16 +249,17 @@
   transform: translateX(-50%) translateY(2px);
 }
 
-/* arrow */
+/* Tooltip arrow */
 .people-grid__item .tooltip__content::before {
   content: "";
   position: absolute;
   top: -6px;
   left: 50%;
   transform: translateX(-50%);
+
   border-width: 6px;
   border-style: solid;
-  border-color: transparent transparent #ffffff transparent; /* ✅ white arrow */
+  border-color: transparent transparent #ffffff transparent;
 }
 
 /* =========================
