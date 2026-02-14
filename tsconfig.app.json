@@ -4,7 +4,7 @@
     "outDir": "./dist/out-tsc",
     "types": []
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/app/admin/dashboard/admin-dashboard.component"],
   "exclude": [
     "jest.config.ts",
     "src/test-setup.ts",

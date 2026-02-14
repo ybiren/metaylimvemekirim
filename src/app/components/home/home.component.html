@@ -1,5 +1,5 @@
 <!-- Bottom area: Updates + People side-by-side, centered, bottom of page -->
-<div style="direction: rtl;" [innerHTML]="mainPageTemplate().html"></div>
+<div style="direction: rtl;" [innerHTML]="mainPageTemplate()?.html"></div>
 
 <div class="home-bottom" dir="rtl">
   <!-- Updates box -->
@@ -17,23 +17,10 @@
             </a>
           </div>
 
-          <!-- items list -->
-          <a class="updates-item" href="msg.asp?idd=39&c_id=&c_name=">
-            חיפוש טרמפים לאירועים
-          </a>
-          <a class="updates-item" href="msg.asp?idd=37&c_id=&c_name=">
-            עובד לחברת JOBCLICK
-          </a>
-          <a class="updates-item" href="msg.asp?idd=36&c_id=&c_name=">
-            רוצים לקדם אירוע באתר?
-          </a>
-          <a class="updates-item" href="msg.asp?idd=35&c_id=&c_name=">
-            טיול לרמת הגולן
-          </a>
-          <a class="updates-item" href="msg.asp?idd=34&c_id=&c_name=">
-            בואו לנהל אתר משלכם
-          </a>
-          <!-- המשך שאר הקישורים באותו פורמט -->
+          
+          @for (upd of updates(); track $index) {
+          <a class="updates-item" [href]="upd.href">{{ upd.title }}</a>
+          }
         </div>
       </div>
     </div>

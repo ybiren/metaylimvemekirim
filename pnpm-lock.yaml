@@ -41,6 +41,12 @@ importers:
       '@angular/ssr':
         specifier: ~20.3.0
         version: 20.3.16(f45a06d5d413204c7a407f2025f4ee94)
+      ag-grid-angular:
+        specifier: ^35.1.0
+        version: 35.1.0(@angular/common@20.3.16(@angular/core@20.3.16(@angular/compiler@20.3.16)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.16(@angular/compiler@20.3.16)(rxjs@7.8.2)(zone.js@0.15.1))
+      ag-grid-community:
+        specifier: ^35.1.0
+        version: 35.1.0
       express:
         specifier: ^4.21.2
         version: 4.22.1
@@ -3078,6 +3084,18 @@ packages:
   adm-zip@0.5.16:
     resolution: {integrity: sha512-TGw5yVi4saajsSEgz25grObGHEUaDrniwvA2qwSC060KfqGPdglhvPMA2lPIoxs3PQIItj2iag35fONcQqgUaQ==}
     engines: {node: '>=12.0'}
+
+  ag-charts-types@13.1.0:
+    resolution: {integrity: sha512-DytRM3CXli+Y013SC1Mr8lQBrhVTACK+11ilDHOhwUM0sRpmGuR51XFGcBKOliW1Vas1AycP31Cm3Pp0jx3hqw==}
+
+  ag-grid-angular@35.1.0:
+    resolution: {integrity: sha512-YUsswwPiWP+xbXMCvkIc/25ABABQFte6MZSrXjbKB1cFpyWaUaGabetrPcioHi50MwK+N+oaSnIQPFh/A3ExqA==}
+    peerDependencies:
+      '@angular/common': '>= 18.0.0'
+      '@angular/core': '>= 18.0.0'
+
+  ag-grid-community@35.1.0:
+    resolution: {integrity: sha512-yWFQfRNjv3KUBkHHzFdDOYGjPcDMU0B8Up4qG651diFlGRUGEGVs94SK73niWvk1FDZdpV9oWrwq3f30/qAoVg==}
 
   agent-base@7.1.4:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
@@ -11166,6 +11184,19 @@ snapshots:
       regex-parser: 2.3.1
 
   adm-zip@0.5.16: {}
+
+  ag-charts-types@13.1.0: {}
+
+  ag-grid-angular@35.1.0(@angular/common@20.3.16(@angular/core@20.3.16(@angular/compiler@20.3.16)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.16(@angular/compiler@20.3.16)(rxjs@7.8.2)(zone.js@0.15.1)):
+    dependencies:
+      '@angular/common': 20.3.16(@angular/core@20.3.16(@angular/compiler@20.3.16)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2)
+      '@angular/core': 20.3.16(@angular/compiler@20.3.16)(rxjs@7.8.2)(zone.js@0.15.1)
+      ag-grid-community: 35.1.0
+      tslib: 2.8.1
+
+  ag-grid-community@35.1.0:
+    dependencies:
+      ag-charts-types: 13.1.0
 
   agent-base@7.1.4: {}
 

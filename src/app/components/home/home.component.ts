@@ -9,7 +9,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { PageTemplateService } from '../../services/page-template.service';
 import { firstValueFrom } from 'rxjs';
 
-
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -24,7 +23,8 @@ export class HomeComponent implements OnInit{
   regions: ReadonlyArray<IOption> = inject(REGIONS_TOKEN);
   private pageTemplateService = inject(PageTemplateService);      
   mainPageTemplate = signal(null);
-
+  updates = signal([]);
+ 
   trackByUserId(index: number, u: IUser): number {
     return u.userID;
   }
@@ -57,6 +57,9 @@ export class HomeComponent implements OnInit{
     });
     const pageTemplate = await firstValueFrom(this.pageTemplateService.load("main"));
     this.mainPageTemplate.set(pageTemplate);
+  
+    const updates = await firstValueFrom(this.pageTemplateService.load_updates());
+    this.updates.set(updates as any[]);
   }    
 }
 

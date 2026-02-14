@@ -74,7 +74,7 @@ export class UsersService {
   }
 
   getAllUsers(onlyUsersThatLikedMe = null) {
-     return this.http.post<IUser[]>(`${this.baseUrl}/users`,{userId: getCurrentUserId(), onlyUsersThatLikedMe});
+     return getCurrentUserId() ? this.http.post<IUser[]>(`${this.baseUrl}/users`,{userId: getCurrentUserId(), onlyUsersThatLikedMe}): of([]);
   }
 
   freezeProfile() {

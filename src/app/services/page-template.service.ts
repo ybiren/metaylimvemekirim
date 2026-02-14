@@ -12,4 +12,8 @@ export class PageTemplateService {
     return this.http.get(`${this.baseUrl}/api/pages/content?path=${path}`);
   }
  
+  load_updates() {
+    return this.http.get(`${this.baseUrl}/api/admin/updates`);
+  }
+
 }

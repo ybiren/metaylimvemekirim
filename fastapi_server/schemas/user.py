@@ -60,6 +60,7 @@ class UserBase(BaseModel):
 
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    last_seen_at: Optional[datetime] = None
 
     isfreezed: Optional[bool] = False  
     

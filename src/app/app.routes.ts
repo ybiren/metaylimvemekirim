@@ -15,7 +15,7 @@ import { ResetPasswordComponent } from './components/reset-password/reset-passwo
 import { SmsUpdatesSignalFormComponent } from './components/sms-updates-signal-form/sms-updates-signal-form.component';
 import { ChatSystemRoomsComponent } from './components/chat-system-rooms/chat-system-rooms.component';
 import { LikesContainerComponent } from './components/likes-container/likes-container.component';
-import { AdminDashboardComponent } from './admin/dashboard/admin-dashboard.component';
+import { AdminUpdatesComponent } from './admin/admin-updates.component';
 
 
 export const appRoutes: Route[] = [
@@ -43,9 +43,9 @@ export const appRoutes: Route[] = [
     path: 'admin',
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-
-      { path: 'dashboard', loadComponent: () => import('./admin/dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent) },
-      { path: 'pages', loadComponent: () => import('./admin/admin-pages.component').then(m => m.AdminPagesComponent) }
+      { path: 'dashboard', loadComponent: () => import('./admin/admin-updates.component').then(m => m.AdminUpdatesComponent) },
+      { path: 'pages', loadComponent: () => import('./admin/admin-pages.component').then(m => m.AdminPagesComponent) },
+      { path: 'users', loadComponent: () => import('./admin/admin-users.component').then(m => m.AdminUsersComponent) }
     ]
   } 
    
