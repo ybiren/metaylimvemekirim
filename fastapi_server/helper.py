@@ -6,7 +6,7 @@ import mimetypes
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from fastapi import HTTPException, UploadFile, Depends, status
-from datetime import date
+from datetime import date,datetime,timezone
 import bcrypt
 from models.user import User
 from models.chat_room import ChatRoom
@@ -37,11 +37,29 @@ pwd_context = CryptContext(
     deprecated="auto")
 
 def get_user_by_email_pass(db, c_email: str, password: str):
-    user = db.query(User).filter(User.email == c_email, User.isfreezed == False).first()
+    user = (
+        db.query(User)
+        .filter(User.email == c_email)
+        .first()
+    )
+
     if not user:
-      raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Bad credentials")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Bad credentials"
+        )
+
     if not pwd_context.verify(password, user.password_hash):
-      raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Bad credentials")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Bad credentials"
+        )
+
+    # ✅ Update last_seen_at
+    user.last_seen_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(user)
+
     return user
 
 def get_system_chat_rooms(db: Session):
@@ -340,7 +358,7 @@ def freeze_user_db(db: Session, user_id: int) -> User:
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    user.isfreezed = True
+    user.isfreezed = not user.isfreezed
 
     db.commit()
     db.refresh(user)

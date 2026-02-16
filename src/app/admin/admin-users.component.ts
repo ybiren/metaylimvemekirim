@@ -8,6 +8,7 @@ import {
   ValueFormatterParams,
 } from 'ag-grid-community';
 import { environment } from '../../environments/environment';
+import { Router, RouterModule } from '@angular/router';
 
 type AdminUser = {
   id: number;
@@ -21,7 +22,7 @@ type AdminUser = {
 @Component({
   selector: 'admin-users',
   standalone: true,
-  imports: [CommonModule, AgGridAngular],
+  imports: [CommonModule, AgGridAngular, RouterModule],
   template: `
     <section class="admin admin--full" dir="rtl">
       <header class="hdr">
@@ -132,7 +133,7 @@ export class AdminUsersComponent {
   pageSize = signal(50);
   rowData = signal<AdminUser[]>([]);
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   defaultColDef: ColDef = {
     sortable: true,
@@ -145,7 +146,24 @@ export class AdminUsersComponent {
   // Use flex widths so columns always align nicely and fill available space
   colDefs: ColDef[] = [
     { field: 'id', headerName: 'Id', width: 90, minWidth: 90, filter: 'agNumberColumnFilter' },
-    { field: 'username', headerName: 'שם תצוגה', flex: 1 },
+    {
+  field: 'username',
+  headerName: 'שם תצוגה',
+  flex: 1,
+  cellRenderer: (params: any) => {
+    const a = document.createElement('a');
+    a.textContent = params.value;
+    a.style.cursor = 'pointer';
+    a.style.color = '#1976d2';
+    a.style.textDecoration = 'underline';
+
+    a.addEventListener('click', () => {
+      this.router.navigate(['/user', params.data.id]);
+    });
+    return a;
+  }
+},
+
     { field: 'email', headerName: 'דוא"ל', flex: 2, minWidth: 220 },
     {
       field: 'last_seen_at',

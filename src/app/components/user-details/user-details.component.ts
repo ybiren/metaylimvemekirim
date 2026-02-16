@@ -18,6 +18,7 @@ import { filter, firstValueFrom, of, take } from 'rxjs';
 import { ShareProfileDialogComponent, ShareChannel } from './share-profile-dialog.component';
 import { ShareUrlService } from '../../services/share-url.service';
 import { ChatService } from '../../services/chat.service';
+import { SMOKING_STATUS_TOKEN } from '../../consts/smoking-status.consts';
 
 
 @Component({
@@ -38,6 +39,8 @@ export class UserDetailsComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   private shareUrlService  = inject(ShareUrlService);
   private chat = inject(ChatService);
+  smokingStatus: ReadonlyArray<IOption> = inject(SMOKING_STATUS_TOKEN);
+  
     
 
   apiBase = environment.apibase;

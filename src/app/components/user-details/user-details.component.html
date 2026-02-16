@@ -34,6 +34,7 @@
       <div><strong>איזור:</strong> {{ textByValue(regions, u.country) || '—' }}</div>
       <div><strong>טלפון:</strong> {{ u.phone || '—' }}</div>
       <div><strong>מצב משפחתי:</strong> {{ textByValue(familyStatus, u.ff) || '—' }}</div>
+      <div><strong>הרגלי עישון:</strong> {{ textByValue(smokingStatus, u.smoking) || '—' }}</div>
     </div>
 
     <div class="about" *ngIf="u.details || u.details1">
