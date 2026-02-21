@@ -67,6 +67,7 @@ class User(Base):
     filter_smoking_status = Column(String(20))
 
     isfreezed = Column("isfreezed", Boolean)
+    isdeleted = Column("isdeleted", Boolean)
 
     extra_images = Column(
         JSONB,
@@ -81,3 +82,4 @@ class User(Base):
         DateTime(timezone=True),
         nullable=True
     )
+    

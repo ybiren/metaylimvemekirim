@@ -45,7 +45,8 @@ export const appRoutes: Route[] = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', loadComponent: () => import('./admin/admin-updates.component').then(m => m.AdminUpdatesComponent) },
       { path: 'pages', loadComponent: () => import('./admin/admin-pages.component').then(m => m.AdminPagesComponent) },
-      { path: 'users', loadComponent: () => import('./admin/admin-users.component').then(m => m.AdminUsersComponent) }
+      { path: 'users', loadComponent: () => import('./admin/admin-users.component').then(m => m.AdminUsersComponent) },
+      { path: 'banners', loadComponent: () => import('./admin/admin-banners.component').then(m => m.AdminBannersComponent) }
     ]
   } 
    

@@ -156,7 +156,9 @@
 
       <a (click)="openShareDialog()" >שתף אתר</a>
       
-      <a (click)="openFreezeProfileDialog()" >הקפא פרופיל</a>
+      <a (click)="openFreezeProfileDialog()" >{{loggedInUser.isfreezed ? "הפשר פרופיל" : "הקפא פרופיל"}}</a>
+      
+      <a (click)="openDeleteProfileDialog()" >מחק פרופיל</a>
       
       <a
           routerLink="/help"

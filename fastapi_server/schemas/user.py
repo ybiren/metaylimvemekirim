@@ -63,4 +63,4 @@ class UserBase(BaseModel):
     last_seen_at: Optional[datetime] = None
 
     isfreezed: Optional[bool] = False  
-    
+    isdeleted: Optional[bool] = False

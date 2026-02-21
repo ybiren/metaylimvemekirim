@@ -29,7 +29,7 @@ TTL_SEC       = 90   # user is "online" if we were touched within this window
 def _now() -> float:
     return time.time()
 
-def _is_online(user_id: int, now: Optional[float] = None) -> bool:
+def is_online(user_id: int, now: Optional[float] = None) -> bool:
     if now is None:
         now = _now()
     ts = LAST_TOUCH.get(user_id, 0.0)
@@ -112,7 +112,7 @@ async def presence_online(exclude: Optional[int] = None):
     Optional: ?exclude=<userId> to drop your own id from the list.
     """
     now = _now()
-    online = [uid for uid in LAST_TOUCH.keys() if _is_online(uid, now)]
+    online = [uid for uid in LAST_TOUCH.keys() if is_online(uid, now)]
     if exclude is not None:
         online = [u for u in online if u != exclude]
     online.sort()
@@ -129,7 +129,7 @@ async def presence_of(userId: int):
     return {
         "ok": True,
         "userId": userId,
-        "online": _is_online(userId, now),
+        "online": is_online(userId, now),
         "lastSeen": int(ls) if ls else None
     }
 

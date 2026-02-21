@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { PwaInstallComponent } from './components/pwa-install/pwa-install.component';
+import { PwaUpdateComponent } from './components/pwa-install/pwa-update.component';
+
 import { LoginComponent } from './components/login/login.component';
 import { TopMenuComponent } from './components/top-menu/top-menu.component';
 import { NgxSpinnerModule } from 'ngx-spinner';
@@ -21,6 +23,7 @@ import { LoginService } from './services/login.service';
     RouterModule,
     NgxSpinnerModule,
     PwaInstallComponent,
+    PwaUpdateComponent,
     LoginComponent,
     TopMenuComponent
   ],

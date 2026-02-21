@@ -19,6 +19,8 @@ from sqlalchemy.exc import IntegrityError
 from cryptography.fernet import Fernet, InvalidToken
 from sqlalchemy.orm import Session
 from pywebpush import webpush, WebPushException
+from ws.notify import is_online
+
 import os
 
 def get_user(db: Session, user_id: int):
@@ -39,7 +41,10 @@ pwd_context = CryptContext(
 def get_user_by_email_pass(db, c_email: str, password: str):
     user = (
         db.query(User)
-        .filter(User.email == c_email)
+        .filter(User.email == c_email, or_(
+            User.isdeleted.is_(False),
+            User.isdeleted.is_(None)
+        ))
         .first()
     )
 
@@ -253,8 +258,12 @@ def like_user(db: Session, user_id, liked_user_id):
         return {"liked": False}
     else:
         # insert (toggle on)
+        print(liked_user_id)
         db.add(UserLike(user_id=user_id, liked_user_id=liked_user_id))
-        send_push(db,liked_user_id,"מישהו מחבב אותך","מישהו מחבב אותך")
+        if not is_online(liked_user_id):
+          print("before send push")
+          send_push(db,liked_user_id,"מישהו מחבב אותך","מישהו מחבב אותך")
+          print("after send push") 
         try:
             db.commit()
         except IntegrityError:
@@ -364,6 +373,21 @@ def freeze_user_db(db: Session, user_id: int) -> User:
     db.refresh(user)
 
     return user
+
+####################################################################
+def delete_user_db(db: Session, user_id: int) -> User:
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.isdeleted = True
+
+    db.commit()
+    db.refresh(user)
+
+    return user
+
 
 ####################################################################
 def insert_push_subscription(
@@ -806,6 +830,7 @@ def send_push(
 
     for sub in subs:
         try:
+            print("send to " + str(sub.subscription))
             webpush(
                 subscription_info=sub.subscription,
                 data=json.dumps(payload),

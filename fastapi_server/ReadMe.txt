@@ -141,3 +141,20 @@ systemctl enable --now crond
   sudo systemctl reload nginx
 
 
+
+
+
+domainthenet
+sar888@gmail.com
+h!BKTH@LxbiCjh3
+
+
+
+zoho.com
+admin@metaylimvemekirim.co.il
+bmyPk-v9
+
+https://accounts.zoho.com/home#profile/personal
+
+sendgrid.com
+

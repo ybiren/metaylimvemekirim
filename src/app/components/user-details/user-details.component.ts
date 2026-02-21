@@ -33,13 +33,13 @@ export class UserDetailsComponent implements OnInit {
   regions:ReadonlyArray<IOption> = inject(REGIONS_TOKEN);
   gender:ReadonlyArray<IOption> = inject(GENDER_TOKEN);  
   familyStatus:ReadonlyArray<IOption> = inject(FAMILY_STATUS_TOKEN);
+  smokingStatus: ReadonlyArray<IOption> = inject(SMOKING_STATUS_TOKEN);
   usersSrv = inject(UsersService);
   dialog = inject(Dialog);
   toast = inject(ToastService);
   private destroyRef = inject(DestroyRef);
   private shareUrlService  = inject(ShareUrlService);
   private chat = inject(ChatService);
-  smokingStatus: ReadonlyArray<IOption> = inject(SMOKING_STATUS_TOKEN);
   
     
 

@@ -81,5 +81,9 @@ export class UsersService {
       return this.http.post<boolean>(`${this.baseUrl}/freeze_user`, {userId: getCurrentUserId()});
   }
   
+  deleteProfile() {
+      return this.http.post<boolean>(`${this.baseUrl}/delete_user`, {userId: getCurrentUserId()});
+  }
+
 
 }

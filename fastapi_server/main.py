@@ -29,6 +29,7 @@ from ws.chat import router as chat_router
 from routes.admin_updates import admin_updates_router
 from routes.admin_pages import public_pages_router,admin_pages_router
 from routes.admin_users import admin_users_router
+from routes.mail_sender import mail_sender_router
 
 from helper import (
     ensure_image_content_type,
@@ -59,7 +60,8 @@ from helper import (
     is_user_liked,
     search_user,
     like_user,
-    freeze_user_db
+    freeze_user_db,
+    delete_user_db
 )
 
 from sendgrid_test.send_mail import send_mail
@@ -118,6 +120,8 @@ app.include_router(admin_updates_router)
 app.include_router(public_pages_router)
 app.include_router(admin_pages_router)
 app.include_router(admin_users_router)
+app.include_router(mail_sender_router, prefix="/api")
+
 
 # ---------------------------------------------------------------------
 # Locks
@@ -682,7 +686,12 @@ async def get_user_by_id(userid: int, db: Session = Depends(get_db)):
 async def freeze_user(payload: dict = Body(...), db: Session = Depends(get_db)):
     user_id = payload["userId"]
     user = freeze_user_db(db, user_id)
-    print(user)
+    return {"ok": True}
+
+@app.post("/delete_user")
+async def delete_user(payload: dict = Body(...), db: Session = Depends(get_db)):
+    user_id = payload["userId"]
+    user = delete_user_db(db, user_id)
     return {"ok": True}
 
 

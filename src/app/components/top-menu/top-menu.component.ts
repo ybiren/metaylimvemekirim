@@ -14,6 +14,7 @@ import { environment } from '../../../environments/environment';
 import { ShareUrlService } from '../../services/share-url.service';
 import { LoginService } from '../../services/login.service';
 import { FreezeProfileDialogComponent, FreezeProfileResult } from '../user-details/freeze-profile-dialog.component';
+import { DeleteProfileDialogComponent, DeleteProfileResult } from '../user-details/delete-profile-dialog.component';
 
 
 @Component({
@@ -159,5 +160,18 @@ export class TopMenuComponent implements OnInit, OnDestroy {
      }
    });
   }
+
+  openDeleteProfileDialog() {
+   this.dialog.open<DeleteProfileResult>(DeleteProfileDialogComponent)
+   .closed.subscribe(async (result) => {
+     if (result === 'yes') {
+       const res:any= await firstValueFrom(this.usersSrv.deleteProfile());
+       if(res?.ok) {
+          this.logout();
+       }
+     }
+   });
+  }
+
 
 }

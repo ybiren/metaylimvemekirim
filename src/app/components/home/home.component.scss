@@ -20,6 +20,11 @@
   min-height: 0; /* prevents flex overflow issues */
 }
 
+.admin-main-page {
+  direction: rtl;
+  padding-right: 10px;
+}
+
 /* This row is what we push to the bottom */
 .home-bottom {
   position: absolute;

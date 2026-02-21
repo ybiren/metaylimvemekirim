@@ -2,6 +2,7 @@ import { Component, signal, inject } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { PushService } from '../../services/push.service';
 import { getCurrentUserId } from '../../core/current-user';
+import { PwaStateService } from '../../services/pwa-state.service';
 
 @Component({
   selector: 'pwa-install',
@@ -99,7 +100,8 @@ import { getCurrentUserId } from '../../core/current-user';
 })
 export class PwaInstallComponent {
   private deferred: any = null;
-
+  private state = inject(PwaStateService);
+  
   show = signal(false);
   installed = signal(false);
 
@@ -119,6 +121,7 @@ export class PwaInstallComponent {
   }
 
   canInstall() {
+    if (this.state.updateAvailable()) return false;
     return this.show();
   }
 

@@ -30,6 +30,7 @@ export interface IUser {
   filter_family_status: number[];
   filter_smoking_status: number;
   like?: number[];
+  isfreezed: boolean;
   [k: string]: any;
 }
 

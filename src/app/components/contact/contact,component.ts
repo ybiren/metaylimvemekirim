@@ -1,10 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
   Validators,
   ReactiveFormsModule,
 } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'contact-page',
@@ -125,13 +127,15 @@ import {
             <article class="info-card">
               <h3>דוא"ל כללי</h3>
               <p>
-                <a href="mailto:Admin@pgoshoti.co.il">
-                  Admin@pgoshoti.co.il
+                <a href="mailto:admin@metaylimvemekirim.co.il">
+                  admin@metaylimvemekirim.co.il
                 </a>
                 <br />
+                <!--
                 <a href="mailto:Info@pgoshoti.co.il">
                   Info@pgoshoti.co.il
                 </a>
+                -->
               </p>
               <p>לשאלות כלליות, תמיכה טכנית ועדכונים.</p>
             </article>
@@ -139,8 +143,8 @@ import {
             <article class="info-card">
               <h3>הנהלה</h3>
               <p>
-                <a href="mailto:info@pgoshoti.co.il">
-                  info@pgoshoti.co.il
+                <a href="mailto:admin@metaylimvemekirim.co.il">
+                  admin@metaylimvemekirim.co.il
                 </a>
               </p>
               <p>לשיתופי פעולה, פרסום והצעות עסקיות.</p>
@@ -396,6 +400,9 @@ export class ContactPageComponent {
     message: ['', [Validators.required, Validators.minLength(10)]],
   });
 
+  private http = inject(HttpClient);
+  private baseUrl = environment.apibase;
+  
   constructor() {}
 
   touchedInvalid(ctrl: string): boolean {
@@ -411,11 +418,20 @@ export class ContactPageComponent {
 
     this.sending = true;
 
-    // TODO: replace with real HTTP call
-    setTimeout(() => {
-      this.sending = false;
-      alert('ההודעה נשלחה בהצלחה (סימולציה)');
-      this.form.reset();
-    }, 600);
-  }
+    this.http.post(`${this.baseUrl}/api/contact`, this.form.value)
+      .subscribe({
+        next: () => {
+          this.sending = false;
+          alert('ההודעה נשלחה בהצלחה');
+          this.form.reset();
+        },
+        error: () => {
+          this.sending = false;
+          alert('שגיאה בשליחה');
+        }
+    });
+}
+
+
+
 }

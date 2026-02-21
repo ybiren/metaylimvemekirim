@@ -1,14 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Component, signal } from '@angular/core';
-import { AgGridAngular } from 'ag-grid-angular';
-import {
-  ColDef,
-  GridReadyEvent,
-  ValueFormatterParams,
-} from 'ag-grid-community';
-import { environment } from '../../environments/environment';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
+import { AgGridAngular } from 'ag-grid-angular';
+import { ColDef, GridReadyEvent, ValueFormatterParams } from 'ag-grid-community';
+import { environment } from '../../environments/environment';
+
+import { DateRangeSetFilter } from './date-range-filter/date-range-filter';
+import { DateRangeFloatingFilterComponent } from './date-range-filter/date-range-floating-filter.component';
 
 type AdminUser = {
   id: number;
@@ -17,12 +16,18 @@ type AdminUser = {
   display_name?: string | null;
   created_at?: string | null;
   last_seen_at?: string | null;
+  status?: string | null;
 };
 
 @Component({
   selector: 'admin-users',
   standalone: true,
-  imports: [CommonModule, AgGridAngular, RouterModule],
+  imports: [
+    CommonModule,
+    AgGridAngular,
+    RouterModule,
+    DateRangeFloatingFilterComponent, // ✅ חשוב: להוסיף כאן
+  ],
   template: `
     <section class="admin admin--full" dir="rtl">
       <header class="hdr">
@@ -59,72 +64,91 @@ type AdminUser = {
         [defaultColDef]="defaultColDef"
         [pagination]="true"
         [paginationPageSize]="pageSize()"
-        (gridReady)="onGridReady($event)">
+        (gridReady)="onGridReady($event)"
+      >
       </ag-grid-angular>
     </section>
   `,
-  styles: [`
-    /* breakout from centered container (same trick you used in AdminPages) */
-    .admin--full{
-      width:95vw;
-      margin-left:calc(50% - 50vw);
-      margin-right:calc(50% - 50vw);
-    }
+  styles: [
+    `
+      .admin--full {
+        width: 95vw;
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
+      }
 
-    .admin{ padding:16px 24px; }
+      .admin {
+        padding: 16px 24px;
+      }
 
-    .hdr{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-end;
-      gap:12px;
-      margin-bottom:12px;
-      flex-wrap:wrap;
-    }
-    .hdr h2{ margin:0; }
-    .hdr p{ margin:4px 0 0; opacity:.7; }
+      .hdr {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 12px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+      .hdr h2 {
+        margin: 0;
+      }
+      .hdr p {
+        margin: 4px 0 0;
+        opacity: 0.7;
+      }
 
-    .actions{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      flex-wrap:wrap;
-    }
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
 
-    .inp{
-      min-width:260px;
-      padding:8px 10px;
-      border:1px solid #ddd;
-      border-radius:10px;
-      outline:none;
-    }
+      .inp {
+        min-width: 260px;
+        padding: 8px 10px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        outline: none;
+      }
 
-    .chk{
-      display:flex;
-      align-items:center;
-      gap:6px;
-      user-select:none;
-      white-space:nowrap;
-    }
+      .chk {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        user-select: none;
+        white-space: nowrap;
+      }
 
-    .btn{
-      padding:8px 12px;
-      border-radius:10px;
-      border:1px solid #ddd;
-      background:#fff;
-      cursor:pointer;
-    }
-    .btn:hover{ background:#f5f5f5; }
+      .btn {
+        padding: 8px 12px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        background: #fff;
+        cursor: pointer;
+      }
+      .btn:hover {
+        background: #f5f5f5;
+      }
 
-    .grid{
-      width:100%;
-      height: calc(100vh - 220px);
-      border-radius:12px;
-      overflow:hidden;
-    }
-  `]
+      .btn--danger {
+        border-color: #f1b0b7;
+        background: #fff5f5;
+      }
+      .btn--danger:hover {
+        background: #ffe8ea;
+      }
+
+      .grid {
+        width: 100%;
+        height: calc(100vh - 220px);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+    `,
+  ],
 })
-export class AdminUsersComponent {
+export class AdminUsersComponent implements OnInit, OnDestroy {
   private gridApi: any = null;
 
   q = signal('');
@@ -143,59 +167,90 @@ export class AdminUsersComponent {
     minWidth: 120,
   };
 
-  // Use flex widths so columns always align nicely and fill available space
   colDefs: ColDef[] = [
-    { field: 'id', headerName: 'Id', width: 90, minWidth: 90, filter: 'agNumberColumnFilter' },
     {
-  field: 'username',
-  headerName: 'שם תצוגה',
-  flex: 1,
-  cellRenderer: (params: any) => {
-    const a = document.createElement('a');
-    a.textContent = params.value;
-    a.style.cursor = 'pointer';
-    a.style.color = '#1976d2';
-    a.style.textDecoration = 'underline';
+      field: 'id',
+      headerName: 'Id',
+      width: 90,
+      minWidth: 90,
+      filter: 'agNumberColumnFilter',
+    },
+    {
+      field: 'username',
+      headerName: 'שם תצוגה',
+      flex: 1,
+      cellRenderer: (params: any) => {
+        const a = document.createElement('a');
+        a.textContent = params.value ?? '';
+        a.style.cursor = 'pointer';
+        a.style.color = '#1976d2';
+        a.style.textDecoration = 'underline';
 
-    a.addEventListener('click', () => {
-      this.router.navigate(['/user', params.data.id]);
-    });
-    return a;
-  }
-},
+        a.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          const id = params?.data?.id;
+          if (id != null) this.router.navigate(['/user', id]);
+        });
 
+        return a;
+      },
+    },
     { field: 'email', headerName: 'דוא"ל', flex: 2, minWidth: 220 },
+
     {
       field: 'last_seen_at',
       headerName: 'נראה לאחרונה',
       flex: 1.2,
       valueFormatter: (p: ValueFormatterParams) => this.formatDate(p.value as any),
+
+      filter: DateRangeSetFilter,
+      floatingFilter: true,
+      floatingFilterComponent: DateRangeFloatingFilterComponent,
     },
     {
       field: 'created_at',
       headerName: 'נוצר בתאריך',
       flex: 1.2,
       valueFormatter: (p: ValueFormatterParams) => this.formatDate(p.value as any),
-    },
-    {
-      field: 'status',
-      headerName: 'סטאטוס',
-      flex: 1.2,
-    }
 
+      filter: DateRangeSetFilter,
+      floatingFilter: true,
+      floatingFilterComponent: DateRangeFloatingFilterComponent,
+    },
+
+    { field: 'status', headerName: 'סטאטוס', flex: 1.2 },
+
+    // ✅ Actions column
+    {
+      headerName: 'פעולות',
+      field: 'actions',
+      width: 140,
+      minWidth: 140,
+      sortable: false,
+      filter: false,
+      floatingFilter: false,
+      resizable: false,
+      cellRenderer: (params: any) => {
+        const btn = document.createElement('button');
+        btn.textContent = 'מחק';
+        btn.className = 'btn btn--danger';
+        btn.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          this.deleteUser(params.data as AdminUser);
+        });
+        return btn;
+      },
+    },
   ];
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.load();
   }
 
-  onGridReady(e: GridReadyEvent) {
+  onGridReady(e: GridReadyEvent): void {
     this.gridApi = e.api;
 
-    // fit columns once grid is ready
     setTimeout(() => this.gridApi?.sizeColumnsToFit(), 0);
-
-    // fit again on window resize (keeps columns aligned)
     window.addEventListener('resize', this.onResize);
   }
 
@@ -203,7 +258,7 @@ export class AdminUsersComponent {
     this.gridApi?.sizeColumnsToFit();
   };
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     window.removeEventListener('resize', this.onResize);
   }
 
@@ -233,19 +288,32 @@ export class AdminUsersComponent {
       params = params.set('online', 'true');
     }
 
-    this.http
-      .get<{ items: AdminUser[] }>(this.api(`/api/admin/users`), { params })
-      .subscribe({
-        next: (res) => {
-          this.rowData.set(res.items ?? []);
-          // refit after data loads
-          setTimeout(() => this.gridApi?.sizeColumnsToFit(), 0);
-        },
-        error: (err) => {
-          console.error('admin users load failed', err);
-          this.rowData.set([]);
-        },
-      });
+    this.http.get<{ items: AdminUser[] }>(this.api(`/api/admin/users`), { params }).subscribe({
+      next: (res) => {
+        this.rowData.set(res.items ?? []);
+        setTimeout(() => this.gridApi?.sizeColumnsToFit(), 0);
+      },
+      error: (err) => {
+        console.error('admin users load failed', err);
+        this.rowData.set([]);
+      },
+    });
+  }
+
+  deleteUser(user: AdminUser) {
+    if (!user?.id) return;
+
+    const ok = confirm(`למחוק משתמש #${user.id} (${user.username}) ?`);
+    if (!ok) return;
+
+    // ⚠️ עדכן את הנתיב אם אצלך הוא שונה
+    this.http.delete(this.api(`/api/admin/users/${user.id}`)).subscribe({
+      next: () => this.load(),
+      error: (err) => {
+        console.error('delete user failed', err);
+        alert('מחיקה נכשלה');
+      },
+    });
   }
 
   private formatDate(value: string | null | undefined): string {
@@ -253,7 +321,6 @@ export class AdminUsersComponent {
     const d = new Date(value);
     if (Number.isNaN(d.getTime())) return String(value);
 
-    // local time display, short + readable
     return d.toLocaleString('he-IL', {
       year: 'numeric',
       month: '2-digit',
@@ -262,10 +329,4 @@ export class AdminUsersComponent {
       minute: '2-digit',
     });
   }
-
-  private status(value: boolean): string {
-    return "yes";
-  }
-
-
 }
