@@ -13,7 +13,7 @@ type AdminBanner = {
   page: BannerPage;
   title?: string | null;
   link_url: string;
-  image_url: string; // served by backend: /api/admin/banners/{id}/image
+  image_url: string; // backend returns: /api/admin/banners/{id}/image
   is_active?: boolean | null;
   sort_order?: number | null;
   created_at?: string | null;
@@ -77,6 +77,7 @@ type AdminBanner = {
           </div>
 
           <div class="form">
+            <!-- ✅ Page (edit section) -->
             <label class="lbl">Page</label>
             <select class="inp2" [(ngModel)]="b.page">
               <option value="main">Main</option>
@@ -98,7 +99,13 @@ type AdminBanner = {
             <div class="fileRow">
               <label class="btn btn--ghost fileBtn" [class.btn--disabled]="saving()">
                 בחר תמונה
-                <input type="file" accept="image/*" (change)="onFileSelected($event)" [disabled]="saving()" hidden />
+                <input
+                  type="file"
+                  accept="image/*"
+                  (change)="onFileSelected($event)"
+                  [disabled]="saving()"
+                  hidden
+                />
               </label>
 
               <span class="fileName" *ngIf="selectedFile() as f">{{ f.name }}</span>
@@ -128,7 +135,7 @@ type AdminBanner = {
 
               <img *ngIf="previewUrl(); else existingImg" [src]="previewUrl()" alt="banner preview" />
               <ng-template #existingImg>
-                <img [src]="api(b.image_url)" alt="banner preview" (error)="onImgError($event)" />
+                <img [src]="absImg(b.image_url)" alt="banner preview" (error)="onImgError($event)" />
               </ng-template>
             </div>
 
@@ -387,24 +394,18 @@ export class AdminBannersComponent implements OnInit, OnDestroy {
 
   q = signal('');
   pageKey = signal<string>('');
-
   pageSize = signal(50);
   rowData = signal<AdminBanner[]>([]);
 
   editing = signal<AdminBanner | null>(null);
   saving = signal(false);
 
-  // file state (upload on save)
   selectedFile = signal<File | null>(null);
   fileError = signal<string>('');
   previewUrl = signal<string>('');
 
-  constructor(private http: HttpClient) {
-  
-  }
+  constructor(private http: HttpClient) {}
 
-  
-  
   defaultColDef: ColDef = {
     sortable: true,
     filter: true,
@@ -413,6 +414,7 @@ export class AdminBannersComponent implements OnInit, OnDestroy {
     minWidth: 120,
   };
 
+  // ✅ includes "page" column
   colDefs: ColDef[] = [
     { field: 'id', headerName: 'Id', width: 90, minWidth: 90, filter: 'agNumberColumnFilter' },
     { field: 'page', headerName: 'Page', width: 120, minWidth: 120 },
@@ -420,8 +422,8 @@ export class AdminBannersComponent implements OnInit, OnDestroy {
     {
       field: 'link_url',
       headerName: 'קישור',
-      flex: 1.6,
-      minWidth: 260,
+      flex: 1.2,
+      minWidth: 240,
       cellRenderer: (p: any) => {
         const url = p.value ?? '';
         const a = document.createElement('a');
@@ -446,7 +448,7 @@ export class AdminBannersComponent implements OnInit, OnDestroy {
         wrap.style.gap = '10px';
 
         const img = document.createElement('img');
-        img.src = this.api(p.value) ?? '';
+        img.src = this.absImg(p.value ?? '');
         img.alt = 'banner';
         img.style.width = '120px';
         img.style.height = '44px';
@@ -540,8 +542,22 @@ export class AdminBannersComponent implements OnInit, OnDestroy {
     this.cleanupPreviewUrl();
   }
 
+  // ✅ API helpers (safe for absolute + relative urls)
   api(path: string) {
-    return `${environment.apibase}${path}`;
+    const v = (path ?? '').trim();
+    if (!v) return '';
+    if (v.startsWith('http://') || v.startsWith('https://')) return v;
+    const base = (environment.apibase || '').replace(/\/$/, '');
+    const p = v.startsWith('/') ? v : `/${v}`;
+    return `${base}${p}`;
+  }
+
+  // ✅ absolute image url + cache bust
+  absImg(path: string) {
+    const u = this.api(path);
+    if (!u) return '';
+    const sep = u.includes('?') ? '&' : '?';
+    return `${u}${sep}t=${Date.now()}`;
   }
 
   onSearch(v: string) {
@@ -604,7 +620,7 @@ export class AdminBannersComponent implements OnInit, OnDestroy {
     return !b.id || b.id === 0;
   }
 
-  // ===== Validators (client-side) =====
+  // ===== Validators =====
 
   isValidHttpUrl(url: string | null | undefined): boolean {
     const v = (url ?? '').trim();
@@ -679,7 +695,7 @@ export class AdminBannersComponent implements OnInit, OnDestroy {
     this.cleanupPreviewUrl();
   }
 
-  // ===== Save (multipart on save) =====
+  // ===== Save =====
 
   saveEditing() {
     const b = this.editing();
