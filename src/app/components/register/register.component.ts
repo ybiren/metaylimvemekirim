@@ -2,6 +2,7 @@ import { Component, DestroyRef, OnInit, OnDestroy, inject, signal } from '@angul
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { RegisterService } from '../../services/register.service';
@@ -41,6 +42,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   private albumSrv = inject(AlbumService);
   private destroyRef = inject(DestroyRef);
   router = inject(Router);
+  activatedRoute = inject(ActivatedRoute);
 
   user = signal<IUser | null>(null);
 
@@ -366,9 +368,15 @@ export class RegisterComponent implements OnInit, OnDestroy {
   // Load user data
   // --------------------
   private async fetchUser() {
-        const found = JSON.parse(localStorage.getItem('user') ?? 'null') as IUser | null;
+        const found = JSON.parse(localStorage.getItem('user') ?? 'null') as IUser | null   ;
         if(found) {
           this.user.set(await firstValueFrom(this.usersSrv.getUser(found.id)));
+        }
+        else {// navigation from admin_user
+          const admin_for_user = this.activatedRoute.snapshot.queryParamMap.get('admin_for_user');
+          if(admin_for_user) {
+            this.user.set(await firstValueFrom(this.usersSrv.getUser(admin_for_user as any)));
+          }
         }
 
         // ✅ set validators based on mode

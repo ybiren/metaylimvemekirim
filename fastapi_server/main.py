@@ -29,6 +29,7 @@ from ws.chat import router as chat_router
 from routes.admin_updates import admin_updates_router
 from routes.admin_pages import public_pages_router,admin_pages_router
 from routes.admin_users import admin_users_router
+from routes.admin_banners import admin_banners_router
 from routes.mail_sender import mail_sender_router
 
 from helper import (
@@ -120,6 +121,7 @@ app.include_router(admin_updates_router)
 app.include_router(public_pages_router)
 app.include_router(admin_pages_router)
 app.include_router(admin_users_router)
+app.include_router(admin_banners_router)
 app.include_router(mail_sender_router, prefix="/api")
 
 
@@ -528,10 +530,12 @@ async def forgot_pass(
     user = get_user_by_email(db,email)
 
     uid = user.id
-    status_code = send_mail(email, uid)
-    if 200 <= status_code < 300:
-        return JSONResponse({"ok": True})
-    return JSONResponse({"ok": False, "message": "Mail Sending Failed."})
+    return send_mail(email, uid)
+    
+    #if 200 <= status_code < 300:
+        #return JSONResponse({"ok": True})
+    #return JSONResponse({"ok": False, "message": "Mail Sending Failed."})
+
 
 @app.post("/reset-password")
 async def reet_pass(payload: dict = Body(...),db: Session = Depends(get_db)):
@@ -716,7 +720,7 @@ def manifest():
     return FileResponse(ANGULAR_DIR / "manifest.webmanifest", media_type="application/manifest+json")
 
 app.mount("/", SpaStaticFiles(directory=str(ANGULAR_DIR)), name="spa")
-
+#app.mount("/spa", StaticFiles(directory=str(ANGULAR_DIR), html=True), name="spa-static")
 
 
 # ---------------------------------------------------------------------

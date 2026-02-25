@@ -139,12 +139,22 @@ type AdminUser = {
         background: #ffe8ea;
       }
 
+      .btn--primary {
+        border-color: #bcd7ff;
+        background: #eef5ff;
+      }
+      .btn--primary:hover {
+        background: #ddeaff;
+      }
+
       .grid {
         width: 100%;
         height: calc(100vh - 220px);
         border-radius: 12px;
         overflow: hidden;
       }
+
+      
     `,
   ],
 })
@@ -220,25 +230,51 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
 
     { field: 'status', headerName: 'סטאטוס', flex: 1.2 },
 
-    // ✅ Actions column
+    // ✅ Actions column (ערוך + מחק)
     {
       headerName: 'פעולות',
       field: 'actions',
-      width: 140,
-      minWidth: 140,
+      width: 220,
+      minWidth: 220,
       sortable: false,
       filter: false,
       floatingFilter: false,
       resizable: false,
       cellRenderer: (params: any) => {
-        const btn = document.createElement('button');
-        btn.textContent = 'מחק';
-        btn.className = 'btn btn--danger';
-        btn.addEventListener('click', (ev) => {
+        const wrap = document.createElement('div');
+        wrap.style.display = 'flex';
+        wrap.style.alignItems = 'center';   // 🔥 ממרכז אנכית
+        wrap.style.justifyContent = 'center';
+        wrap.style.gap = '12px';            // 🔥 רווח בין כפתורים
+        wrap.style.height = '100%';         // 🔥 חשוב מאוד!
+        wrap.style.width = '100%';
+        
+        // ✏️ Edit
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'ערוך';
+        editBtn.className = 'btn btn--primary';
+        editBtn.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          const id = params?.data?.id;
+          if (id != null) {
+            this.router.navigate(['/register'], {
+              queryParams: { admin_for_user: id },
+            });
+          }
+        });
+
+        // 🗑️ Delete
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'מחק';
+        delBtn.className = 'btn btn--danger';
+        delBtn.addEventListener('click', (ev) => {
           ev.stopPropagation();
           this.deleteUser(params.data as AdminUser);
         });
-        return btn;
+
+        wrap.appendChild(editBtn);
+        wrap.appendChild(delBtn);
+        return wrap;
       },
     },
   ];
@@ -288,16 +324,18 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
       params = params.set('online', 'true');
     }
 
-    this.http.get<{ items: AdminUser[] }>(this.api(`/api/admin/users`), { params }).subscribe({
-      next: (res) => {
-        this.rowData.set(res.items ?? []);
-        setTimeout(() => this.gridApi?.sizeColumnsToFit(), 0);
-      },
-      error: (err) => {
-        console.error('admin users load failed', err);
-        this.rowData.set([]);
-      },
-    });
+    this.http
+      .get<{ items: AdminUser[] }>(this.api(`/api/admin/users`), { params })
+      .subscribe({
+        next: (res) => {
+          this.rowData.set(res.items ?? []);
+          setTimeout(() => this.gridApi?.sizeColumnsToFit(), 0);
+        },
+        error: (err) => {
+          console.error('admin users load failed', err);
+          this.rowData.set([]);
+        },
+      });
   }
 
   deleteUser(user: AdminUser) {
