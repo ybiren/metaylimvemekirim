@@ -1,3 +1,4 @@
+<!-- register.component.html -->
 <form class="form" [formGroup]="form" (ngSubmit)="onSubmit()" dir="rtl" novalidate>
   <!-- Intro -->
   <section class="intro card">
@@ -316,6 +317,27 @@
         <option [ngValue]="smokingStatus[0].val">{{ smokingStatus[0].txt }}</option>
         <option [ngValue]="smokingStatus[1].val">{{ smokingStatus[1].txt }}</option>
       </select>
+    </div>
+  </div>
+
+  <!-- ✅ NEW: Notification preferences -->
+  <h2 class="section-header">כאשר אני מקבל הודעה מהאתר אני מעוניין:</h2>
+
+  <div class="grid card" formGroupName="notifyPrefs">
+    <label class="label" for="notify_push">לקבל הודעת פוש</label>
+    <div class="field">
+      <label class="checkbox-line">
+        <input id="notify_push" type="checkbox" formControlName="push" />
+        <span class="muted">פוש לאפליקציה/דפדפן (אם הופעלה הרשאה)</span>
+      </label>
+    </div>
+
+    <label class="label" for="notify_email">לקבל אימייל</label>
+    <div class="field">
+      <label class="checkbox-line">
+        <input id="notify_email" type="checkbox" formControlName="email" />
+        <span class="muted">אימייל לכתובת שהזנת</span>
+      </label>
     </div>
   </div>
 

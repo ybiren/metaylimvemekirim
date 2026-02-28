@@ -66,6 +66,9 @@ class User(Base):
     filter_family_status = Column(String(100))
     filter_smoking_status = Column(String(20))
 
+    notify_push = Column(Boolean, nullable=False, server_default="false")
+    notify_email = Column(Boolean, nullable=False, server_default="false")
+    
     isfreezed = Column("isfreezed", Boolean)
     isdeleted = Column("isdeleted", Boolean)
 

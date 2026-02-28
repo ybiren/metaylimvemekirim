@@ -1,3 +1,5 @@
+/* register.component.scss */
+
 :host {
   display: block;
   direction: rtl;
@@ -160,6 +162,13 @@ img.avatar-preview {
 
 .remove-btn:hover {
   background: #f1f5f9;
+}
+
+/* ✅ NEW: checkbox line for notification prefs */
+.checkbox-line {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
 }
 
 /* Muted */

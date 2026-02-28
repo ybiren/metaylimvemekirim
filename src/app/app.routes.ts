@@ -16,10 +16,13 @@ import { SmsUpdatesSignalFormComponent } from './components/sms-updates-signal-f
 import { ChatSystemRoomsComponent } from './components/chat-system-rooms/chat-system-rooms.component';
 import { LikesContainerComponent } from './components/likes-container/likes-container.component';
 import { AdminUpdatesComponent } from './admin/admin-updates.component';
+import { AdminMainComponent } from './admin/admin-main.component';
+import { LoginComponent } from './components/login/login.component';
 
 
 export const appRoutes: Route[] = [
   { path: 'home', component: HomeComponent },
+  { path: 'login', component: LoginComponent },
   { path: 'users', component: UsersComponent },
   { path: 'user/:userID', loadComponent: () =>
       import('./components/user-details/user-details.component').then(m => m.UserDetailsComponent) },
@@ -40,7 +43,8 @@ export const appRoutes: Route[] = [
 
    // ✅ admin area
   {
-    path: 'admin',
+    path: 'admin', 
+    component: AdminMainComponent,
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', loadComponent: () => import('./admin/admin-updates.component').then(m => m.AdminUpdatesComponent) },
@@ -48,7 +52,9 @@ export const appRoutes: Route[] = [
       { path: 'users', loadComponent: () => import('./admin/admin-users.component').then(m => m.AdminUsersComponent) },
       { path: 'banners', loadComponent: () => import('./admin/admin-banners.component').then(m => m.AdminBannersComponent) }
     ]
-  } 
-   
+  }, 
+
+  { path: '', redirectTo: 'home', pathMatch: 'full' },
+  { path: '**', redirectTo: 'home' },
 
 ];

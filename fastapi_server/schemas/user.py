@@ -51,6 +51,9 @@ class UserBase(BaseModel):
     filter_family_status: Optional[str] = None
     filter_smoking_status: Optional[str] = None
 
+    notify_push: Optional[bool] = False
+    notify_email: Optional[bool] = False
+    
     # ✅ JSONB list of dicts -> typed list
     extra_images: Optional[List[ExtraImage]] = None
 

@@ -1,3 +1,4 @@
+// register.component.ts
 import { Component, DestroyRef, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -131,6 +132,12 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
       // terms
       acceptTerms: [false, [Validators.requiredTrue]],
+
+      // ✅ NEW: notification prefs
+      notifyPrefs: this.fb.group({
+        push: [true],
+        email: [true],
+      }),
 
       // filters
       filter_height_min: [145],
@@ -413,6 +420,13 @@ export class RegisterComponent implements OnInit, OnDestroy {
             c_url: current.url ?? '',
             c_fb: current.fb ?? '',
             acceptTerms: current ? true: false,
+
+            // ✅ NEW: notification prefs
+            notifyPrefs: {
+              push: Boolean((current as any).notify_push ?? true),
+              email: Boolean((current as any).notify_email ?? true),
+            },
+
             filter_height_min: Number((current as any).filter_height_min ?? 145),
             filter_height_max: Number((current as any).filter_height_max ?? 200),
             filter_age_min: Number((current as any).filter_age_min ?? 25),
@@ -491,6 +505,11 @@ export class RegisterComponent implements OnInit, OnDestroy {
     fd.append('c_smoking', String(this.f.c_smoking.value ?? 0));
     fd.append('c_url', String(this.f.c_url.value ?? ''));
     fd.append('c_fb', String(this.f.c_fb.value ?? ''));
+
+    // ✅ NEW: notification prefs -> FormData
+    const prefs = this.form.value.notifyPrefs as { push?: boolean; email?: boolean } | null;
+    fd.append('notify_push', String(!!prefs?.push));
+    fd.append('notify_email', String(!!prefs?.email));
 
     fd.append('filter_height_min', String(this.f.filter_height_min.value ?? 0));
     fd.append('filter_height_max', String(this.f.filter_height_max.value ?? 0));

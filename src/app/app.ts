@@ -45,8 +45,8 @@ export class App implements OnInit, OnDestroy{
 
   // reactive state
   isHome = signal(false);
+  isAdminPage = signal(false);
   userID = signal(null);
-  
 
   constructor() {
     // 🚀 1) Check if user already logged in
@@ -54,11 +54,7 @@ export class App implements OnInit, OnDestroy{
       this.loginService.onLogin$.subscribe((isLoggedin) => {
       this.userID.set(isLoggedin || getCurrentUserId() ? getCurrentUserId() : null) ;
     }); 
-     
-  
-    
-    
-    
+
     const params = new URLSearchParams(window.location.search);
     if (this.userID() && !params.get("shareprofile")) {
       this.presenceSub = this.presence.start(25_000, this.userID()); // match HEARTBEAT_SEC
@@ -73,11 +69,16 @@ export class App implements OnInit, OnDestroy{
 
     // 2) Set initial value of isHome
     this.setIsHome(this.router.url);
+    this.setIsAdminPage(this.router.url);
 
     // 3) Update isHome signal on navigation
     this.router.events
       .pipe(filter(e => e instanceof NavigationEnd))
-      .subscribe((e: NavigationEnd) => this.setIsHome(e.urlAfterRedirects));
+      .subscribe((e: NavigationEnd) =>  {
+        this.setIsHome(e.urlAfterRedirects);
+        this.setIsAdminPage(e.urlAfterRedirects);
+      } 
+    );
       
   }
 
@@ -85,6 +86,10 @@ export class App implements OnInit, OnDestroy{
     this.isHome.set(url === '/' || url === '');
   }
 
+  private setIsAdminPage(url: string) {
+    this.isAdminPage.set(url.indexOf("/admin") !== -1);
+  }
+    
   ngOnInit() {
     this.usersSvc.load();
   }

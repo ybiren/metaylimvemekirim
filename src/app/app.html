@@ -89,7 +89,9 @@
 </div>
 }
 @else {
-<app-top-menu />
+  @if(!isAdminPage()) { 
+   <app-top-menu />
+  }
 }
 
 <ngx-spinner

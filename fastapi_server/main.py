@@ -290,6 +290,9 @@ async def register(
     filter_age_max: str = Form(...),
     filter_family_status: str = Form(...),
     filter_smoking_status: str = Form(...),
+    
+    notify_push: Optional[str] = Form(...),
+    notify_email: Optional[str] = Form(...)
 ):
     def _has_real_file(up: Optional[UploadFile]) -> bool:
         return bool(up and getattr(up, "filename", None))
@@ -302,7 +305,15 @@ async def register(
             return int(v)
         except Exception:
             return None
+    
+    def to_bool(v: Any) -> bool:
+        if v is None:
+            return False
+        if isinstance(v, bool):
+            return v
+        return str(v).lower() in ("true", "1", "yes", "on")
 
+    
     user_fields: Dict[str, Any] = {
         "name": c_name,
         "gender": to_int(c_gender),
@@ -335,6 +346,9 @@ async def register(
         "filter_age_max": to_int(filter_age_max),
         "filter_family_status": filter_family_status,          # CSV like "1,2,3"
         "filter_smoking_status": str(filter_smoking_status),   # keep as string if column is string
+    
+        "notify_push": to_bool(notify_push),
+        "notify_email": to_bool(notify_email),
     }
 
     stored_user, created = upsert_user(db, user_fields)

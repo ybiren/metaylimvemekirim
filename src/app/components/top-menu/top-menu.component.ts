@@ -67,7 +67,7 @@ export class TopMenuComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.usersSrv.users$.subscribe(() => {
+    this.loginService.onLogin$.subscribe(() => {
       this.loggedInUser = localStorage.getItem('user') ?  JSON.parse(localStorage.getItem('user')) : null;
     }); 
   }
@@ -81,7 +81,7 @@ export class TopMenuComponent implements OnInit, OnDestroy {
     localStorage.clear();
     this.isMenuOpen = false;
     this.loginService.onLogout();
-    this.router.navigateByUrl('/');
+    this.router.navigateByUrl('/login');
   }
 
   randomInit(): {} {
