@@ -62,7 +62,8 @@ from helper import (
     search_user,
     like_user,
     freeze_user_db,
-    delete_user_db
+    delete_user_db,
+    set_email_verified
 )
 
 from sendgrid_test.send_mail import send_mail
@@ -252,6 +253,9 @@ async def delete_user_extra_image(user_id: int, filename: str, db: AsyncSession 
   return {"ok": True, "deleted": filename, "remaining": len(user.extra_images)}
 
 
+
+
+
 @app.post("/register")
 async def register(
     db: Session = Depends(get_db),
@@ -294,6 +298,8 @@ async def register(
     notify_push: Optional[str] = Form(...),
     notify_email: Optional[str] = Form(...)
 ):
+    
+    
     def _has_real_file(up: Optional[UploadFile]) -> bool:
         return bool(up and getattr(up, "filename", None))
 
@@ -712,6 +718,16 @@ async def delete_user(payload: dict = Body(...), db: Session = Depends(get_db)):
     user = delete_user_db(db, user_id)
     return {"ok": True}
 
+@app.get("/users/check-email")
+def check_email(email: str, db: Session = Depends(get_db)):
+    exists = db.query(User.id).filter(User.email == email).first() is not None
+    return {"exists": exists}
+
+@app.post("/set_email_verified")
+async def delete_user(payload: dict = Body(...), db: Session = Depends(get_db)):
+    uid = decrypt_uid(payload["uid"])
+    user = set_email_verified(db, uid)
+    return {"ok": True}
 
 
 

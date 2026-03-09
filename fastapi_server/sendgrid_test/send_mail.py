@@ -8,7 +8,7 @@ def send_mail(email, uid):
     msg["From"] = "admin@metaylimvemekirim.co.il"
     msg["To"] = email
 
-    reset_link = f"https://metaylimvemekirim.co.il/reset-password?uid={encrypt_uid(uid)}"
+    reset_link = f"https://metaylimvemekirim.co.il/reset-password?reset-password-uid={encrypt_uid(uid)}"
 
     # טקסט רגיל (חשוב מאוד!)
     msg.set_content(f"איפוס סיסמא: {reset_link}")

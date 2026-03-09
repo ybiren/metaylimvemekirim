@@ -71,6 +71,7 @@ class User(Base):
     
     isfreezed = Column("isfreezed", Boolean)
     isdeleted = Column("isdeleted", Boolean)
+    is_email_verified = Column(Boolean, default=False)
 
     extra_images = Column(
         JSONB,

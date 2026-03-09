@@ -20,7 +20,7 @@ from cryptography.fernet import Fernet, InvalidToken
 from sqlalchemy.orm import Session
 from pywebpush import webpush, WebPushException
 from ws.notify import is_online
-
+from sendgrid_test.send_mail_verification import send_mail_verification
 import os
 
 def get_user(db: Session, user_id: int):
@@ -41,7 +41,7 @@ pwd_context = CryptContext(
 def get_user_by_email_pass(db, c_email: str, password: str):
     user = (
         db.query(User)
-        .filter(User.email == c_email, or_(
+        .filter(User.email == c_email, User.is_email_verified.is_(True), or_(
             User.isdeleted.is_(False),
             User.isdeleted.is_(None)
         ))
@@ -166,6 +166,9 @@ def upsert_user(db: Session, user_fields: Dict[str, Any]) -> Tuple[User, bool]:
 
     data = dict(user_fields)
     data["email"] = email
+    
+    if "sessionID" in data:
+      del data["sessionID"]
 
     # find existing user by email
     stmt = select(User).where(User.email == email)
@@ -180,7 +183,10 @@ def upsert_user(db: Session, user_fields: Dict[str, Any]) -> Tuple[User, bool]:
             raise ValueError("password is required when creating a user")
 
         data["password_hash"] = hash_password(raw_password)
-        
+        data["isfreezed"] = False
+        data["isdeleted"] = False
+        data["is_email_verified"] = False
+
         user = User(**data)
         db.add(user)
         created = True
@@ -201,6 +207,7 @@ def upsert_user(db: Session, user_fields: Dict[str, Any]) -> Tuple[User, bool]:
 
     db.commit()
     db.refresh(user)
+    send_mail_verification(email, encrypt_uid(user.id))   
     return user, created
 
 ####################################################################
@@ -386,6 +393,17 @@ def delete_user_db(db: Session, user_id: int) -> User:
     db.commit()
     db.refresh(user)
 
+    return user
+
+####################################################################
+def set_email_verified(db: Session, user_id: int) -> User:
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.is_email_verified = True
+    db.commit()
+    db.refresh(user)
     return user
 
 
