@@ -70,6 +70,6 @@
     }
   </div>
   } @else {
-    <app-album [userId]="id"></app-album>    
+    <app-album [userId]="id" [editable]="loggedInUser()?.id === id"></app-album>
   }
 </section>

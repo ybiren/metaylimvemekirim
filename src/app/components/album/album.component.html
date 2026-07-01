@@ -1,14 +1,14 @@
 <section class="album card">
   <header class="topbar">
     <div class="titles">
-      <h2 class="title">אלבום תמונות</h2>
-      <div class="sub" *ngIf="hasImages()">
+      <h2 class="title">{{ editable() ? 'ניהול תמונות' : 'אלבום תמונות' }}</h2>
+      <div class="sub" *ngIf="!editable() && hasImages()">
         {{ index() + 1 }} / {{ count() }}
       </div>
     </div>
 
     <div class="actions">
-      @if (loggedInUser() && loggedInUser().id !== userId()) {
+      @if (!editable() && loggedInUser() && loggedInUser().id !== userId()) {
         <button
           class="like-btn"
           type="button"
@@ -21,7 +21,7 @@
         </button>
       }
 
-      <button type="button" class="btn" (click)="refresh()" [disabled]="loading()">
+      <button type="button" class="btn" (click)="refresh()" [disabled]="loading() || uploading()">
         רענן
       </button>
     </div>
@@ -30,51 +30,108 @@
   <div class="state" *ngIf="loading()">טוען...</div>
   <div class="state error" *ngIf="!loading() && errorMsg()">{{ errorMsg() }}</div>
 
-  <div class="state empty" *ngIf="!loading() && !errorMsg() && !hasImages()">
-    אין תמונות נוספות עדיין
-  </div>
+  @if (editable()) {
+    <!-- ── Edit mode ── -->
+    <div class="edit-section">
 
-  <ng-container *ngIf="!loading() && !errorMsg() && current() as img">
-    <div
-      class="viewer"
-      (touchstart)="onTouchStart($event)"
-      (touchend)="onTouchEnd($event)"
-    >
-      <button
-        type="button"
-        class="nav"
-        (click)="prev()"
-        [disabled]="count() <= 1"
-        aria-label="הקודם"
-      >
-        ‹
-      </button>
-
-      <div class="stage">
-        <img class="photo" [src]="img.absoluteUrl" [alt]="img.filename || 'תמונה'" />
-        <div class="caption" *ngIf="img.filename">{{ img.filename }}</div>
+      <div class="thumb-grid" *ngIf="hasImages() || localPreviews().length">
+        <!-- Existing server images -->
+        <div class="thumb-card" *ngFor="let img of images()">
+          <img [src]="img.absoluteUrl" [alt]="img.filename || 'תמונה'" class="thumb-img" />
+          <button
+            type="button"
+            class="delete-btn"
+            (click)="deleteServer(img)"
+            [disabled]="deletingFilename() === img.filename || uploading()"
+            aria-label="מחק"
+          >{{ deletingFilename() === img.filename ? '…' : '✕' }}</button>
+        </div>
+        <!-- Local pending images -->
+        <div class="thumb-card pending" *ngFor="let url of localPreviews(); let i = index">
+          <img [src]="url" alt="תמונה חדשה" class="thumb-img" />
+          <button
+            type="button"
+            class="delete-btn"
+            (click)="removeLocal(i)"
+            [disabled]="uploading()"
+            aria-label="הסר"
+          >✕</button>
+        </div>
       </div>
 
-      <button
-        type="button"
-        class="nav"
-        (click)="next()"
-        [disabled]="count() <= 1"
-        aria-label="הבא"
-      >
-        ›
-      </button>
+      <div class="state empty" *ngIf="!loading() && !hasImages() && !localPreviews().length">
+        אין תמונות נוספות עדיין
+      </div>
+
+      <div class="upload-area">
+        <label class="pick-label" [class.disabled]="totalImages() >= MAX_EXTRA_IMAGES || uploading()">
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            style="display:none"
+            (change)="onFilePick($event)"
+            [disabled]="totalImages() >= MAX_EXTRA_IMAGES || uploading()"
+          />
+          + הוסף תמונות
+        </label>
+        <span class="counter-muted">{{ totalImages() }} / {{ MAX_EXTRA_IMAGES }}</span>
+        <button
+          *ngIf="localFiles().length"
+          type="button"
+          class="btn upload-btn"
+          (click)="uploadAll()"
+          [disabled]="uploading()"
+        >{{ uploading() ? 'שולח…' : 'העלה' }}</button>
+      </div>
+
+      <div class="edit-error" *ngIf="editError()">{{ editError() }}</div>
     </div>
 
-    <div class="dots" *ngIf="count() > 1">
-      <button
-        type="button"
-        class="dot"
-        *ngFor="let _ of images(); let i = index"
-        [class.active]="i === index()"
-        (click)="goTo(i)"
-        [attr.aria-label]="'לתמונה ' + (i + 1)"
-      ></button>
+  } @else {
+    <!-- ── View mode ── -->
+    <div class="state empty" *ngIf="!loading() && !errorMsg() && !hasImages()">
+      אין תמונות נוספות עדיין
     </div>
-  </ng-container>
+
+    <ng-container *ngIf="!loading() && !errorMsg() && current() as img">
+      <div
+        class="viewer"
+        (touchstart)="onTouchStart($event)"
+        (touchend)="onTouchEnd($event)"
+      >
+        <button
+          type="button"
+          class="nav"
+          (click)="prev()"
+          [disabled]="count() <= 1"
+          aria-label="הקודם"
+        >‹</button>
+
+        <div class="stage">
+          <img class="photo" [src]="img.absoluteUrl" [alt]="img.filename || 'תמונה'" />
+          <div class="caption" *ngIf="img.filename">{{ img.filename }}</div>
+        </div>
+
+        <button
+          type="button"
+          class="nav"
+          (click)="next()"
+          [disabled]="count() <= 1"
+          aria-label="הבא"
+        >›</button>
+      </div>
+
+      <div class="dots" *ngIf="count() > 1">
+        <button
+          type="button"
+          class="dot"
+          *ngFor="let _ of images(); let i = index"
+          [class.active]="i === index()"
+          (click)="goTo(i)"
+          [attr.aria-label]="'לתמונה ' + (i + 1)"
+        ></button>
+      </div>
+    </ng-container>
+  }
 </section>

@@ -227,6 +227,121 @@
   background: rgba(0, 0, 0, 0.55);
 }
 
+/* ── Edit mode ── */
+.edit-section {
+  display: grid;
+  gap: 1rem;
+}
+
+.thumb-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+}
+
+.thumb-card {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  aspect-ratio: 1;
+  background: var(--soft);
+  border: 1px solid var(--border);
+}
+
+.thumb-card.pending {
+  opacity: 0.7;
+  border-style: dashed;
+}
+
+.thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.delete-btn {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 120ms ease;
+}
+
+.delete-btn:hover {
+  background: rgba(198, 40, 40, 0.85);
+}
+
+.delete-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.upload-area {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.pick-label {
+  display: inline-flex;
+  align-items: center;
+  border: 1.5px dashed rgba(0, 0, 0, 0.3);
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  background: var(--soft);
+  transition: background 120ms ease, border-color 120ms ease;
+  white-space: nowrap;
+}
+
+.pick-label:hover {
+  background: #f0f0f0;
+  border-color: rgba(0, 0, 0, 0.5);
+}
+
+.pick-label.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.upload-btn {
+  background: #1e88e5;
+  color: #fff;
+  border-color: transparent;
+}
+
+.upload-btn:hover {
+  background: #1565c0;
+}
+
+.counter-muted {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.edit-error {
+  color: #c62828;
+  font-size: 0.875rem;
+  padding: 0.4rem 0.75rem;
+  background: #fff1f1;
+  border-radius: 8px;
+  border: 1px solid rgba(198, 40, 40, 0.2);
+}
+
 /* Mobile: no arrows, image full width, swipe-friendly */
 @media (max-width: 640px) {
   .card {
@@ -264,5 +379,26 @@
   .stage,
   .photo {
     touch-action: pan-y;
+  }
+
+  /* edit mode on mobile */
+  .thumb-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .delete-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+
+  .upload-area {
+    gap: 0.5rem;
+  }
+
+  .pick-label {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.9rem;
   }
 }

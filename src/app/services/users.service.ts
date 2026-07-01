@@ -85,5 +85,14 @@ export class UsersService {
       return this.http.post<boolean>(`${this.baseUrl}/delete_user`, {userId: getCurrentUserId()});
   }
 
+  checkEmailExists(email: string) {
+    return this.http.get(`${environment.apibase}/users/check-email`, {
+      params: { email }
+    });
+  }
+
+  setEmailVerified(uid) {
+    return this.http.post(`${environment.apibase}/set_email_verified`, {uid});
+  }
 
 }

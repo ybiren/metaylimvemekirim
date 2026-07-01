@@ -10,7 +10,7 @@ import { RegisterService } from '../../services/register.service';
 import { AlbumService } from '../../services/album.service';
 import { UsersService } from '../../services/users.service';
 
-import { rangeValidator, hebrewNameValidator, passwordMatchValidator } from '../../validators/form-validators';
+import { rangeValidator, hebrewNameValidator, passwordMatchValidator, emailExistsValidator } from '../../validators/form-validators';
 import { IOption, IUser } from '../../interfaces';
 import { getCurrentUserId } from '../../core/current-user';
 import { environment } from '../../../environments/environment';
@@ -175,7 +175,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
   private setModeValidators(isRegister: boolean) {
     const password = this.form.get('password')!;
     const password2 = this.form.get('password2')!;
-
+    const email = this.form.get('c_email')!;
+    
     if (isRegister) {
       password.setValidators([Validators.required, Validators.maxLength(9)]);
       password2.setValidators([Validators.required, Validators.maxLength(9)]);
@@ -185,6 +186,17 @@ export class RegisterComponent implements OnInit, OnDestroy {
         rangeValidator('filter_age_min', 'filter_age_max'),
         rangeValidator('filter_height_min', 'filter_height_max'),
       ]);
+    
+      email.enable();
+      email.setValidators([
+        Validators.required,
+        Validators.email
+      ]);
+
+      email.setAsyncValidators([
+        emailExistsValidator(this.usersSrv)
+      ]);
+    
     } else {
       password.clearValidators();
       password2.clearValidators();
@@ -199,11 +211,15 @@ export class RegisterComponent implements OnInit, OnDestroy {
         rangeValidator('filter_age_min', 'filter_age_max'),
         rangeValidator('filter_height_min', 'filter_height_max'),
       ]);
+    
+      email.clearAsyncValidators();
+      email.disable();   // ← prevents editing
     }
 
     password.updateValueAndValidity({ emitEvent: false });
     password2.updateValueAndValidity({ emitEvent: false });
     this.form.updateValueAndValidity({ emitEvent: false });
+    email.updateValueAndValidity({ emitEvent: false });
   }
 
   private requireFullBirthdateValidators() {
@@ -528,17 +544,25 @@ export class RegisterComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.serverMsg.set(this.user() ? 'עודכן בהצלחה!' : 'נרשמת בהצלחה!');
         this.submitting.set(false);
-        setTimeout(() => this.router.navigate(['/home']), 400);
-      },
-      error: (err) => {
-        console.error(err);
-        this.serverMsg.set('שגיאה בשמירה. נסה שוב.');
-        this.submitting.set(false);
-      },
-    });
-  }
 
-  private debugFormErrors() {
+        setTimeout(() => {
+          if (!this.user()) {
+            this.router.navigate(['/verify-email']);
+          } else {
+            this.router.navigate(['/home']);
+          }
+        }, 400);
+      },
+
+    error: (err) => {
+      console.error(err);
+      this.serverMsg.set('שגיאה בשמירה. נסה שוב.');
+      this.submitting.set(false);
+    },
+  });
+ }
+
+ private debugFormErrors() {
     if (!this.form.invalid) return;
     console.group('Register form errors');
     Object.entries(this.form.controls).forEach(([key, ctrl]) => {

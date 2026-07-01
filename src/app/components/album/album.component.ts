@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject, input, signal, computed } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject, input, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlbumService } from '../../services/album.service';
@@ -22,24 +22,35 @@ type UiImage = {
   templateUrl: './album.component.html',
   styleUrls: ['./album.component.scss'],
 })
-export class AlbumComponent implements OnInit {
+export class AlbumComponent implements OnInit, OnDestroy {
   private albumSrv = inject(AlbumService);
   private destroyRef = inject(DestroyRef);
   private usersSvc = inject(UsersService);
   private toast = inject(ToastService);
   private chat = inject(ChatService);
      
-  userId = input<number>(getCurrentUserId());
-  
-  loading = signal(false);
+  userId   = input<number>(getCurrentUserId());
+  editable = input<boolean>(false);
+
+  readonly MAX_EXTRA_IMAGES = 5;
+
+  loading  = signal(false);
   errorMsg = signal('');
-  images = signal<UiImage[]>([]);
-  index = signal(0);
+  images   = signal<UiImage[]>([]);
+  index    = signal(0);
   loggedInUser = signal<IUser | null>(null);
   isLoggedIUserLikesPeer = signal<boolean>(null);
-  
-  count = computed(() => this.images().length);
-  hasImages = computed(() => this.count() > 0);
+
+  // edit-mode state
+  localFiles    = signal<File[]>([]);
+  localPreviews = signal<string[]>([]);
+  deletingFilename = signal<string | null>(null);
+  uploading  = signal(false);
+  editError  = signal('');
+
+  count       = computed(() => this.images().length);
+  hasImages   = computed(() => this.count() > 0);
+  totalImages = computed(() => this.images().length + this.localFiles().length);
 
   current = computed(() => {
     const list = this.images();
@@ -156,6 +167,88 @@ export class AlbumComponent implements OnInit {
   }
     
   
+ngOnDestroy(): void {
+  this.localPreviews().forEach(u => URL.revokeObjectURL(u));
+}
+
+// ---------- edit mode ----------
+
+onFilePick(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  const files = Array.from(input.files ?? []);
+  input.value = '';
+  if (!files.length) return;
+
+  this.editError.set('');
+  const available = this.MAX_EXTRA_IMAGES - this.totalImages();
+  if (available <= 0) {
+    this.editError.set(`ניתן להעלות עד ${this.MAX_EXTRA_IMAGES} תמונות בלבד`);
+    return;
+  }
+
+  const valid = files.filter(f => f.type.startsWith('image/')).slice(0, available);
+  this.localFiles.set([...this.localFiles(), ...valid]);
+  this.localPreviews.set([...this.localPreviews(), ...valid.map(f => URL.createObjectURL(f))]);
+
+  if (files.length > available) {
+    this.editError.set(`נוספו רק ${available} תמונות (מקסימום ${this.MAX_EXTRA_IMAGES})`);
+  }
+}
+
+removeLocal(i: number): void {
+  const previews = [...this.localPreviews()];
+  URL.revokeObjectURL(previews[i]);
+  previews.splice(i, 1);
+  const files = [...this.localFiles()];
+  files.splice(i, 1);
+  this.localFiles.set(files);
+  this.localPreviews.set(previews);
+}
+
+uploadAll(): void {
+  const files = this.localFiles();
+  if (!files.length) return;
+  const uid = Number(this.userId());
+  this.uploading.set(true);
+  this.editError.set('');
+
+  this.albumSrv.uploadExtraImages(uid, files).subscribe({
+    next: () => {
+      this.localPreviews().forEach(u => URL.revokeObjectURL(u));
+      this.localFiles.set([]);
+      this.localPreviews.set([]);
+      this.uploading.set(false);
+      this.refresh();
+    },
+    error: (err) => {
+      console.error(err);
+      this.editError.set('שגיאה בהעלאת תמונות');
+      this.uploading.set(false);
+    },
+  });
+}
+
+deleteServer(img: UiImage): void {
+  if (!img.filename) return;
+  const uid = Number(this.userId());
+  this.deletingFilename.set(img.filename);
+  this.editError.set('');
+
+  this.albumSrv.deleteExtraImage(uid, img.filename).subscribe({
+    next: () => {
+      this.deletingFilename.set(null);
+      this.refresh();
+    },
+    error: (err) => {
+      console.error(err);
+      this.deletingFilename.set(null);
+      this.editError.set('שגיאה במחיקת תמונה');
+    },
+  });
+}
+
+// ---------- swipe ----------
+
 private touchStartX = 0;
 private touchStartY = 0;
 

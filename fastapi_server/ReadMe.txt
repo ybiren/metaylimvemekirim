@@ -91,7 +91,8 @@ systemctl enable --now crond
  
  1) docker rm -f pgadmin
  
- 2) docker volume ls | grep pgadmin
+ 2) docker volume ls | grep pgadmin ssh -L 15433:127.0.0.1:5433 root@194.36.90.119
+
     docker volume rm <volume_name>
  
  3) docker run -d \

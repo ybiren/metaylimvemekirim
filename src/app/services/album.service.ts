@@ -33,6 +33,14 @@ export class AlbumService {
     );
   }
 
+  uploadExtraImages(userId: number, files: File[]) {
+    const fd = new FormData();
+    files.forEach(f => fd.append('c_extra_images', f));
+    return this.http.post<{ ok: boolean; added: number; total: number; urls: string[] }>(
+      `${this.baseUrl}/images/${userId}/extra`, fd
+    );
+  }
+
   /** Build a full URL for <img [src]> */
   toAbsolute(urlFromApi: string): string {
     if (!urlFromApi) return '';

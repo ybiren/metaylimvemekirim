@@ -101,6 +101,9 @@
       <div class="errors" *ngIf="f.c_email.touched && f.c_email.invalid">
         <small *ngIf="f.c_email.errors?.required">שדה חובה</small>
         <small *ngIf="f.c_email.errors?.email">כתובת מייל לא תקינה</small>
+        <small *ngIf="f.c_email.errors?.['emailExists']">
+          האימייל כבר קיים במערכת
+        </small>
       </div>
     </div>
 

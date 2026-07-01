@@ -39,7 +39,12 @@ export const appRoutes: Route[] = [
   { path: 'sms', component: SmsUpdatesSignalFormComponent },
   { path: 'chat-system-rooms', component: ChatSystemRoomsComponent },
   { path: 'likes', component: LikesContainerComponent },
-
+  {
+    path: 'verify-email',
+    loadComponent: () =>
+      import('./components/verify-email/verify-email.component')
+        .then(m => m.VerifyEmailComponent)
+    },
 
    // ✅ admin area
   {
