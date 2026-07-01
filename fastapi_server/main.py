@@ -204,6 +204,51 @@ async def get_user_image(user_id: int, db: Session = Depends(get_db)):
     return FileResponse(path, media_type=media_type)
 
 
+@app.post("/images/{user_id}/extra")
+async def upload_user_extra_images(
+    user_id: int,
+    c_extra_images: List[UploadFile] = File(...),
+    db: Session = Depends(get_db),
+):
+    user = get_user(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    real_files = [f for f in c_extra_images if f and getattr(f, "filename", None)]
+    if not real_files:
+        raise HTTPException(status_code=400, detail="No files provided")
+
+    existing: List[Dict[str, Any]] = list(user.extra_images or [])
+    if len(existing) + len(real_files) > MAX_EXTRA_IMAGES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Max {MAX_EXTRA_IMAGES} extra images allowed (already have {len(existing)}).",
+        )
+
+    new_meta: List[Dict[str, Any]] = []
+    for up in real_files:
+        ensure_image_content_type(up)
+        bts, size = await read_file(up)
+        guid = uuid.uuid4().hex
+        rel_path = save_extra_image_to_disk(
+            image_bytes=bts,
+            user_id=user_id,
+            mime_type=up.content_type,
+            images_dir=IMAGES_DIR,
+            base_dir_for_rel=BASE_DIR,
+            guid=guid,
+        )
+        fn = Path(rel_path).name
+        new_meta.append({"path": rel_path, "content_type": up.content_type, "size": size, "filename": fn})
+
+    user.extra_images = existing + new_meta
+    db.commit()
+    db.refresh(user)
+
+    urls = [f"/images/{user_id}/extra/{x['filename']}" for x in (user.extra_images or []) if x.get("filename")]
+    return {"ok": True, "added": len(new_meta), "total": len(user.extra_images or []), "urls": urls}
+
+
 @app.get("/images/{user_id}/extra/{filename}")
 async def get_user_extra_image(user_id: int, filename: str, db: Session = Depends(get_db)):
     
