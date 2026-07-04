@@ -60,8 +60,10 @@ export class App implements OnInit, OnDestroy{
     const params = new URLSearchParams(window.location.search);
     if (this.userID() && !params.get("shareprofile")) {
       this.presenceSub = this.presence.start(25_000, this.userID()); // match HEARTBEAT_SEC
-       // Navigate immediately to /users
-      this.router.navigateByUrl('/home');
+      if (window.location.pathname !== '/sms') {
+        // Navigate immediately to /users
+        this.router.navigateByUrl('/home');
+      }
     } else {
       if(params.get("reset-password-uid")) {
         const uid = params.get("reset-password-uid");

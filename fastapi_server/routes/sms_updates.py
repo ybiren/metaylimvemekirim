@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlalchemy.orm import Session
 
 from db import get_db
-from models.sms_updates import SmsUpdate
+from models.sms_updates import SmsUpdate, AGE_GROUP_COLUMNS
 from schemas.sms_updates import SmsUpdateCreate
 
 router2 = APIRouter()
@@ -17,11 +17,20 @@ def create_sms_update(
     if not payload.consentInfo or not payload.consentSignature:
         raise HTTPException(status_code=400, detail="Consents are required")
 
+    unknown = [label for label in payload.ageGroups if label not in AGE_GROUP_COLUMNS]
+    if unknown:
+        raise HTTPException(status_code=400, detail=f"Unknown age group(s): {unknown}")
+
+    age_group_flags = {
+        column_name: label in payload.ageGroups
+        for label, column_name in AGE_GROUP_COLUMNS.items()
+    }
+
     record = SmsUpdate(
         full_name=payload.fullName,
         email=payload.email.lower(),
         phone=payload.phone,
-        age_groups=payload.ageGroups,
+        **age_group_flags,
         personal_email_note=payload.personalEmailNote,
         consent_info=payload.consentInfo,
         consent_signature=payload.consentSignature,

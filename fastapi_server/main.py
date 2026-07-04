@@ -17,6 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.encoders import jsonable_encoder
 from starlette.responses import FileResponse, JSONResponse
 from starlette.types import Scope
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from models.payloads.sendmessage_payload import SendMessagePayload
 from helper import decrypt_uid
@@ -782,12 +783,14 @@ async def delete_user(payload: dict = Body(...), db: Session = Depends(get_db)):
 class SpaStaticFiles(StaticFiles):
     async def get_response(self, path: str, scope: Scope):
         log.info("Static request: /%s", path)
-        response = await super().get_response(path, scope)
-        if response.status_code == 404 and "." not in path:
-            index_file = os.path.join(self.directory, "index.html")
-            if os.path.exists(index_file):
-                return FileResponse(index_file, media_type="text/html")
-        return response
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            if exc.status_code == 404 and "." not in path:
+                index_file = os.path.join(self.directory, "index.html")
+                if os.path.exists(index_file):
+                    return FileResponse(index_file, media_type="text/html")
+            raise
 
 
 @app.get("/manifest.webmanifest")
