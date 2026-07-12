@@ -99,10 +99,6 @@
   animation: updates-marquee 25s linear infinite;
 }
 
-.updates-box__scroll:hover .updates-list {
-  animation-play-state: paused;
-}
-
 .updates-item {
   display: block;
   padding: 6px 4px;
