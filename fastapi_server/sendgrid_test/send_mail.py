@@ -11,20 +11,39 @@ def send_mail(email, uid):
     reset_link = f"https://metaylimvemekirim.co.il/reset-password?reset-password-uid={encrypt_uid(uid)}"
 
     # טקסט רגיל (חשוב מאוד!)
-    msg.set_content(f"איפוס סיסמא: {reset_link}")
+    msg.set_content(
+        "שלום,\n\n"
+        "קיבלנו בקשה לאיפוס הסיסמה עבור החשבון שלך באתר מטיילים ומכירים.\n\n"
+        f"לבחירת סיסמה חדשה, לחץ על הקישור הבא:\n{reset_link}\n\n"
+        "אם לא ביקשת איפוס סיסמה, ניתן להתעלם מהודעה זו והחשבון שלך יישאר מאובטח.\n"
+        "הקישור יהיה בתוקף למשך 30 דקות.\n\n"
+        "תודה,\n"
+        "צוות מטיילים ומכירים\n"
+        "https://metaylimvemekirim.co.il\n"
+        "support@metaylimvemekirim.co.il"
+    )
 
     # HTML
     msg.add_alternative(f"""
     <html>
-        <body dir="rtl">
-            <h3>איפוס סיסמא</h3>
-            <p>לחץ על הקישור הבא:</p>
+        <body dir="rtl" style="font-family:Arial,sans-serif;color:#222;">
+            <p>שלום,</p>
+            <p>קיבלנו בקשה לאיפוס הסיסמה עבור החשבון שלך באתר <strong>מטיילים ומכירים</strong>.</p>
+            <p>אם אתה ביקשת את איפוס הסיסמה, לחץ על הכפתור למטה כדי לבחור סיסמה חדשה.</p>
             <p>
-                <a href="{reset_link}" 
+                <a href="{reset_link}"
                    style="background:#1e88e5;color:white;padding:10px 15px;
-                          text-decoration:none;border-radius:6px;">
+                          text-decoration:none;border-radius:6px;display:inline-block;">
                    אפס סיסמא
                 </a>
+            </p>
+            <p>אם לא ביקשת איפוס סיסמה, ניתן להתעלם מהודעה זו והחשבון שלך יישאר מאובטח.</p>
+            <p>הקישור יהיה בתוקף למשך 30 דקות.</p>
+            <p>תודה,<br>צוות מטיילים ומכירים</p>
+            <hr style="border:none;border-top:1px solid #eee;margin:20px 0;">
+            <p style="font-size:12px;color:#888;">
+                <a href="https://metaylimvemekirim.co.il" style="color:#888;">metaylimvemekirim.co.il</a>
+                &nbsp;|&nbsp; support@metaylimvemekirim.co.il
             </p>
         </body>
     </html>
