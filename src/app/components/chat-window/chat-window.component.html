@@ -118,12 +118,10 @@
             <span class="msg__time">{{ m.sentAt | date : 'HH:mm' }}</span>
             <span
               class="msg__ticks"
-              [class.delivered]="!!m.deliveredAt"
+              *ngIf="m.fromUserId === me"
               [class.read]="!!m.readAt"
               aria-hidden="true"
-            >
-              ✓✓
-            </span>
+            >✓✓</span>
           </div>
         </div>
       </div>

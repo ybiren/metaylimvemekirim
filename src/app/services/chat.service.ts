@@ -124,14 +124,17 @@ export class ChatService {
       const r = await fetch(`${this.baseApi}/chat/threads?userId=${this.me}`);
       const j = await r.json();
       const rows = Array.isArray(j.threads) ? (j.threads as ThreadRow[]) : [];
-      this.threads$.next(rows);
 
-      const prevUnreadTotal = this.unreadTotal$.value;
-      this.unreadTotal$.next(rows.reduce((sum, t) => sum + (t.unread || 0), 0));
+      this.zone.run(() => {
+        this.threads$.next(rows);
 
-      if (this.unreadTotal$.value !== prevUnreadTotal) {
-        this.playBeep();
-      }
+        const prevUnreadTotal = this.unreadTotal$.value;
+        this.unreadTotal$.next(rows.reduce((sum, t) => sum + (t.unread || 0), 0));
+
+        if (this.unreadTotal$.value !== prevUnreadTotal) {
+          this.playBeep();
+        }
+      });
     }, 100);
   }
 

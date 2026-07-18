@@ -326,14 +326,23 @@ async def chat_threads(
     user = userId
     items: List[Dict] = []
 
-    from_user_ids = db.execute(
+    received_from = db.execute(
         select(ChatMessage.from_user_id).where(ChatMessage.to_user_id == user).distinct()
     ).scalars().all()
+    sent_to = db.execute(
+        select(ChatMessage.to_user_id).where(ChatMessage.from_user_id == user).distinct()
+    ).scalars().all()
+    peer_ids = set(received_from) | set(sent_to)
 
-    for from_user_id in from_user_ids:
+    for peer in peer_ids:
+        room_filter = or_(
+            and_(ChatMessage.from_user_id == user, ChatMessage.to_user_id == peer),
+            and_(ChatMessage.from_user_id == peer, ChatMessage.to_user_id == user),
+        )
+
         last_msg = db.execute(
             select(ChatMessage)
-            .where(ChatMessage.from_user_id == from_user_id, ChatMessage.to_user_id == user)
+            .where(room_filter)
             .order_by(ChatMessage.sent_at.desc())
             .limit(1)
         ).scalars().first()
@@ -341,20 +350,18 @@ async def chat_threads(
         if not last_msg:
             continue
 
-        peer = last_msg.to_user_id if last_msg.from_user_id == user else last_msg.from_user_id
-
         unread = db.execute(
             select(func.count())
             .select_from(ChatMessage)
             .where(
-                ChatMessage.from_user_id == from_user_id,
+                ChatMessage.from_user_id == peer,
                 ChatMessage.to_user_id == user,
                 ChatMessage.read_at.is_(None),
             )
         ).scalar_one()
 
         count = db.execute(
-            select(func.count()).select_from(ChatMessage).where(ChatMessage.from_user_id == from_user_id)
+            select(func.count()).select_from(ChatMessage).where(room_filter)
         ).scalar_one()
 
         items.append(

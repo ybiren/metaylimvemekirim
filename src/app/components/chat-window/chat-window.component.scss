@@ -283,9 +283,13 @@
   opacity: .7;
   white-space: nowrap;
 }
-.msg__ticks { letter-spacing: -1px; }
-.msg__ticks.delivered { opacity: .85; }
-.msg__ticks.read { opacity: 1; }
+.msg__ticks { letter-spacing: -1px; color: #8c8c8c; }
+.msg__ticks.read {
+  color: #34b7f1;
+  font-weight: 900;
+  font-size: 13px;
+  -webkit-text-stroke: 0.4px #34b7f1;
+}
 
 .chat__typing {
   margin: 8px 0;
