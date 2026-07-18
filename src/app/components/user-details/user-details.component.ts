@@ -88,17 +88,14 @@ export class UserDetailsComponent implements OnInit {
         /*
         this.chat.setActivePeer(this.id);
         this.chat.connect(this.id);
-        this.chat.statusChanged$
-        .pipe(
-          filter(stat => stat === WebSocket.OPEN),
-          take(1),
-          takeUntilDestroyed(this.destroyRef)
-        )
-        .subscribe(() => {
-          this.chat.send(`קבלת לייק מ ${this.loggedInUser().name}`);
-          this.chat.setActivePeer(null);
-          this.chat.disconnect();
-        });   
+        const watcher = effect(() => {
+          if (this.chat.statusChanged() === WebSocket.OPEN) {
+            this.chat.send(`קבלת לייק מ ${this.loggedInUser().name}`);
+            this.chat.setActivePeer(null);
+            this.chat.disconnect();
+            watcher.destroy();
+          }
+        }, { injector: this.injector });
         */
       }
     });

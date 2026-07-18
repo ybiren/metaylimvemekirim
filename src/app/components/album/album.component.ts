@@ -150,17 +150,14 @@ export class AlbumComponent implements OnInit, OnDestroy {
         /*
         this.chat.setActivePeer(this.userId());
         this.chat.connect(this.userId());
-        this.chat.statusChanged$
-        .pipe(
-          filter(stat => stat === WebSocket.OPEN),
-          take(1),
-          takeUntilDestroyed(this.destroyRef)
-        )
-        .subscribe(() => {
-          this.chat.send(`קבלת לייק מ ${this.loggedInUser().name}`);
-          this.chat.setActivePeer(null);
-          this.chat.disconnect();
-        });
+        const watcher = effect(() => {
+          if (this.chat.statusChanged() === WebSocket.OPEN) {
+            this.chat.send(`קבלת לייק מ ${this.loggedInUser().name}`);
+            this.chat.setActivePeer(null);
+            this.chat.disconnect();
+            watcher.destroy();
+          }
+        }, { injector: this.injector });
         */
       }
     });

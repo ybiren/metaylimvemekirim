@@ -1,6 +1,6 @@
 // src/app/core/chat.service.ts
-import { inject, Injectable, NgZone } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { inject, Injectable, signal } from '@angular/core';
+import { Observable } from 'rxjs';
 import { getCurrentUserId } from '../core/current-user';
 import { environment } from '../../environments/environment';
 import { HttpClient } from '@angular/common/http';
@@ -48,16 +48,16 @@ export class ChatService {
   private me = getCurrentUserId();
   private peer = 0;
 
-  readonly messages$    = new BehaviorSubject<ChatMsg[]>([]);
-  readonly typing$      = new BehaviorSubject<boolean>(false);
-  readonly threads$     = new BehaviorSubject<ThreadRow[]>([]);
-  readonly unreadTotal$ = new BehaviorSubject<number>(0);
-  readonly activePeer$  = new BehaviorSubject<number | null>(null);
+  readonly messages    = signal<ChatMsg[]>([]);
+  readonly typing      = signal<boolean>(false);
+  readonly threads     = signal<ThreadRow[]>([]);
+  readonly unreadTotal = signal<number>(0);
+  readonly activePeer  = signal<number | null>(null);
 
-  readonly statusChanged$  = new BehaviorSubject<number>(0);
+  readonly statusChanged  = signal<number>(0);
 
-  // ✅ NEW: users observable
-  readonly users$ = new BehaviorSubject<ChatUserRow[]>([]);
+  // ✅ NEW: users signal
+  readonly users = signal<ChatUserRow[]>([]);
 
   http = inject(HttpClient);
 
@@ -65,7 +65,7 @@ export class ChatService {
   private audioCtx?: AudioContext;
   private audioUnlocked = false;
 
-  constructor(private zone: NgZone) {
+  constructor() {
     const unlock = async () => {
       try {
         if (!this.audioCtx) this.audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -84,7 +84,7 @@ export class ChatService {
   }
 
   setActivePeer(peerId: number | null) {
-    this.activePeer$.next(peerId);
+    this.activePeer.set(peerId);
   }
 
   // ------------------- Users (top / sidebar) -------------------
@@ -104,10 +104,10 @@ export class ChatService {
 
       // Accept either {users:[...]} or just [...]
       const rows = Array.isArray(j) ? j : (Array.isArray(j.users) ? j.users : []);
-      this.users$.next(rows as ChatUserRow[]);
+      this.users.set(rows as ChatUserRow[]);
     } catch (e) {
       console.warn('[Chat] refreshUsers failed', e);
-      this.users$.next([]);
+      this.users.set([]);
     }
   }
 
@@ -125,16 +125,15 @@ export class ChatService {
       const j = await r.json();
       const rows = Array.isArray(j.threads) ? (j.threads as ThreadRow[]) : [];
 
-      this.zone.run(() => {
-        this.threads$.next(rows);
+      const prevUnreadTotal = this.unreadTotal();
+      const nextUnreadTotal = rows.reduce((sum, t) => sum + (t.unread || 0), 0);
 
-        const prevUnreadTotal = this.unreadTotal$.value;
-        this.unreadTotal$.next(rows.reduce((sum, t) => sum + (t.unread || 0), 0));
+      this.threads.set(rows);
+      this.unreadTotal.set(nextUnreadTotal);
 
-        if (this.unreadTotal$.value !== prevUnreadTotal) {
-          this.playBeep();
-        }
-      });
+      if (nextUnreadTotal !== prevUnreadTotal) {
+        this.playBeep();
+      }
     }, 100);
   }
 
@@ -144,7 +143,7 @@ export class ChatService {
     const r = await fetch(`${this.baseApi}/chat/history?user1=${this.me}&user2=${peerId}&limit=${limit}`);
     const j = await r.json();
     const arr = Array.isArray(j.messages) ? (j.messages as ChatMsg[]) : [];
-    this.messages$.next([...arr].reverse());
+    this.messages.set([...arr].reverse());
   }
 
   async markAsRead(peerId: number) {
@@ -180,7 +179,7 @@ export class ChatService {
 
     this.ws.onopen = () => {
       this.reconnectDelay = 500;
-      this.statusChanged$.next(WebSocket.OPEN);
+      this.statusChanged.set(WebSocket.OPEN);
       console.log("open");
 
       // ✅ after socket opens (useful after reconnect)
@@ -188,47 +187,43 @@ export class ChatService {
     };
 
     this.ws.onmessage = (ev) => {
-      this.zone.run(() => {
-        const data = JSON.parse(ev.data);
+      const data = JSON.parse(ev.data);
 
-        if (data.type === 'message' && data.msg) {
-          const msg = data.msg as ChatMsg;
-          this.messages$.next([...this.messages$.value, msg]);
-          this.refreshThreads();
+      if (data.type === 'message' && data.msg) {
+        const msg = data.msg as ChatMsg;
+        this.messages.update(list => [...list, msg]);
+        this.refreshThreads();
 
-        } else if (data.type === 'delivered') {
-          const ids: string[] = data.ids || [];
-          const at: string | undefined = data.deliveredAt;
-          const set = new Set<string>(ids);
-          const list = this.messages$.value.map(m =>
-            set.has(m.id) ? { ...m, deliveredAt: at ?? new Date().toISOString() } : m
-          );
-          this.messages$.next(list);
+      } else if (data.type === 'delivered') {
+        const ids: string[] = data.ids || [];
+        const at: string | undefined = data.deliveredAt;
+        const set = new Set<string>(ids);
+        this.messages.update(list => list.map(m =>
+          set.has(m.id) ? { ...m, deliveredAt: at ?? new Date().toISOString() } : m
+        ));
 
-        } else if (data.type === 'read') {
-          const ids: string[] = data.ids || [];
-          const at: string | undefined = data.readAt;
-          const set = new Set<string>(ids);
-          const list = this.messages$.value.map(m =>
-            set.has(m.id) ? { ...m, readAt: at ?? new Date().toISOString() } : m
-          );
-          this.messages$.next(list);
-          this.refreshThreads();
+      } else if (data.type === 'read') {
+        const ids: string[] = data.ids || [];
+        const at: string | undefined = data.readAt;
+        const set = new Set<string>(ids);
+        this.messages.update(list => list.map(m =>
+          set.has(m.id) ? { ...m, readAt: at ?? new Date().toISOString() } : m
+        ));
+        this.refreshThreads();
 
-        } else if (data.type === 'typing') {
-          this.typing$.next(true);
-          setTimeout(() => this.zone.run(() => this.typing$.next(false)), 1500);
+      } else if (data.type === 'typing') {
+        this.typing.set(true);
+        setTimeout(() => this.typing.set(false), 1500);
 
-        // ✅ OPTIONAL: if your backend ever sends presence updates
-        } else if (data.type === 'presence' && Array.isArray(data.users)) {
-          this.users$.next(data.users as ChatUserRow[]);
-        }
-      });
+      // ✅ OPTIONAL: if your backend ever sends presence updates
+      } else if (data.type === 'presence' && Array.isArray(data.users)) {
+        this.users.set(data.users as ChatUserRow[]);
+      }
     };
 
     this.ws.onclose = () => {
-      this.typing$.next(false);
-      this.statusChanged$.next(WebSocket.CLOSED);
+      this.typing.set(false);
+      this.statusChanged.set(WebSocket.CLOSED);
 
       // ✅ refresh users to reflect "me offline"/others state (or clear)
       //this.refreshUsers().catch(() => {});
@@ -246,11 +241,11 @@ export class ChatService {
     }
     try { this.ws?.close(); } catch {}
     this.ws = undefined;
-    this.typing$.next(false);
+    this.typing.set(false);
 
     // ✅ clear users list on disconnect (as you requested)
-    this.users$.next([]);
-    this.statusChanged$.next(WebSocket.CLOSED);
+    this.users.set([]);
+    this.statusChanged.set(WebSocket.CLOSED);
   }
 
   send(content: string) {
@@ -272,7 +267,7 @@ export class ChatService {
   }
 
   markPeerRead(peerId: number) {
-    const msgs = this.messages$.value;
+    const msgs = this.messages();
     const lastPeerMsg = [...msgs].reverse().find(m => m.fromUserId === peerId && !m.readAt);
     if (lastPeerMsg) this.markReadUpTo(lastPeerMsg.sentAt);
   }

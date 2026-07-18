@@ -1,6 +1,6 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Subscription, timer, of } from 'rxjs';
+import { Subscription, timer, of } from 'rxjs';
 import { switchMap, map, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
@@ -10,10 +10,10 @@ export class PresenceService {
   private baseUrl = environment.apibase;
 
   /** Set of userIds currently online (excluding me) */
-  readonly onlineSet$ = new BehaviorSubject<Set<number>>(new Set());
+  readonly onlineSet = signal<Set<number>>(new Set());
 
-  /** If you also want an array stream, use this: */
-  readonly online$ = this.onlineSet$.pipe(map(set => [...set]));
+  /** If you also want an array, use this: */
+  readonly online = computed(() => [...this.onlineSet()]);
 
   private sub?: Subscription;
 
@@ -42,24 +42,24 @@ export class PresenceService {
         console.error('[Presence] cycle failed:', err);
         return of(new Set<number>()); // fallback to empty set
       })
-    ).subscribe(set => this.onlineSet$.next(set));
+    ).subscribe(set => this.onlineSet.set(set));
 
     return this.sub!;
   }
 
   /** Instant check */
   isOnline(userId: number): boolean {
-    return this.onlineSet$.value.has(Number(userId));
+    return this.onlineSet().has(Number(userId));
   }
 
   /** Optional helpers */
   getOnlineList(): number[] {
-    return [...this.onlineSet$.value];
+    return [...this.onlineSet()];
   }
 
   stop() {
     this.sub?.unsubscribe();
     this.sub = undefined;
-    this.onlineSet$.next(new Set());
+    this.onlineSet.set(new Set());
   }
 }

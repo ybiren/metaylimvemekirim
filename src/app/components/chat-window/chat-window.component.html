@@ -15,8 +15,8 @@
         </div>
 
         @if (peerIdResolved > 0) {
-          <div class="chat__status" [class.online]="isPeerOnline">
-            {{ isPeerOnline ? 'מחובר/ת' : 'לא מחובר/ת' }}
+          <div class="chat__status" [class.online]="isPeerOnline()">
+            {{ isPeerOnline() ? 'מחובר/ת' : 'לא מחובר/ת' }}
           </div>
         }
       </div>
@@ -127,7 +127,7 @@
       </div>
     </ng-container>
 
-    <div class="chat__typing" *ngIf="typing$ | async">מקליד/ה…</div>
+    <div class="chat__typing" *ngIf="typing()">מקליד/ה…</div>
   </main>
 
   <!-- Composer -->

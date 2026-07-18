@@ -3,7 +3,7 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subscription, interval, fromEvent, firstValueFrom } from 'rxjs';
 import { IUser } from '../../interfaces';
-import { ChatService, ThreadRow } from '../../services/chat.service';
+import { ChatService } from '../../services/chat.service';
 import { PresenceService } from '../../services/presence.service';
 import { Dialog } from '@angular/cdk/dialog';
 import { ChatWindowComponent } from '../chat-window/chat-window.component';
@@ -28,8 +28,6 @@ export class TopMenuComponent implements OnInit, OnDestroy {
   loggedInUser?: IUser | null = null;
 
   open = false; // inbox panel
-  threads: ThreadRow[] = [];
-  unreadTotal = 0;
 
   // mobile nav state
   isMenuOpen = false;
@@ -48,11 +46,8 @@ export class TopMenuComponent implements OnInit, OnDestroy {
     public chat: ChatService,
     public presence: PresenceService
   ) {
-    // Chat threads + unread counter
-    this.subs.push(
-      this.chat.threads$.subscribe((t) => (this.threads = t)),
-      this.chat.unreadTotal$.subscribe((n) => (this.unreadTotal = n))
-    );
+    // Chat threads + unread counter are read directly from
+    // chat.threads()/chat.unreadTotal() signals in the template.
 
     // Initial load + periodic refresh
     this.chat.refreshThreads();

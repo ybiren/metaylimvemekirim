@@ -7,7 +7,7 @@ import {
   input,
   effect,
   computed,
-  DestroyRef,
+  Injector,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
@@ -20,8 +20,6 @@ import { UsersService } from '../../services/users.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ToastService } from '../../services/toast.service';
 import { ChatService } from '../../services/chat.service';
-import { filter, take, takeWhile } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { REGIONS_TOKEN } from '../../consts/regions.consts';
 
 
@@ -54,7 +52,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   private device = inject(DeviceDetectorService);
   private toast = inject(ToastService);
   private chat = inject(ChatService);
-  private destroyRef = inject(DestroyRef);
+  private injector = inject(Injector);
   regions: ReadonlyArray<IOption> = inject(REGIONS_TOKEN);
   
   
@@ -154,17 +152,14 @@ export class UsersComponent implements OnInit, OnDestroy {
          if(this.loggedInUser().like?.includes(u.id)) {
            this.chat.setActivePeer(u.id);
            this.chat.connect(u.id);
-           this.chat.statusChanged$
-          .pipe(
-            filter(stat => stat === WebSocket.OPEN),
-            take(1),
-            takeUntilDestroyed(this.destroyRef)
-          )
-          .subscribe(() => {
-            this.chat.send(`קבלת לייק מ ${this.loggedInUser().name}`);
-            this.chat.setActivePeer(null);
-            this.chat.disconnect();
-          });
+           const watcher = effect(() => {
+             if (this.chat.statusChanged() === WebSocket.OPEN) {
+               this.chat.send(`קבלת לייק מ ${this.loggedInUser().name}`);
+               this.chat.setActivePeer(null);
+               this.chat.disconnect();
+               watcher.destroy();
+             }
+           }, { injector: this.injector });
          }
       },
       error: () => alert("אירעה שגיאה")

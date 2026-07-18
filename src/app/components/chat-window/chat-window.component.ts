@@ -6,14 +6,14 @@ import {
   ElementRef,
   Input,
   inject,
-  DestroyRef,
+  Injector,
   computed,
+  effect,
   signal,
 } from '@angular/core';
-import { NgIf, NgFor, DatePipe, AsyncPipe } from '@angular/common';
+import { NgIf, NgFor, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { ChatService, ChatMsg } from '../../services/chat.service';
@@ -28,7 +28,7 @@ type EmojiItem = { char: string; name: string; keywords: string[] };
 @Component({
   standalone: true,
   selector: 'app-chat-window',
-  imports: [NgIf, NgFor, DatePipe, FormsModule, AsyncPipe, RouterLink],
+  imports: [NgIf, NgFor, DatePipe, FormsModule, RouterLink],
   templateUrl: './chat-window.component.html',
   styleUrls: ['./chat-window.component.scss'],
 })
@@ -84,7 +84,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   private presenceSvc = inject(PresenceService);
   private usersSvc = inject(UsersService);
   private router = inject(Router);
-  private destroyRef = inject(DestroyRef);
+  private injector = inject(Injector);
 
   private dlgData = inject(DIALOG_DATA, { optional: true }) as
     | { peerId?: number; roomName?: string, peerName?: string }
@@ -93,8 +93,8 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   // -------------------------
   // UI bindings
   // -------------------------
-  typing$ = this.chatSvc.typing$;
-  isPeerOnline = false;
+  typing = this.chatSvc.typing;
+  isPeerOnline = computed(() => this.presenceSvc.isOnline(this.peerIdResolved));
 
   // you used this in template: @if (!isLoggedIUserBlockedByPeer())
   // so this must be a FUNCTION returning boolean
@@ -145,22 +145,15 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     this.chatSvc.connect(this.peerIdResolved);
 
     // keep messages in sync + autoscroll
-    this.chatSvc.messages$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((list) => {
-        this.messages = list;
-        setTimeout(() => this.scrollToEnd(), 300);
-      });
+    effect(() => {
+      this.messages = this.chatSvc.messages();
+      setTimeout(() => this.scrollToEnd(), 300);
+    }, { injector: this.injector });
 
     // room participants stream
-    this.chatSvc.users$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((list) => {
-        this.roomUsers = list;
-      });
-
-    // presence snapshot
-    this.isPeerOnline = this.presenceSvc.isOnline(this.peerIdResolved);
+    effect(() => {
+      this.roomUsers = this.chatSvc.users();
+    }, { injector: this.injector });
 
     // blocked state
     const blocked = await firstValueFrom(
