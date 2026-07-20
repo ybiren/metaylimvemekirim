@@ -13,11 +13,9 @@
   --people-body-h: 150px;
   --box-h: calc(var(--box-header-h) + var(--people-body-h));
 
-  /* important: the page should behave like a full-height column */
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0; /* prevents flex overflow issues */
+  /* the page grows with its content and scrolls with the document,
+     rather than being pinned to the viewport height */
+  display: block;
 }
 
 .admin-main-page {
@@ -25,17 +23,19 @@
   padding-right: 10px;
 }
 
-/* This row is what we push to the bottom */
+/* This row sits right after the page content, in normal document flow,
+   so it scrolls together with the rest of the page on every screen size.
+   (Previously it was absolutely positioned to the viewport height, which
+   made it overlap the content instead of following it whenever the page
+   was taller than one screen - most noticeable on mobile.) */
 .home-bottom {
-  position: absolute;
-  bottom: 0;
-  margin-top: auto; /* ✅ pushes to bottom of page area */
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: flex-end;
 
   gap: var(--bottom-gap);
+  margin-top: var(--bottom-gap);
   padding: 0 16px var(--bottom-pad);
 
   direction: rtl;
