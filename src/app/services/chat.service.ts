@@ -14,9 +14,13 @@ export type ChatMsg = {
   sentAt: string;
   deliveredAt?: string | null;
   readAt?: string | null;
+  editedAt?: string | null;
   type: string;
   date: string
 };
+
+/** Messages can be edited for this long after being sent (ms). Mirrors the server's EDIT_WINDOW_SECONDS. */
+export const EDIT_WINDOW_MS = 15 * 60 * 1000;
 
 export type ThreadRow = {
   roomId: string;
@@ -211,6 +215,13 @@ export class ChatService {
         ));
         this.refreshThreads();
 
+      } else if (data.type === 'edited' && data.msg) {
+        const edited = data.msg as ChatMsg;
+        this.messages.update(list => list.map(m =>
+          m.id === edited.id ? { ...m, content: edited.content, editedAt: edited.editedAt } : m
+        ));
+        this.refreshThreads();
+
       } else if (data.type === 'typing') {
         this.typing.set(true);
         setTimeout(() => this.typing.set(false), 1500);
@@ -253,6 +264,14 @@ export class ChatService {
     const payload = { type: 'message', content };
     try { this.ws.send(JSON.stringify(payload)); } catch (e) {
       console.error('[Chat] send error:', e);
+    }
+  }
+
+  editMessage(id: string, content: string) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    const payload = { type: 'edit', id, content };
+    try { this.ws.send(JSON.stringify(payload)); } catch (e) {
+      console.error('[Chat] edit send error:', e);
     }
   }
 

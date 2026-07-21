@@ -115,6 +115,15 @@
           <div class="msg__text">{{ m.content }}</div>
 
           <div class="msg__meta">
+            <button
+              type="button"
+              class="msg__edit-btn"
+              *ngIf="canEdit(m)"
+              (click)="startEdit(m)"
+              aria-label="ערוך הודעה"
+              title="ערוך הודעה"
+            >✎</button>
+            <span class="msg__edited" *ngIf="m.editedAt">נערך</span>
             <span class="msg__time">{{ m.sentAt | date : 'HH:mm' }}</span>
             <span
               class="msg__ticks"
@@ -132,6 +141,13 @@
 
   <!-- Composer -->
   @if (!isLoggedIUserBlockedByPeer()) {
+    @if (editingId) {
+      <div class="chat__editing-bar" (click)="$event.stopPropagation()">
+        <span class="chat__editing-label">✎ עריכת הודעה</span>
+        <button type="button" class="chat__editing-cancel" (click)="cancelEdit()" aria-label="בטל עריכה">✕</button>
+      </div>
+    }
+
     <footer class="chat__composer" (click)="$event.stopPropagation()">
 
       <div class="chat__emoji" (click)="$event.stopPropagation()">
@@ -177,15 +193,15 @@
         class="chat__input"
         type="text"
         dir="rtl"
-        placeholder="כתוב הודעה…"
+        [placeholder]="editingId ? 'ערוך הודעה…' : 'כתוב הודעה…'"
         [(ngModel)]="draft"
         (keydown.enter)="send()"
-        (keydown.escape)="closePopups()"
+        (keydown.escape)="editingId ? cancelEdit() : closePopups()"
         (input)="onTyping()"
       />
 
       <button type="button" class="chat__send" (click)="send()" [disabled]="!draft?.trim()">
-        שלח
+        {{ editingId ? 'עדכן' : 'שלח' }}
       </button>
     </footer>
   }

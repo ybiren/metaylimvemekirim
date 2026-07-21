@@ -34,6 +34,7 @@ class ChatMessage(Base):
     )
     delivered_at = Column(DateTime(timezone=True), nullable=True)
     read_at = Column(DateTime(timezone=True), nullable=True)
+    edited_at = Column(DateTime(timezone=True), nullable=True)
 
 
     __table_args__ = (

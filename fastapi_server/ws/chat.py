@@ -43,6 +43,11 @@ USER_CURRENT_GLOBAL_ROOM: Dict[int, str] = {}  # userId -> roomId(str)
 ROOM_LAST_DATE: Dict[str, str] = {}  # roomKey -> "YYYY-MM-DD"
 ROOM_LAST_DATE_LOCK = asyncio.Lock()
 
+# =========================
+# Editing
+# =========================
+EDIT_WINDOW_SECONDS = 15 * 60  # messages can be edited for 15 minutes after sending
+
 
 # ---------- utils ----------
 
@@ -80,7 +85,18 @@ def _serialize_dm_message(m: ChatMessage) -> dict:
         "sentAt": _dt_to_iso_utc(m.sent_at),
         "deliveredAt": _dt_to_iso_utc(m.delivered_at),
         "readAt": _dt_to_iso_utc(m.read_at),
+        "editedAt": _dt_to_iso_utc(m.edited_at),
     }
+
+
+def _within_edit_window(sent_at_iso_or_dt) -> bool:
+    if isinstance(sent_at_iso_or_dt, str):
+        sent_dt = datetime.fromisoformat(sent_at_iso_or_dt)
+    else:
+        sent_dt = sent_at_iso_or_dt
+    if sent_dt.tzinfo is None:
+        sent_dt = sent_dt.replace(tzinfo=timezone.utc)
+    return (datetime.now(timezone.utc) - sent_dt.astimezone(timezone.utc)).total_seconds() <= EDIT_WINDOW_SECONDS
 
 
 # --------- date helpers ---------
@@ -176,6 +192,20 @@ def _insert_dm_message(
     return _serialize_dm_message(m)
 
 
+def _edit_dm_message(db: Session, user_id: int, msg_id: str, new_content: str) -> Optional[dict]:
+    m = db.get(ChatMessage, msg_id)
+    if not m or m.from_user_id != user_id:
+        return None
+    if not _within_edit_window(m.sent_at):
+        return None
+
+    m.content = new_content
+    m.edited_at = datetime.now(timezone.utc)
+    db.flush()
+    db.refresh(m)
+    return _serialize_dm_message(m)
+
+
 def _mark_dm_delivered_for_user(db: Session, user_id: int, peer_id: int) -> list[str]:
     now = datetime.now(timezone.utc)
 
@@ -233,6 +263,23 @@ def _global_append(room_key: str, msg: dict) -> None:
     lst.append(msg)
     if len(lst) > GLOBAL_MAX_PER_ROOM:
         del lst[: len(lst) - GLOBAL_MAX_PER_ROOM]
+
+
+def _edit_global_message(room_key: str, user_id: int, msg_id: str, new_content: str) -> Optional[dict]:
+    lst = GLOBAL_MESSAGES.get(room_key)
+    if not lst:
+        return None
+    for m in lst:
+        if m.get("id") != msg_id:
+            continue
+        if m.get("fromUserId") != user_id:
+            return None
+        if not _within_edit_window(m["sentAt"]):
+            return None
+        m["content"] = new_content
+        m["editedAt"] = _now_iso()
+        return dict(m)
+    return None
 
 
 async def _broadcast_presence(room_key: str) -> None:
@@ -479,7 +526,47 @@ async def ws_chat(
     try:
         while True:
             packet = await ws.receive_json()
-            if packet.get("type") != "message":
+            ptype = packet.get("type")
+
+            if ptype == "edit":
+                msg_id = packet.get("id")
+                new_content = (packet.get("content") or "").strip()
+                if not msg_id or not new_content:
+                    continue
+
+                if _is_global(peerId):
+                    gr = str(peerId)
+                    async with GLOBAL_LOCK:
+                        edited = _edit_global_message(gr, userId, msg_id, new_content)
+                    if edited:
+                        await _broadcast(gr, {"type": "edited", "roomId": peerId, "msg": edited})
+                    else:
+                        try:
+                            await ws.send_json({"type": "editError", "id": msg_id})
+                        except Exception:
+                            pass
+                    continue
+
+                try:
+                    edited = _edit_dm_message(db, userId, msg_id, new_content)
+                    if edited:
+                        db.commit()
+                    else:
+                        db.rollback()
+                except Exception:
+                    db.rollback()
+                    raise
+
+                if edited:
+                    await _broadcast(rid, {"type": "edited", "roomId": rid, "msg": edited})
+                else:
+                    try:
+                        await ws.send_json({"type": "editError", "id": msg_id})
+                    except Exception:
+                        pass
+                continue
+
+            if ptype != "message":
                 continue
 
             content = (packet.get("content") or "").strip()
@@ -498,6 +585,7 @@ async def ws_chat(
                     "toUserId": peerId,
                     "content": content,
                     "sentAt": _now_iso(),
+                    "editedAt": None,
                 }
                 gr = str(peerId)
                 async with GLOBAL_LOCK:
@@ -527,6 +615,7 @@ async def ws_chat(
                 "sentAt": saved["sentAt"],
                 "deliveredAt": saved["deliveredAt"],
                 "readAt": saved["readAt"],
+                "editedAt": saved["editedAt"],
             }
 
             await _broadcast_date_if_needed(rid, rid, msg["sentAt"])

@@ -16,7 +16,7 @@ import { FormsModule } from '@angular/forms';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
-import { ChatService, ChatMsg } from '../../services/chat.service';
+import { ChatService, ChatMsg, EDIT_WINDOW_MS } from '../../services/chat.service';
 import { PresenceService } from '../../services/presence.service';
 import { UsersService } from '../../services/users.service';
 import { getCurrentUserId } from '../../core/current-user';
@@ -43,6 +43,10 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   draft = '';
   messages: ChatMsg[] = [];
   roomUsers: any[] = [];
+
+  // editing an existing message (WhatsApp-style: in place, no reordering)
+  editingId: string | null = null;
+  readonly EDIT_WINDOW_MS = EDIT_WINDOW_MS;
 
   roomName = '';
   peerName= '';
@@ -251,9 +255,31 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     const text = (this.draft || '').trim();
     if (!text) return;
 
-    this.chatSvc.send(text);
+    if (this.editingId) {
+      this.chatSvc.editMessage(this.editingId, text);
+      this.editingId = null;
+    } else {
+      this.chatSvc.send(text);
+    }
     this.draft = '';
     this.scrollToEnd();
+  }
+
+  canEdit(m: ChatMsg): boolean {
+    if (m.type === 'date' || m.fromUserId !== this.me) return false;
+    return (Date.now() - new Date(m.sentAt).getTime()) <= this.EDIT_WINDOW_MS;
+  }
+
+  startEdit(m: ChatMsg) {
+    if (!this.canEdit(m)) return;
+    this.editingId = m.id;
+    this.draft = m.content;
+    queueMicrotask(() => this.inputEl?.nativeElement?.focus());
+  }
+
+  cancelEdit() {
+    this.editingId = null;
+    this.draft = '';
   }
 
   onTyping() {

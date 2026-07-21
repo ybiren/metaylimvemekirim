@@ -283,6 +283,22 @@
   opacity: .7;
   white-space: nowrap;
 }
+.msg__edit-btn {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 12px;
+  line-height: 1;
+  opacity: .55;
+}
+.msg__edit-btn:hover { opacity: 1; }
+
+.msg__edited {
+  font-style: italic;
+  opacity: .7;
+}
+
 .msg__ticks { letter-spacing: -1px; color: #8c8c8c; }
 .msg__ticks.read {
   color: #34b7f1;
@@ -295,6 +311,31 @@
   margin: 8px 0;
   font-size: 12px;
   opacity: .7;
+}
+
+/* Editing banner */
+.chat__editing-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  padding: 6px var(--pad-x);
+  background: #fff7d6;
+  border-top: 1px solid var(--border);
+
+  font-size: 12px;
+  font-weight: 800;
+  color: #7a6a00;
+}
+
+.chat__editing-cancel {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  color: inherit;
+  padding: 2px 6px;
 }
 
 /* Composer */
