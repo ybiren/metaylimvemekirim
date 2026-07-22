@@ -37,6 +37,8 @@ export class ShareUrlService {
 
       if (choice === 'native') await this.shareNative(title, sharedUrl);
       if (choice === 'whatsapp') this.shareWhatsapp(title, sharedUrl);
+      if (choice === 'facebook') this.shareFacebook(sharedUrl);
+      if (choice === 'messenger') this.shareMessenger(sharedUrl);
       if (choice === 'email') this.shareEmail(subject, title, sharedUrl);
       if (choice === 'copy') this.copyLink(sharedUrl);
     });
@@ -65,6 +67,23 @@ export class ShareUrlService {
   private shareWhatsapp(title: string, sharedUrl) {
     const text = `${title}\n${sharedUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+  }
+
+  private shareFacebook(sharedUrl) {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(sharedUrl)}`;
+    window.open(url, '_blank', 'noopener,width=600,height=600');
+  }
+
+  private shareMessenger(sharedUrl) {
+    // Facebook's real Messenger share dialog needs a registered app_id, which
+    // this site doesn't have. Best-effort fallback: deep link into the
+    // Messenger app on mobile (works if it's installed); on desktop there's
+    // no app-id-free equivalent, so fall back to the Facebook sharer.
+    if (this.isMobile()) {
+      window.location.href = `fb-messenger://share/?link=${encodeURIComponent(sharedUrl)}`;
+      return;
+    }
+    this.shareFacebook(sharedUrl);
   }
 
   private shareEmail(subject: string, title: string, sharedUrl) {
