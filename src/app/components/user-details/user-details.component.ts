@@ -16,6 +16,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { AlbumComponent } from '../album/album.component';
 import { filter, firstValueFrom, of, take } from 'rxjs';
 import { ShareProfileDialogComponent, ShareChannel } from './share-profile-dialog.component';
+import { ReportProfileDialogComponent, ReportProfileResult } from './report-profile-dialog.component';
 import { ShareUrlService } from '../../services/share-url.service';
 import { ChatService } from '../../services/chat.service';
 import { SMOKING_STATUS_TOKEN } from '../../consts/smoking-status.consts';
@@ -40,6 +41,7 @@ export class UserDetailsComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   private shareUrlService  = inject(ShareUrlService);
   private chat = inject(ChatService);
+  private http = inject(HttpClient);
   
     
 
@@ -198,8 +200,37 @@ export class UserDetailsComponent implements OnInit {
 
    openShareDialog(){
     const sharedUrl = `${window.location.origin}/user/${this.id}?shareprofile=1`;
-    const sharedUserName = this.user().name;  
+    const sharedUserName = this.user().name;
     this.shareUrlService.openShareDialog(sharedUrl, sharedUserName);
+  }
+
+  openReportDialog() {
+    const u = this.user();
+    if (!u) return;
+    const me = this.loggedInUser();
+    const isMobile = window.innerWidth < 600;
+
+    const ref = this.dialog.open<ReportProfileResult>(ReportProfileDialogComponent, {
+      data: { reportedUserName: u.name, isMobile },
+      panelClass: isMobile ? 'im-sheet' : 'im-dialog',
+      hasBackdrop: true,
+      backdropClass: 'share-backdrop',
+    });
+
+    ref.closed.subscribe((result) => {
+      if (!result) return;
+      this.http.post(`${this.apiBase}/api/report`, {
+        reportedUserId: this.id,
+        reportedUserName: u.name,
+        reporterUserId: me?.id ?? null,
+        reporterName: me?.name ?? null,
+        category: result.category,
+        reason: result.reason,
+      }).subscribe({
+        next: () => this.toast.show('הדיווח נשלח, תודה ✓'),
+        error: () => this.toast.show('שגיאה בשליחת הדיווח, נסה שוב'),
+      });
+    });
   }
 
 
