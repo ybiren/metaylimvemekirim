@@ -1,4 +1,13 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  ElementRef,
+  HostListener,
+  inject,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { IOption, IUser } from '../../interfaces';
 import { UsersService } from '../../services/users.service';
 import { environment } from '../../../environments/environment';
@@ -24,7 +33,74 @@ export class HomeComponent implements OnInit{
   private pageTemplateService = inject(PageTemplateService);      
   mainPageTemplate = signal(null);
   updates = signal([]);
- 
+
+  // Marquee pause-on-touch state
+  private updatesBox = viewChild<ElementRef<HTMLElement>>('updatesBox');
+  updatesPaused = signal(false);
+  private pressStartX = 0;
+  private pressStartY = 0;
+  private pausedBeforePress = false;
+  private suppressNextClick = false;
+
+  onUpdatesPressStart(event: TouchEvent) {
+    const touch = event.touches[0];
+    this.pressStartX = touch ? touch.clientX : 0;
+    this.pressStartY = touch ? touch.clientY : 0;
+    this.pausedBeforePress = this.updatesPaused();
+    // Freeze right away so the finger has something steady to read.
+    this.updatesPaused.set(true);
+  }
+
+  onUpdatesPressEnd(event: TouchEvent) {
+    const touch = event.changedTouches[0];
+    const moved =
+      !!touch &&
+      (Math.abs(touch.clientX - this.pressStartX) > 10 ||
+        Math.abs(touch.clientY - this.pressStartY) > 10);
+
+    if (moved) {
+      // The finger dragged (page scroll): not a tap, keep the previous state.
+      this.updatesPaused.set(this.pausedBeforePress);
+      this.suppressNextClick = true;
+      return;
+    }
+
+    // Any tap toggles, however long the finger stayed down: the first one stops
+    // the marquee, the next one starts it again. The tap that stops it doesn't
+    // follow the link, so opening an update takes a second tap.
+    this.updatesPaused.set(!this.pausedBeforePress);
+    this.suppressNextClick = !this.pausedBeforePress;
+  }
+
+  onUpdatesPressCancel() {
+    this.updatesPaused.set(this.pausedBeforePress);
+    this.suppressNextClick = true;
+  }
+
+  onUpdatesClick(event: Event) {
+    if (this.suppressNextClick) {
+      this.suppressNextClick = false;
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+
+  // Touching anywhere else on the page lets the marquee run again.
+  @HostListener('document:touchstart', ['$event'])
+  @HostListener('document:mousedown', ['$event'])
+  onDocumentPress(event: Event) {
+    if (!this.updatesPaused()) {
+      return;
+    }
+    const box = this.updatesBox()?.nativeElement;
+    const target = event.target as Node | null;
+    if (box && target && box.contains(target)) {
+      return;
+    }
+    this.updatesPaused.set(false);
+    this.pausedBeforePress = false;
+  }
+
   trackByUserId(index: number, u: IUser): number {
     return u.userID;
   }

@@ -99,6 +99,19 @@
   animation: updates-marquee 25s linear infinite;
 }
 
+/* Mobile: a tap toggles the .paused class, a press-and-hold pauses while held. */
+.updates-list.paused {
+  animation-play-state: paused;
+}
+
+/* Desktop: pause on mouse hover. Scoped to real pointing devices so the
+   hover state doesn't "stick" on touch screens after a tap. */
+@media (hover: hover) {
+  .updates-box:hover .updates-list {
+    animation-play-state: paused;
+  }
+}
+
 .updates-item {
   display: block;
   padding: 6px 4px;
