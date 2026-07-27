@@ -8,6 +8,7 @@ import { environment } from '../../environments/environment';
 
 import { DateRangeSetFilter } from './date-range-filter/date-range-filter';
 import { DateRangeFloatingFilterComponent } from './date-range-filter/date-range-floating-filter.component';
+import { registerAgGridModules } from './ag-grid-setup';
 
 type AdminUser = {
   id: number;
@@ -167,7 +168,9 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   pageSize = signal(50);
   rowData = signal<AdminUser[]>([]);
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router) {
+    registerAgGridModules();
+  }
 
   defaultColDef: ColDef = {
     sortable: true,

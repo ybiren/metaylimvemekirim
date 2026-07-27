@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { AgGridAngular } from 'ag-grid-angular';
 import { ColDef, GridReadyEvent } from 'ag-grid-community';
 import { environment } from '../../environments/environment';
+import { registerAgGridModules } from './ag-grid-setup';
 
 type BannerPage = 'main' | 'about' | 'contact';
 
@@ -404,7 +405,9 @@ export class AdminBannersComponent implements OnInit, OnDestroy {
   fileError = signal<string>('');
   previewUrl = signal<string>('');
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    registerAgGridModules();
+  }
 
   defaultColDef: ColDef = {
     sortable: true,

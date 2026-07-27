@@ -15,7 +15,6 @@ import { ResetPasswordComponent } from './components/reset-password/reset-passwo
 import { SmsUpdatesSignalFormComponent } from './components/sms-updates-signal-form/sms-updates-signal-form.component';
 import { ChatSystemRoomsComponent } from './components/chat-system-rooms/chat-system-rooms.component';
 import { LikesContainerComponent } from './components/likes-container/likes-container.component';
-import { AdminUpdatesComponent } from './admin/admin-updates.component';
 import { AdminMainComponent } from './admin/admin-main.component';
 import { LoginComponent } from './components/login/login.component';
 
