@@ -93,6 +93,13 @@
 
 .about h3, .about h4 { margin: 12px 0 6px; }
 
+.actions {
+  display: flex;
+  flex-wrap: wrap;      /* let buttons wrap on narrow/mobile screens */
+  align-items: center;
+  gap: 8px;
+}
+
 .btn {
   margin: 16px 0 0 5px;
   padding: 10px 18px;

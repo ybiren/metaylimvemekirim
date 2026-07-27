@@ -46,7 +46,7 @@
 
   
     @if (loggedInUser() && loggedInUser().id!==id) {
-    <div style="display: flex">
+    <div class="actions">
       <button class="btn block-btn"
         [ngClass]="{'unblock-btn' : isLoggedIUserBlocksPeer() }"
         (click)="blockUser(this.id)">
