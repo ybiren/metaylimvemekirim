@@ -1,0 +1,110 @@
+/* One album's pictures + full-screen viewer. */
+
+.gallery {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px 12px 32px;
+  box-sizing: border-box;
+}
+
+.gallery__head {
+  text-align: center;
+  margin-bottom: 18px;
+
+  h1 {
+    margin: 6px 0 0;
+    font-size: 24px;
+    color: #0b6ea8;
+  }
+}
+
+.back {
+  display: inline-block;
+  text-decoration: none;
+  color: #0b6ea8;
+  font-size: 14px;
+  padding: 4px 0;
+}
+
+.gallery__sub {
+  margin: 6px 0 0;
+  opacity: 0.75;
+  font-size: 14px;
+}
+
+.gallery__count {
+  margin: 4px 0 0;
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+.state {
+  padding: 28px 12px;
+  text-align: center;
+  background: #caeaff;
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+.state--err {
+  background: #fff1f1;
+  color: #b00020;
+}
+
+/* 3 columns desktop, 2 tablet, 1 on phones — same as the albums page */
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.photo {
+  /* it's a button so it's keyboard reachable — strip the button chrome */
+  padding: 0;
+  border: 1px solid #cfe6f5;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #eaf6ff;
+  cursor: pointer;
+
+  aspect-ratio: 4 / 3;
+  display: block;
+  width: 100%;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.15s ease;
+  }
+}
+
+@media (hover: hover) {
+  .photo:hover img {
+    transform: scale(1.04);
+  }
+}
+
+/* The viewer itself lives in PhotoViewerComponent, shared with the albums page. */
+
+@media (max-width: 900px) {
+  .photo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .gallery {
+    padding: 12px 10px 24px;
+  }
+
+  .gallery__head h1 {
+    font-size: 20px;
+  }
+
+  .photo-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+}

@@ -33,6 +33,16 @@ export const appRoutes: Route[] = [
   { path: 'contact', component: ContactPageComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'album', component: AlbumComponent },
+  {
+    path: 'albums',
+    loadComponent: () =>
+      import('./components/albums/albums-list.component').then(m => m.AlbumsListComponent)
+  },
+  {
+    path: 'albums/:albumId',
+    loadComponent: () =>
+      import('./components/albums/album-gallery.component').then(m => m.AlbumGalleryComponent)
+  },
   { path: 'help', component: HelpComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'sms', component: SmsUpdatesSignalFormComponent },
@@ -54,7 +64,8 @@ export const appRoutes: Route[] = [
       { path: 'dashboard', loadComponent: () => import('./admin/admin-updates.component').then(m => m.AdminUpdatesComponent) },
       { path: 'pages', loadComponent: () => import('./admin/admin-pages.component').then(m => m.AdminPagesComponent) },
       { path: 'users', loadComponent: () => import('./admin/admin-users.component').then(m => m.AdminUsersComponent) },
-      { path: 'banners', loadComponent: () => import('./admin/admin-banners.component').then(m => m.AdminBannersComponent) }
+      { path: 'banners', loadComponent: () => import('./admin/admin-banners.component').then(m => m.AdminBannersComponent) },
+      { path: 'albums', loadComponent: () => import('./admin/admin-albums.component').then(m => m.AdminAlbumsComponent) }
     ]
   }, 
 

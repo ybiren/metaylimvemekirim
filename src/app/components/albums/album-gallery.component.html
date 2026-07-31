@@ -1,0 +1,39 @@
+<section class="gallery" dir="rtl">
+  <header class="gallery__head">
+    <a class="back" routerLink="/albums">‹ כל האלבומים</a>
+
+    @if (album(); as a) {
+      <h1>{{ a.title }}</h1>
+      @if (a.description) {
+        <p class="gallery__sub">{{ a.description }}</p>
+      }
+      <p class="gallery__count">{{ count() }} תמונות</p>
+    }
+  </header>
+
+  @if (loading()) {
+    <div class="state">טוען תמונות…</div>
+  } @else if (error()) {
+    <div class="state state--err">{{ error() }}</div>
+  } @else if (count() === 0) {
+    <div class="state">אין תמונות באלבום הזה</div>
+  } @else {
+    <div class="photo-grid">
+      @for (p of photos(); track p.id; let i = $index) {
+        <button type="button" class="photo" (click)="open(i)" [attr.aria-label]="'תמונה ' + (i + 1)">
+          <img [src]="abs(p.image_url)" [alt]="album()?.title" loading="lazy" />
+        </button>
+      }
+    </div>
+  }
+
+  @if (viewerIndex() !== null) {
+    <app-photo-viewer
+      [photos]="photos()"
+      [startIndex]="viewerIndex()!"
+      [title]="album()?.title ?? ''"
+      [toAbsolute]="abs"
+      (closed)="close()"
+    />
+  }
+</section>

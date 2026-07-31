@@ -150,6 +150,21 @@ import { environment } from '../../../environments/environment';
               <p>לשיתופי פעולה, פרסום והצעות עסקיות.</p>
             </article>
 
+            <article class="info-card info-card--whatsapp">
+              <h3>וואטסאפ</h3>
+              <p>
+                <a
+                  href="https://chat.whatsapp.com/LQ0Y8gtzBss89jRpFEPngu"
+                  target="_blank"
+                  rel="noopener"
+                  class="wa-link"
+                >
+                  הצטרפו לקבוצת הוואטסאפ שלנו
+                </a>
+              </p>
+              <p>עדכונים שוטפים ושיחה עם שאר חברי האתר.</p>
+            </article>
+
             <article class="info-card info-card--soft">
               <h3>עוד דרכים ליצור קשר</h3>
               <p>
@@ -333,6 +348,20 @@ import { environment } from '../../../environments/environment';
 
       .info-card--soft {
         background: #f1f5f9;
+      }
+
+      .info-card--whatsapp {
+        background: #f2fbf5;
+        border: 1px solid #cdeed8;
+      }
+
+      .info-card--whatsapp h3::before {
+        content: '💬 ';
+      }
+
+      .wa-link {
+        color: #128c7e;
+        font-weight: 600;
       }
 
       .info-card h3 {

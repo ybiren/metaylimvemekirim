@@ -1,0 +1,56 @@
+<section class="albums" dir="rtl">
+  <header class="albums__head">
+    <h1>אלבומים</h1>
+    <p class="albums__sub">גלריית התמונות של האתר</p>
+  </header>
+
+  @if (loading()) {
+    <div class="state">טוען אלבומים…</div>
+  } @else if (error()) {
+    <div class="state state--err">{{ error() }}</div>
+  } @else if (albums().length === 0) {
+    <div class="state">אין אלבומים להצגה כרגע</div>
+  } @else {
+    @for (a of albums(); track a.id) {
+      <section class="album">
+        <header class="album__head">
+          <h2 class="album__title">
+            <a [routerLink]="['/albums', a.id]">{{ a.title }}</a>
+          </h2>
+          @if (a.description) {
+            <p class="album__desc">{{ a.description }}</p>
+          }
+          <span class="album__count">{{ a.photo_count }} תמונות</span>
+        </header>
+
+        @if (a.photos?.length) {
+          <!-- every picture gets its own column -->
+          <div class="photo-grid">
+            @for (p of a.photos; track p.id; let i = $index) {
+              <button
+                type="button"
+                class="photo"
+                (click)="openViewer(a, i)"
+                [attr.aria-label]="'תמונה ' + (i + 1)"
+              >
+                <img [src]="abs(p.image_url)" [alt]="a.title" loading="lazy" />
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="state state--small">אין תמונות באלבום הזה</div>
+        }
+      </section>
+    }
+  }
+
+  @if (viewer(); as v) {
+    <app-photo-viewer
+      [photos]="v.photos"
+      [startIndex]="v.index"
+      [title]="v.title"
+      [toAbsolute]="abs"
+      (closed)="closeViewer()"
+    />
+  }
+</section>

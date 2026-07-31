@@ -568,6 +568,31 @@ def save_extra_image_to_disk(
     return str(path.resolve().relative_to(base_dir_for_rel))
 
 
+def save_album_image_to_disk(
+    image_bytes: bytes,
+    album_id: int,
+    mime_type: str,
+    images_dir: Path,
+    base_dir_for_rel: Path,
+    guid: str,
+) -> str:
+    """
+    Save an *album* picture as:
+      data/images/albums/<album_id>/<guid>.<ext>
+    Returns relative path from base_dir_for_rel.
+    """
+    ext = mimetypes.guess_extension(mime_type) or ".bin"
+    ext = _normalize_jpeg_ext(ext)
+
+    album_dir = images_dir / "albums" / str(album_id)
+    album_dir.mkdir(parents=True, exist_ok=True)
+
+    filename = f"{guid}{ext}"
+    path = album_dir / filename
+    path.write_bytes(image_bytes)
+    return str(path.resolve().relative_to(base_dir_for_rel))
+
+
 async def find_user_image_path(
     user_id: int,
     base_dir: Path,
