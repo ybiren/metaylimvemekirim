@@ -358,8 +358,15 @@ def search_user(
     if c_country not in (None, 0, "0"):
         query = query.filter(User.country == int(c_country))
 
-    if c_smoking:
-        query = query.filter(User.smoking == int(c_smoking))
+    # The search offers two choices only: "1" = מעשן, "2" = לא מעשן.
+    # In the DB smoking = 0 is the only non smoker value, every other value is
+    # a smoker (מעשן / רק באירועים / מנסה להפסיק). Users with no value at all
+    # are unknown, so they stay out of both sides.
+    if c_smoking not in (None, "", 0, "0"):
+        if int(c_smoking) == 2:
+            query = query.filter(User.smoking == 0)
+        else:
+            query = query.filter(User.smoking != 0)
 
     if c_tz not in (None, 0, "0"):
         query = query.filter(User.c_tz == int(c_tz))
