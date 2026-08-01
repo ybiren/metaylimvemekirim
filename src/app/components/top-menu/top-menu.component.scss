@@ -14,7 +14,7 @@
   padding: 0.5rem 1rem 0.25rem;
 }
 
-/* Top bar: invite + logo + burger */
+/* Top bar: share + logo + burger */
 .top-bar {
   display: flex;
   align-items: center;
@@ -28,8 +28,8 @@
   border-radius: 12px;
 }
 
-/* Invite button */
-.invite-btn {
+/* Share button */
+.share-btn {
   border: 0;
   border-radius: 999px;
   padding: 0.4rem 1.2rem;
@@ -42,7 +42,7 @@
   white-space: nowrap;
 }
 
-.invite-btn:hover {
+.share-btn:hover {
   filter: brightness(1.05);
 }
 
