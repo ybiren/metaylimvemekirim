@@ -165,6 +165,21 @@ import { environment } from '../../../environments/environment';
               <p>עדכונים שוטפים ושיחה עם שאר חברי האתר.</p>
             </article>
 
+            <article class="info-card info-card--instagram">
+              <h3>אינסטגרם</h3>
+              <p>
+                <a
+                  href="https://www.instagram.com/metaylimvemekirim?utm_source=qr&amp;igsh=MXJ6bDFhcTA2Ym1q"
+                  target="_blank"
+                  rel="noopener"
+                  class="ig-link"
+                >
+                  &#64;metaylimvemekirim
+                </a>
+              </p>
+              <p>תמונות מהטיולים והאירועים שלנו.</p>
+            </article>
+
             <article class="info-card info-card--soft">
               <h3>עוד דרכים ליצור קשר</h3>
               <p>
@@ -361,6 +376,20 @@ import { environment } from '../../../environments/environment';
 
       .wa-link {
         color: #128c7e;
+        font-weight: 600;
+      }
+
+      .info-card--instagram {
+        background: #fdf4fb;
+        border: 1px solid #f3d6ec;
+      }
+
+      .info-card--instagram h3::before {
+        content: '📷 ';
+      }
+
+      .ig-link {
+        color: #c13584;
         font-weight: 600;
       }
 
