@@ -21,7 +21,11 @@ from sqlalchemy.orm import Session
 from pywebpush import webpush, WebPushException
 from ws.notify import is_online
 from sendgrid_test.send_mail_verification import send_mail_verification
+from sendgrid_test.send_mail_like import send_mail_like
+import logging
 import os
+
+log = logging.getLogger("app")
 
 def get_user(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id).first()
@@ -244,6 +248,30 @@ def block_user(db: Session, user_id, blocked_user_id):
 
 
 ####################################################################
+def notify_like_by_mail(db: Session, liker_id, liked_user_id) -> None:
+    """
+    Mail the liked user, but only if they asked for email notifications.
+    A mail failure must never break the like itself.
+    """
+    liked_user = get_user(db, liked_user_id)
+    if not liked_user or not liked_user.notify_email:
+        return
+
+    email = (liked_user.email or "").strip()
+    if not email:
+        return
+
+    liker = get_user(db, liker_id)
+    liker_name = (getattr(liker, "name", None) or "").strip()
+
+    try:
+        send_mail_like(email, liker_name, liker_id)
+        log.info("Sent like mail: to=%s likerID=%s", email, liker_id)
+    except Exception:
+        log.exception("Failed to send like mail to userID=%s", liked_user_id)
+
+
+####################################################################
 def like_user(db: Session, user_id, liked_user_id):
 
     if user_id <= 0 or liked_user_id <= 0:
@@ -278,8 +306,11 @@ def like_user(db: Session, user_id, liked_user_id):
             db.rollback()
             return {"liked": True}
 
+        # only after the like is really stored
+        notify_like_by_mail(db, user_id, liked_user_id)
+
         return {"liked": True}
-        
+
 ####################################################################
 def is_user_blocked(
     db: Session,
