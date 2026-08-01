@@ -52,7 +52,7 @@
         (click)="blockUser(this.id)">
       </button>
 
-      @if(!isLoggedIUserBlockedByPeer()) {
+      @if(!isLoggedIUserBlockedByPeer() && isMutualLike()) {
       <button class="btn msg-btn" (click)="openCompose()">הודעה</button>
       }
   

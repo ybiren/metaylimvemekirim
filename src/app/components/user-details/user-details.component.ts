@@ -55,8 +55,12 @@ export class UserDetailsComponent implements OnInit {
   isLoggedIUserBlocksPeer = signal<boolean>(null);
   isShowProfile = signal<boolean>(true);
   isLoggedIUserLikesPeer = signal<boolean>(null);
+  isPeerLikesLoggedInUser = signal<boolean>(null);
   id = 0;
   liked = false;
+
+  // messaging is open only once both sides liked each other
+  isMutualLike = computed(() => !!this.isLoggedIUserLikesPeer() && !!this.isPeerLikesLoggedInUser());
 
   constructor() {
 
@@ -74,7 +78,8 @@ export class UserDetailsComponent implements OnInit {
     if(this.loggedInUser()) {
       this.isLoggedIUserBlockedByPeer.set(await firstValueFrom(this.usersSrv.is_blockedByPeerSignal(this.id, this.loggedInUser().id)));
       this.isLoggedIUserBlocksPeer.set(await firstValueFrom(this.usersSrv.is_blockedByPeerSignal(this.loggedInUser().id, this.id )));   
-      this.isLoggedIUserLikesPeer.set(await firstValueFrom(this.usersSrv.isLiked(this.loggedInUser().id, this.id))); 
+      this.isLoggedIUserLikesPeer.set(await firstValueFrom(this.usersSrv.isLiked(this.loggedInUser().id, this.id)));
+      this.isPeerLikesLoggedInUser.set(await firstValueFrom(this.usersSrv.isLiked(this.id, this.loggedInUser().id)));
     }
   }
 
