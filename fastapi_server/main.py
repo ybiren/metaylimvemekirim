@@ -519,13 +519,20 @@ async def get_users(payload: dict = Body(...), db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
 
     q = db.query(User)
-    q = apply_user_filters(q, me)
 
     onlyUsersThatLikedMe = payload.get("onlyUsersThatLikedMe")
-    
+
     #if  onlyUsersThatLikedMe is None , there is no filter
 
-    if onlyUsersThatLikedMe is True: 
+    if onlyUsersThatLikedMe is None:
+      # browsing everyone -> honour the search preferences of both sides
+      q = apply_user_filters(q, me)
+    else:
+      # a like is an explicit action, so it must stay visible even when the
+      # preference filters would have hidden that user from the other one.
+      q = q.filter(User.id != me.id)
+
+    if onlyUsersThatLikedMe is True:
       q = q.filter(
         exists().where(
             and_(
