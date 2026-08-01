@@ -60,7 +60,7 @@ export class App implements OnInit, OnDestroy{
     const params = new URLSearchParams(window.location.search);
     if (this.userID() && !params.get("shareprofile")) {
       this.presenceSub = this.presence.start(25_000, this.userID()); // match HEARTBEAT_SEC
-      if (window.location.pathname !== '/sms') {
+      if (!this.isDeepLink(window.location.pathname)) {
         // Navigate immediately to /users
         this.router.navigateByUrl('/home');
       }
@@ -74,13 +74,20 @@ export class App implements OnInit, OnDestroy{
         const uid = params.get("email-verified-uid");
         this.usersSvc.setEmailVerified(uid).subscribe((res:any) => {
           if(res?.ok) {
-            this.toast.show("אימות הדואל הצליח...יש לבצע הזדהות מחדש") 
+            this.toast.show("אימות הדואל הצליח...יש לבצע הזדהות מחדש")
             this.router.navigateByUrl('/login');
           }
-          
-        });      
+
+        });
       }
-    
+
+      // a profile is only public through an explicit share link
+      if (!this.userID()
+          && !params.get("shareprofile")
+          && this.isProfilePath(window.location.pathname)) {
+        this.router.navigateByUrl('/home');
+      }
+
 
 
     }
@@ -98,6 +105,15 @@ export class App implements OnInit, OnDestroy{
       } 
     );
       
+  }
+
+  private isProfilePath(pathname: string) {
+    return /^\/user\/\d+/.test(pathname);
+  }
+
+  // URLs a logged in user may enter directly, instead of being sent to /home
+  private isDeepLink(pathname: string) {
+    return pathname === '/sms' || this.isProfilePath(pathname);
   }
 
   private setIsHome(url: string) {
