@@ -5,6 +5,8 @@ from email.message import EmailMessage
 
 mail_sender_router = APIRouter()
 
+ADMIN_MAIL = "admin@metaylimvemekirim.co.il"
+
 class ContactPayload(BaseModel):
     name: str
     email: str
@@ -38,7 +40,7 @@ def send_contact(payload: ContactPayload):
 
     with smtplib.SMTP("smtp.zoho.com", 587) as server:
         server.starttls()
-        server.login("admin@metaylimvemekirim.co.il", "bmyPk-v9")
+        server.login(ADMIN_MAIL, "bmyPk-v9")
         server.send_message(msg)
 
     return {"ok": True}
@@ -46,22 +48,25 @@ def send_contact(payload: ContactPayload):
 
 @mail_sender_router.post("/report")
 def send_report(payload: ReportPayload):
-    reported = payload.reportedUserName or f"#{payload.reportedUserId}"
-    reporter = payload.reporterName or (
-        f"#{payload.reporterUserId}" if payload.reporterUserId else "אנונימי"
+    # shown as "(id)name"
+    reported = f"({payload.reportedUserId}){payload.reportedUserName or ''}"
+    reporter = (
+        f"({payload.reporterUserId}){payload.reporterName or ''}"
+        if payload.reporterUserId
+        else "אנונימי"
     )
 
     msg = EmailMessage()
-    msg["Subject"] = f"דיווח על תכנים פוגעניים - פרופיל {reported} (#{payload.reportedUserId})"
-    # From must be the authenticated Zoho address; report is delivered to sar888.
-    msg["From"] = "admin@metaylimvemekirim.co.il"
-    msg["To"] =  "sar888@gmail.com"
+    msg["Subject"] = f"דיווח על תכנים פוגעניים - פרופיל {reported}"
+    # the reporter stays anonymous, so the mail carries no address of theirs
+    msg["From"] = ADMIN_MAIL
+    msg["To"] = ADMIN_MAIL
 
     msg.set_content(f"""\
 דיווח חדש על תכנים פוגעניים
 
-פרופיל מדווח: {reported} (userId={payload.reportedUserId})
-מדווח: {reporter} (userId={payload.reporterUserId})
+פרופיל מדווח: {reported}
+מדווח: {reporter}
 קטגוריה: {payload.category or "-"}
 
 תיאור:
@@ -70,7 +75,7 @@ def send_report(payload: ReportPayload):
 
     with smtplib.SMTP("smtp.zoho.com", 587) as server:
         server.starttls()
-        server.login("admin@metaylimvemekirim.co.il", "bmyPk-v9")
+        server.login(ADMIN_MAIL, "bmyPk-v9")
         server.send_message(msg)
 
     return {"ok": True}

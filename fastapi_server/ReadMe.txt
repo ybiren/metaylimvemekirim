@@ -151,13 +151,14 @@ h!BKTH@LxbiCjh3
 
 
 
-zoho.com
+https://mailadmin.zoho.com/
+login gmail bengold789
+
 admin@metaylimvemekirim.co.il
 bmyPk-v9
 
 https://accounts.zoho.com/home#profile/personal
 
-https://mailadmin.zoho.com/
 
 sendgrid.com
 
