@@ -10,6 +10,7 @@
         <div class="u-cell u-name" role="columnheader">שם</div>
         <div class="u-cell u-age" role="columnheader">גיל</div>
         <div class="u-cell u-age" role="columnheader">אזור מגורים</div>
+        <div class="u-cell u-like" role="columnheader">לייק</div>
         <div class="u-cell u-action" role="columnheader">&nbsp;</div>
       </div>
 
@@ -21,12 +22,10 @@
 
         <div class="u-cell u-name" role="cell">
           <a [routerLink]="['/user', u.id]">
-            <span class="name">
-            {{ u.name }}
+            <span class="name">{{ u.name }}</span>
             @if (isOnline()(u.id)) {
               <span class="online">כרגע באתר</span>
             }
-            </span>
           </a>
         </div>
 
@@ -37,8 +36,18 @@
         <div class="u-cell u-name" role="cell">
           <span class="name">{{ regions[u.country]?.txt }}</span>
         </div>
-   
-        
+
+        <div class="u-cell u-like" role="cell">
+          <button
+            type="button"
+            class="btn-like"
+            [class.active]="isLiked()(u.id)"
+            (click)="toggleLike(u)"
+            aria-label="אהבתי"
+            title="אהבתי"
+          ></button>
+        </div>
+
         <div class="u-cell u-action" role="cell">
           <a class="btn-profile" [routerLink]="['/user', u.id]">הצג</a>
         </div>

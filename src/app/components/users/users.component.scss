@@ -37,7 +37,9 @@
 
 .u-row {
   display: grid;
-  grid-template-columns: 72px 100px 90px 1fr 130px;
+  /* minmax(0,…) — a plain 1fr has an auto minimum and refuses to shrink
+     below its content, which pushes the row past the viewport */
+  grid-template-columns: 72px minmax(0, 1.2fr) 90px minmax(0, 1fr) 56px 130px;
   align-items: center;
   column-gap: 12px;
 
@@ -82,6 +84,22 @@
   min-width: 0;
 }
 
+/* the link is a flex item: without min-width:0 it refuses to shrink
+   and blows the whole grid past the viewport */
+.u-name > a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.u-like {
+  justify-content: center;
+  overflow: hidden; /* keep the header label inside its narrow column */
+}
+
 .u-action {
   justify-content: flex-start;
 }
@@ -103,11 +121,13 @@
 ===================================================== */
 
 .name {
+  display: block; /* inline elements ignore overflow/text-overflow */
   font-size: 15.5px;
   font-weight: 700;
   color: #222;
   white-space: nowrap;
 
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
@@ -157,6 +177,47 @@
 .btn-profile:hover {
   background-color: #f7f7f7;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* =====================================================
+   LIKE BUTTON
+===================================================== */
+
+.btn-like {
+  width: 36px;
+  height: 36px;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+
+  font-size: 22px;
+  line-height: 1;
+  color: #9ca3af;
+
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.btn-like::before {
+  content: "❤";
+}
+
+.btn-like:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.btn-like:active {
+  transform: scale(0.9);
+}
+
+/* liked */
+.btn-like.active {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
 }
 
 /* =====================================================
@@ -217,14 +278,33 @@
   .u-row {
     /* Compact columns for ~320–420px phones */
     grid-template-columns:
-      56px   /* avatar */
-      1fr    /* name */
-      38px   /* age */
-      1fr    /* region */
-      56px;  /* action */
+      56px             /* avatar */
+      minmax(0, 1fr)   /* name */
+      32px             /* age */
+      minmax(0, 1fr)   /* region */
+      34px             /* like */
+      50px;            /* action */
 
     padding: 6px 8px;
     column-gap: 6px;
+  }
+
+  /* header labels must not overflow the narrow fixed columns */
+  .u-row--head {
+    font-size: 12.5px;
+  }
+
+  /* stack the online badge under the name so both stay readable */
+  .u-name > a {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .btn-like {
+    width: 32px;
+    height: 32px;
+    font-size: 19px;
   }
 
   .avatar {
@@ -258,8 +338,18 @@
 /* Extra safety for very small phones (<= 340px) */
 @media (max-width: 340px) {
   .u-row {
-    grid-template-columns: 52px 1fr 36px 1fr 52px;
+    grid-template-columns: 52px minmax(0, 1fr) 30px minmax(0, 1fr) 30px 46px;
     column-gap: 5px;
+  }
+
+  .u-row--head {
+    font-size: 11.5px;
+  }
+
+  .btn-like {
+    width: 28px;
+    height: 28px;
+    font-size: 17px;
   }
 
   .btn-profile {

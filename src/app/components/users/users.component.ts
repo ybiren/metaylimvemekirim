@@ -7,7 +7,6 @@ import {
   input,
   effect,
   computed,
-  Injector,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
@@ -19,7 +18,6 @@ import { getCurrentUserId } from '../../core/current-user';
 import { UsersService } from '../../services/users.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ToastService } from '../../services/toast.service';
-import { ChatService } from '../../services/chat.service';
 import { REGIONS_TOKEN } from '../../consts/regions.consts';
 
 
@@ -51,8 +49,6 @@ export class UsersComponent implements OnInit, OnDestroy {
   private usersSvc = inject(UsersService);
   private device = inject(DeviceDetectorService);
   private toast = inject(ToastService);
-  private chat = inject(ChatService);
-  private injector = inject(Injector);
   regions: ReadonlyArray<IOption> = inject(REGIONS_TOKEN);
   
   
@@ -131,8 +127,41 @@ export class UsersComponent implements OnInit, OnDestroy {
     return (userId: number) => this.presence.isOnline(userId);
   });
 
+  // the server owns the like state (same as the profile page) — the login/users
+  // payloads carry no like data, so it has to be asked for
+  private likedIds = signal<ReadonlySet<number>>(new Set<number>());
+  private likeStateRequested = new Set<number>();
+
   isLiked = computed(() => {
-    return (userId: number) => this.loggedInUser().like?.includes(userId);
+    const liked = this.likedIds();
+    return (userId: number) => liked.has(userId);
+  });
+
+  private setLiked(userId: number, liked: boolean) {
+    this.likedIds.update((current) => {
+      const next = new Set(current);
+      if (liked) {
+        next.add(userId);
+      } else {
+        next.delete(userId);
+      }
+      return next;
+    });
+  }
+
+  // resolve the like state of the rows actually on screen, once each
+  private likeStateEffect = effect(() => {
+    const me = this.loggedInUser()?.id;
+    if (!me) return;
+
+    for (const u of this.pagedUsers()) {
+      if (u.id === me || this.likeStateRequested.has(u.id)) continue;
+      this.likeStateRequested.add(u.id);
+      this.usersSvc.isLiked(me, u.id).subscribe({
+        next: (liked) => this.setLiked(u.id, !!liked),
+        error: () => this.likeStateRequested.delete(u.id),
+      });
+    }
   });
 
 
@@ -143,24 +172,15 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   toggleLike(u: IUser) {
-    const userId = this.loggedInUser().id;
-    this.usersSvc.like(userId, u.id).subscribe({
+    const me = this.loggedInUser()?.id;
+    if (!me) return;
+
+    this.usersSvc.like(me, u.id).subscribe({
       next: (res: any) => {
-         this.toast.show('הוספת like ✓');
-         localStorage.setItem('user', JSON.stringify({...this.loggedInUser(),"like": [...res.like_list]}));
-         this.loggedInUser.set(JSON.parse(localStorage.getItem('user')) as IUser);
-         if(this.loggedInUser().like?.includes(u.id)) {
-           this.chat.setActivePeer(u.id);
-           this.chat.connect(u.id);
-           const watcher = effect(() => {
-             if (this.chat.statusChanged() === WebSocket.OPEN) {
-               this.chat.send(`קבלת לייק מ ${this.loggedInUser().name}`);
-               this.chat.setActivePeer(null);
-               this.chat.disconnect();
-               watcher.destroy();
-             }
-           }, { injector: this.injector });
-         }
+        const liked = !!res?.liked;
+        this.likeStateRequested.add(u.id);
+        this.setLiked(u.id, liked);
+        this.toast.show(liked ? 'הוספת like ✓' : 'הסרת like ✓');
       },
       error: () => alert("אירעה שגיאה")
     });
