@@ -25,7 +25,7 @@ from helper import decrypt_uid
 # import routers
 from routes.sms_updates import router2 as sms_updates_router
 from routes.push import router3 as push_router
-from ws.notify import router as notify_router
+from ws.notify import router as notify_router, is_online
 from ws.chat import router as chat_router
 from routes.admin_updates import admin_updates_router
 from routes.admin_pages import public_pages_router,admin_pages_router
@@ -640,9 +640,18 @@ async def search_users(payload: Dict[str, Any], db: Session = Depends(get_db)):
     c_ages1 = payload.get("c_ages1") 
     c_ages2 =  payload.get("c_ages2")
     c_name = payload.get("c_name")
+    c_online = payload.get("c_online")
 
     q=search_user(db, c_gender, c_ff, c_country, c_smoking, c_tz, c_pic, c_ages1, c_ages2, c_name)
-    return apply_user_filters(q,me)    
+    users = apply_user_filters(q,me).all()
+
+    # presence is kept in memory by ws.notify, not in the DB, so it cannot be a
+    # SQL filter — narrow the rows afterwards using the same source that feeds
+    # the "כרגע באתר" badge, so the two always agree
+    if c_online:
+        users = [u for u in users if is_online(u.id)]
+
+    return users
        
 
 @app.post("/isLiked")
