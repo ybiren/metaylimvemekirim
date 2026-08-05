@@ -65,7 +65,8 @@ export const appRoutes: Route[] = [
       { path: 'pages', loadComponent: () => import('./admin/admin-pages.component').then(m => m.AdminPagesComponent) },
       { path: 'users', loadComponent: () => import('./admin/admin-users.component').then(m => m.AdminUsersComponent) },
       { path: 'banners', loadComponent: () => import('./admin/admin-banners.component').then(m => m.AdminBannersComponent) },
-      { path: 'albums', loadComponent: () => import('./admin/admin-albums.component').then(m => m.AdminAlbumsComponent) }
+      { path: 'albums', loadComponent: () => import('./admin/admin-albums.component').then(m => m.AdminAlbumsComponent) },
+      { path: 'reports', loadComponent: () => import('./admin/admin-reports.component').then(m => m.AdminReportsComponent) }
     ]
   }, 
 

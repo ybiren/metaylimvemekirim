@@ -30,6 +30,7 @@ from ws.chat import router as chat_router
 from routes.admin_updates import admin_updates_router
 from routes.admin_pages import public_pages_router,admin_pages_router
 from routes.admin_users import admin_users_router
+from routes.admin_reports import admin_reports_router
 from routes.admin_banners import admin_banners_router
 from routes.admin_albums import admin_albums_router, public_albums_router
 from routes.mail_sender import mail_sender_router
@@ -124,6 +125,7 @@ app.include_router(admin_updates_router)
 app.include_router(public_pages_router)
 app.include_router(admin_pages_router)
 app.include_router(admin_users_router)
+app.include_router(admin_reports_router)
 app.include_router(admin_banners_router)
 app.include_router(admin_albums_router)
 app.include_router(public_albums_router)

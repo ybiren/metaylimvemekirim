@@ -13,6 +13,7 @@ import { RouterModule } from '@angular/router';
       <a routerLink="/admin/users" routerLinkActive="active">Admin Users</a>
       <a routerLink="/admin/banners" routerLinkActive="active">Admin Banners</a>
       <a routerLink="/admin/albums" routerLinkActive="active">Admin Albums</a>
+      <a routerLink="/admin/reports" routerLinkActive="active">Admin Reports</a>
     </nav>
 
     <router-outlet></router-outlet>
