@@ -14,8 +14,15 @@ def get_page_content(
     path: str = Query(...),
     db: Session = Depends(get_db),
 ):
+    # Pages are created two ways and they disagree about the leading slash:
+    # admin_create_page insists on one, admin_upsert_page has that check
+    # commented off. Match the path with and without it so a page saved either
+    # way is still found.
+    bare = path.lstrip("/")
+    candidates = {path, bare, "/" + bare}
+
     row = db.query(SitePage).filter(
-        SitePage.path == path,
+        SitePage.path.in_(candidates),
         SitePage.is_active == True
     ).first()
 

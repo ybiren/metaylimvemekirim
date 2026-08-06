@@ -21,6 +21,23 @@
 .admin-main-page {
   direction: rtl;
   padding-right: 10px;
+
+  /* The admin html is injected with [innerHTML], so it never gets this
+     component's scoping attribute - ::ng-deep is what reaches inside it.
+     An embed carries a fixed width (YouTube hands out width="560"), which
+     overflows a phone. */
+  ::ng-deep iframe {
+    max-width: 100%;
+  }
+
+  /* Video keeps its shape instead of being letterboxed once the width is
+     capped. Left to video embeds, since a map or a form is not 16:9. */
+  ::ng-deep iframe[src*='youtube'],
+  ::ng-deep iframe[src*='vimeo'] {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
 }
 
 /* This row sits right after the page content, in normal document flow,
@@ -51,87 +68,6 @@
     flex-direction: column;
     align-items: center;
   }
-}
-
-/* =========================
-   UPDATES BOX (marquee)
-   Matches People box height
-   ========================= */
-
-.updates-box {
-  width: 260px;
-  height: var(--box-h);
-
-  border-radius: 4px;
-  overflow: hidden;
-
-  display: flex;
-  flex-direction: column; /* header + body */
-}
-
-.updates-box__header {
-  height: var(--box-header-h);
-
-  background: #31adff;
-  text-align: center;
-
-  padding: 0 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.updates-box__body {
-  background: #caeaff;
-  flex: 1;
-  min-height: 0; /* important so the inner area sizes correctly */
-}
-
-.updates-box__scroll {
-  height: 100%;
-  overflow: hidden;
-  position: relative;
-}
-
-.updates-list {
-  display: grid;
-  grid-auto-rows: min-content;
-  animation: updates-marquee 25s linear infinite;
-}
-
-/* Mobile: a tap toggles the .paused class, a press-and-hold pauses while held. */
-.updates-list.paused {
-  animation-play-state: paused;
-}
-
-/* Desktop: pause on mouse hover. Scoped to real pointing devices so the
-   hover state doesn't "stick" on touch screens after a tap. */
-@media (hover: hover) {
-  .updates-box:hover .updates-list {
-    animation-play-state: paused;
-  }
-}
-
-.updates-item {
-  display: block;
-  padding: 6px 4px;
-  text-align: center;
-  font-size: 13px;
-  text-decoration: none;
-  color: #000;
-  border-bottom: 1px solid #99c7e6;
-}
-
-.updates-item--promo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.updates-item--promo img {
-  width: 16px;
-  height: 16px;
 }
 
 /* =========================
@@ -277,15 +213,3 @@
   border-color: transparent transparent #ffffff transparent;
 }
 
-/* =========================
-   Marquee animation
-   ========================= */
-
-@keyframes updates-marquee {
-  0% {
-    transform: translateY(100%);
-  }
-  100% {
-    transform: translateY(-100%);
-  }
-}

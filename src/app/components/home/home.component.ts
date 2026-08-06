@@ -1,17 +1,15 @@
 import {
   Component,
   computed,
-  ElementRef,
-  HostListener,
   inject,
   OnInit,
   signal,
-  viewChild,
 } from '@angular/core';
 import { IOption, IUser } from '../../interfaces';
 import { UsersService } from '../../services/users.service';
 import { environment } from '../../../environments/environment';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
 import { REGIONS_TOKEN } from '../../consts/regions.consts';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -30,76 +28,20 @@ export class HomeComponent implements OnInit{
   private usersSvc = inject(UsersService)
   apiBase = environment.apibase;
   regions: ReadonlyArray<IOption> = inject(REGIONS_TOKEN);
-  private pageTemplateService = inject(PageTemplateService);      
-  mainPageTemplate = signal(null);
-  updates = signal([]);
+  private pageTemplateService = inject(PageTemplateService);
+  private sanitizer = inject(DomSanitizer);
+  mainPageTemplate = signal<{ html?: string } | null>(null);
 
-  // Marquee pause-on-touch state
-  private updatesBox = viewChild<ElementRef<HTMLElement>>('updatesBox');
-  updatesPaused = signal(false);
-  private pressStartX = 0;
-  private pressStartY = 0;
-  private pausedBeforePress = false;
-  private suppressNextClick = false;
-
-  onUpdatesPressStart(event: TouchEvent) {
-    const touch = event.touches[0];
-    this.pressStartX = touch ? touch.clientX : 0;
-    this.pressStartY = touch ? touch.clientY : 0;
-    this.pausedBeforePress = this.updatesPaused();
-    // Freeze right away so the finger has something steady to read.
-    this.updatesPaused.set(true);
-  }
-
-  onUpdatesPressEnd(event: TouchEvent) {
-    const touch = event.changedTouches[0];
-    const moved =
-      !!touch &&
-      (Math.abs(touch.clientX - this.pressStartX) > 10 ||
-        Math.abs(touch.clientY - this.pressStartY) > 10);
-
-    if (moved) {
-      // The finger dragged (page scroll): not a tap, keep the previous state.
-      this.updatesPaused.set(this.pausedBeforePress);
-      this.suppressNextClick = true;
-      return;
-    }
-
-    // Any tap toggles, however long the finger stayed down: the first one stops
-    // the marquee, the next one starts it again. The tap that stops it doesn't
-    // follow the link, so opening an update takes a second tap.
-    this.updatesPaused.set(!this.pausedBeforePress);
-    this.suppressNextClick = !this.pausedBeforePress;
-  }
-
-  onUpdatesPressCancel() {
-    this.updatesPaused.set(this.pausedBeforePress);
-    this.suppressNextClick = true;
-  }
-
-  onUpdatesClick(event: Event) {
-    if (this.suppressNextClick) {
-      this.suppressNextClick = false;
-      event.preventDefault();
-      event.stopPropagation();
-    }
-  }
-
-  // Touching anywhere else on the page lets the marquee run again.
-  @HostListener('document:touchstart', ['$event'])
-  @HostListener('document:mousedown', ['$event'])
-  onDocumentPress(event: Event) {
-    if (!this.updatesPaused()) {
-      return;
-    }
-    const box = this.updatesBox()?.nativeElement;
-    const target = event.target as Node | null;
-    if (box && target && box.contains(target)) {
-      return;
-    }
-    this.updatesPaused.set(false);
-    this.pausedBeforePress = false;
-  }
+  /**
+   * Angular sanitises every [innerHTML] binding and drops <iframe> outright,
+   * along with <script>, <style>, <object> and <embed> - so an embedded video
+   * in the admin page vanished with no error. This content is authored in the
+   * admin section, so it is bound as trusted instead.
+   */
+  mainPageHtml = computed<SafeHtml | null>(() => {
+    const html = this.mainPageTemplate()?.html;
+    return html ? this.sanitizer.bypassSecurityTrustHtml(html) : null;
+  });
 
   trackByUserId(index: number, u: IUser): number {
     return u.userID;
@@ -131,11 +73,16 @@ export class HomeComponent implements OnInit{
   this.usersSvc.users$.subscribe( (users) => {
         this.users.set(users)
     });
-    const pageTemplate = await firstValueFrom(this.pageTemplateService.load("main"));
-    this.mainPageTemplate.set(pageTemplate);
-  
-    const updates = await firstValueFrom(this.pageTemplateService.load_updates());
-    this.updates.set(updates as any[]);
-  }    
+
+    // A missing or inactive "main" page answers 404, which used to reject here
+    // and abandon the rest of ngOnInit without a word in the console.
+    try {
+      const pageTemplate = await firstValueFrom(this.pageTemplateService.load("main"));
+      this.mainPageTemplate.set(pageTemplate);
+    } catch (err) {
+      console.error('[Home] main page content failed to load', err);
+      this.mainPageTemplate.set(null);
+    }
+  }
 }
 
