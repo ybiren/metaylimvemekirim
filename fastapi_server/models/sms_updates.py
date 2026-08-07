@@ -17,6 +17,7 @@ class Base(DeclarativeBase):
 # Hebrew label (as sent by the Angular form) -> boolean column name on SmsUpdate.
 # This is the single source of truth for the age-group columns.
 AGE_GROUP_COLUMNS: dict[str, str] = {
+    'קבוצת גיל 25-35': 'age_25_35',
     'קבוצת גיל 32-43': 'age_32_43',
     'קבוצת גיל עד 40': 'age_up_to_40',
     'קבוצת גיל עד 49': 'age_up_to_49',
@@ -38,6 +39,7 @@ class SmsUpdate(Base):
     email: Mapped[str] = mapped_column(Text, nullable=False)
     phone: Mapped[str] = mapped_column(Text, nullable=False)
 
+    age_25_35: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     age_32_43: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     age_up_to_40: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     age_up_to_49: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

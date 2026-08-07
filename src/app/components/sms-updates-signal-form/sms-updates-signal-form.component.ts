@@ -34,6 +34,7 @@ type TouchedState = {
 export class SmsUpdatesSignalFormComponent {
   // ---- options (from your Google Form) ----
   ageOptions = [
+    'קבוצת גיל 25-35',
     'קבוצת גיל 32-43',
     'קבוצת גיל עד 40',
     'קבוצת גיל עד 49',
