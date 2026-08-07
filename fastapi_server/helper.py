@@ -19,7 +19,6 @@ from sqlalchemy.exc import IntegrityError
 from cryptography.fernet import Fernet, InvalidToken
 from sqlalchemy.orm import Session
 from pywebpush import webpush, WebPushException
-from ws.notify import is_online
 from sendgrid_test.send_mail_verification import send_mail_verification
 from sendgrid_test.send_mail_like import send_mail_like
 import logging
@@ -272,6 +271,49 @@ def notify_like_by_mail(db: Session, liker_id, liked_user_id) -> None:
 
 
 ####################################################################
+def notify_like_by_push(db: Session, liker_id, liked_user_id) -> None:
+    """
+    Push to the liked user, but only if they asked for push notifications.
+    A push failure must never break the like itself.
+
+    This runs whether or not they are on the site: someone with the tab open in
+    the background is exactly who a notification is for.
+    """
+    liked_user = get_user(db, liked_user_id)
+    if not liked_user or not liked_user.notify_push:
+        return
+
+    liker = get_user(db, liker_id)
+    liker_name = (getattr(liker, "name", None) or "").strip()
+
+    try:
+        result = send_push(
+            db,
+            liked_user_id,
+            "מישהו מחבב אותך",
+            f"{liker_name} מחבב/ת אותך" if liker_name else "מישהו מחבב אותך",
+            # the liker's profile, not the recipient's own
+            url=f"/user/{liker_id}",
+        )
+
+        # Report what actually happened. Announcing "sent" without looking at
+        # the result claims success even when the user has no subscription at
+        # all - which is the one case worth knowing about.
+        if result.get("total"):
+            log.info(
+                "Like push: to=%s likerID=%s sent=%s deleted=%s total=%s",
+                liked_user_id, liker_id,
+                result.get("sent"), result.get("deleted"), result.get("total"),
+            )
+        else:
+            log.warning(
+                "Like push skipped: userID=%s has no push subscriptions", liked_user_id
+            )
+    except Exception:
+        log.exception("Failed to send like push to userID=%s", liked_user_id)
+
+
+####################################################################
 def like_user(db: Session, user_id, liked_user_id):
 
     if user_id <= 0 or liked_user_id <= 0:
@@ -293,12 +335,7 @@ def like_user(db: Session, user_id, liked_user_id):
         return {"liked": False}
     else:
         # insert (toggle on)
-        print(liked_user_id)
         db.add(UserLike(user_id=user_id, liked_user_id=liked_user_id))
-        if not is_online(liked_user_id):
-          print("before send push")
-          send_push(db,liked_user_id,"מישהו מחבב אותך","מישהו מחבב אותך")
-          print("after send push") 
         try:
             db.commit()
         except IntegrityError:
@@ -306,8 +343,21 @@ def like_user(db: Session, user_id, liked_user_id):
             db.rollback()
             return {"liked": True}
 
-        # only after the like is really stored
-        notify_like_by_mail(db, user_id, liked_user_id)
+        # Only after the like is really stored. The two channels are
+        # independent: whatever happens to one must not cost the other, and
+        # neither may fail the like itself.
+        #
+        # Push goes first because it is the fast one - mail talks to an SMTP
+        # server that can be slow to answer.
+        try:
+            notify_like_by_push(db, user_id, liked_user_id)
+        except Exception:
+            log.exception("Like push step failed for userID=%s", liked_user_id)
+
+        try:
+            notify_like_by_mail(db, user_id, liked_user_id)
+        except Exception:
+            log.exception("Like mail step failed for userID=%s", liked_user_id)
 
         return {"liked": True}
 
@@ -886,32 +936,39 @@ def send_push(
     db: Session,
     user_id: int,
     title: str,
-    body: str
+    body: str,
+    url: Optional[str] = None
 ) -> dict:
     """
     Send push notification to ALL subscriptions of a user.
     Automatically deletes dead subscriptions (404 / 410).
+
+    url is where tapping the notification lands. It defaults to the recipient's
+    own profile, which is rarely what you want - pass the page the notification
+    is actually about.
     """
 
     payload = {
         "title": title,
         "body": body,
          "data": {
-           "url": f"/user/{user_id}"
+           "url": url or f"/user/{user_id}"
         },
     }
 
     subs = get_user_subscriptions(db, user_id)
 
     if not subs:
-        return {"sent": 0, "deleted": 0}
+        # same shape as the normal return, so callers can read "total" safely
+        return {"sent": 0, "deleted": 0, "total": 0}
 
     sent = 0
     deleted = 0
 
     for sub in subs:
         try:
-            print("send to " + str(sub.subscription))
+            # endpoint only: the subscription also carries the crypto keys
+            log.info("Push -> userID=%s endpoint=%s", user_id, sub.endpoint)
             webpush(
                 subscription_info=sub.subscription,
                 data=json.dumps(payload),
@@ -925,11 +982,18 @@ def send_push(
 
             # 🔥 subscription is dead → delete it
             if status in (404, 410):
+                log.info(
+                    "Push subscription gone (%s), deleting: userID=%s endpoint=%s",
+                    status, user_id, sub.endpoint,
+                )
                 delete_subscription_by_endpoint(db, sub.endpoint)
                 deleted += 1
             else:
                 # keep subscription, just log error
-                print("Push failed:", repr(e))
+                log.warning(
+                    "Push failed (%s): userID=%s endpoint=%s: %s",
+                    status, user_id, sub.endpoint, e,
+                )
 
     return {
         "sent": sent,

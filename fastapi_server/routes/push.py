@@ -21,12 +21,18 @@ class UnsubscribeBody(BaseModel):
 
 @router3.post("/subscribe")
 def subscribe(body: SubscribeBody, db: Session = Depends(get_db)):
+  # The client sends 0 when nobody is logged in, and 0 satisfies the NOT NULL
+  # on user_id - the row would be stored against a user that does not exist and
+  # no notification would ever be delivered. Refuse it instead of saving it.
+  if not body.userId or body.userId <= 0:
+    raise HTTPException(status_code=400, detail="userId is required")
+
   sub = body.subscription
   endpoint = sub.get("endpoint")
   keys = (sub.get("keys") or {})
   p256dh = keys.get("p256dh")
   auth = keys.get("auth")
-  
+
   if not endpoint or not p256dh or not auth:
     raise HTTPException(status_code=400, detail="Invalid subscription payload")
 

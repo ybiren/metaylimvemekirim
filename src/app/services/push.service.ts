@@ -11,41 +11,49 @@ export class PushService {
 
   private readonly VAPID_PUBLIC_KEY = environment.vapidPublicKey;
 
-  async enableAndRegister(userId?: number): Promise<void> {
-    alert(`this.swPush.isEnabled= ${this.swPush.isEnabled}`);
-    if (!this.swPush.isEnabled) return;
-    alert("after swPush.isEnableddfdfdfsdsds");
-    
-    alert(`notification permission=${Notification.permission}`);
+  // every other service posts through apibase; a relative path only works
+  // while Angular and FastAPI share an origin
+  private baseUrl = environment.apibase;
+
+  /** @returns whether the browser is now subscribed and the server knows */
+  async enableAndRegister(userId?: number): Promise<boolean> {
+    if (!this.swPush.isEnabled) return false;
+    if (typeof Notification === 'undefined') return false;
+
+    // getCurrentUserId() answers 0 when nobody is logged in, and 0 passes the
+    // NOT NULL on push_subscriptions.user_id - so without this the row is
+    // saved against a user that does not exist and no push ever arrives.
+    if (!userId) {
+      console.warn('[Push] not subscribing: no logged-in user');
+      return false;
+    }
+
+    // Asking again after a block is a no-op, and requestSubscription would
+    // only throw, so stop here and let the caller explain it.
+    if (Notification.permission === 'denied') return false;
+
     if (Notification.permission !== 'granted') {
       const perm = await Notification.requestPermission();
-      alert("after request permission");
+      if (perm !== 'granted') return false;
     }
-    
-    
+
     try {
       const sub = await this.swPush.requestSubscription({
         serverPublicKey: this.VAPID_PUBLIC_KEY,
       });
 
-      const res = await firstValueFrom(
-        this.http.post('/api/push/subscribe', {
+      await firstValueFrom(
+        this.http.post(`${this.baseUrl}/api/push/subscribe`, {
           userId,
           subscription: sub,
           userAgent: navigator.userAgent,
         })
       );
 
-      alert("Subscribed OK: " + JSON.stringify(res));
-    } catch (e: any) {
-      const msg =
-        `requestSubscription FAILED\n` +
-        `name: ${e?.name}\n` +
-        `message: ${e?.message}\n` +
-        `stack: ${e?.stack ?? 'n/a'}\n` +
-        `raw: ${JSON.stringify(e)}`;
-      alert(msg);
-      console.error(e);
+      return true;
+    } catch (e) {
+      console.error('[Push] subscribe failed', e);
+      return false;
     }
   }
 
@@ -59,7 +67,7 @@ export class PushService {
     await sub.unsubscribe();
 
     await firstValueFrom(
-      this.http.post('/api/push/unsubscribe', {
+      this.http.post(`${this.baseUrl}/api/push/unsubscribe`, {
         userId,
         endpoint: sub.endpoint,
       })

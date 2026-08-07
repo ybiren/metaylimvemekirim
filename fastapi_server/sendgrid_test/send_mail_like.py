@@ -44,7 +44,9 @@ def send_mail_like(email, liker_name, liker_id):
     </html>
     """, subtype="html")
 
-    with smtplib.SMTP("smtp.zoho.com", 587) as server:
+    # Without a timeout an unreachable SMTP server hangs the request rather
+    # than raising, which no caller can guard against.
+    with smtplib.SMTP("smtp.zoho.com", 587, timeout=15) as server:
         server.starttls()
         server.login("admin@metaylimvemekirim.co.il", "bmyPk-v9")
         server.send_message(msg)
