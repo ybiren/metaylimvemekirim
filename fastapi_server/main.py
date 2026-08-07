@@ -173,6 +173,15 @@ def serve_root():
 def serve_root():
     return FileResponse(ANGULAR_DIR / "index.html", media_type="text/html")
 
+@app.get("/albums")
+def serve_root():
+    return FileResponse(ANGULAR_DIR / "index.html", media_type="text/html")
+
+# the gallery of one album, e.g. /albums/12
+@app.get("/albums/{album_id}")
+def serve_root():
+    return FileResponse(ANGULAR_DIR / "index.html", media_type="text/html")
+
 @app.get("/help")
 def serve_root():
     return FileResponse(ANGULAR_DIR / "index.html", media_type="text/html")
