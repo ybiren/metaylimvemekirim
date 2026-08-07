@@ -255,23 +255,11 @@ export class UpdatesTickerComponent implements AfterViewInit, OnDestroy {
 
   private resizeObserver?: ResizeObserver;
 
-  /** Carried over from the home page marquee, which had it hard coded. */
-  private readonly promo: ISiteUpdate = {
-    id: -1,
-    title: 'בואו לנהל אתר משלכם!',
-    href: 'http://www.pgoshoti.co.il/site.asp',
-    isPromo: true,
-    targetBlank: true,
-    bold: true,
-    underline: true,
-  };
-
-  items = computed(() => [
-    this.promo,
-    ...this.updates()
+  items = computed(() =>
+    this.updates()
       .filter((u) => u.isActive !== false && !!u.title)
-      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || (a.id ?? 0) - (b.id ?? 0)),
-  ]);
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || (a.id ?? 0) - (b.id ?? 0))
+  );
 
   constructor() {
     this.pageTemplateService.load_updates().subscribe({
