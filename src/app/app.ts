@@ -62,8 +62,7 @@ export class App implements OnInit, OnDestroy{
     const params = new URLSearchParams(window.location.search);
     if (this.userID() && !params.get("shareprofile")) {
       this.presenceSub = this.presence.start(25_000, this.userID()); // match HEARTBEAT_SEC
-      if (!this.isDeepLink(window.location.pathname)) {
-        // Navigate immediately to /users
+      if (this.isLanding(window.location.pathname)) {
         this.router.navigateByUrl('/home');
       }
     } else {
@@ -113,9 +112,13 @@ export class App implements OnInit, OnDestroy{
     return /^\/user\/\d+/.test(pathname);
   }
 
-  // URLs a logged in user may enter directly, instead of being sent to /home
-  private isDeepLink(pathname: string) {
-    return pathname === '/sms' || this.isProfilePath(pathname);
+  /**
+   * Only the bare site address sends a logged in user on to /home. Anything
+   * else is a URL they asked for - a shared album, a profile, a page from a
+   * bookmark - and redirecting away from it loses the link they followed.
+   */
+  private isLanding(pathname: string) {
+    return pathname === '/' || pathname === '';
   }
 
   private setIsHome(url: string) {

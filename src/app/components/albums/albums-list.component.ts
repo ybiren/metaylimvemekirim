@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
   AlbumsService,
   IPublicAlbumDetail,
@@ -17,6 +17,8 @@ import { PhotoViewerComponent } from './photo-viewer.component';
 })
 export class AlbumsListComponent implements OnInit {
   private albumsSvc = inject(AlbumsService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   loading = signal(true);
   error = signal('');
@@ -29,6 +31,16 @@ export class AlbumsListComponent implements OnInit {
   abs = (url: string): string => this.albumsSvc.toAbsolute(url);
 
   ngOnInit(): void {
+    // A link can name a single album: /albums?q=12 is the same page as
+    // /albums/12, so hand over to the gallery instead of keeping a second
+    // way of showing one album. replaceUrl keeps the redirect out of the
+    // history, so Back goes where the visitor came from.
+    const q = Number(this.route.snapshot.queryParamMap.get('q'));
+    if (Number.isInteger(q) && q > 0) {
+      this.router.navigate(['/albums', q], { replaceUrl: true });
+      return;
+    }
+
     this.albumsSvc.list().subscribe({
       next: (res) => {
         this.albums.set(res?.items ?? []);
