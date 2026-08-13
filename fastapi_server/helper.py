@@ -418,8 +418,18 @@ def search_user(
         else:
             query = query.filter(User.smoking != 0)
 
+    # "מגובה" is a lower bound, not an exact height. Members whose height is
+    # unknown stay in the results rather than being dropped over a field they
+    # never filled in - and unknown is 0 as often as it is NULL, because the
+    # register form defaults the box to 0 and always posts it.
     if c_tz not in (None, 0, "0"):
-        query = query.filter(User.c_tz == int(c_tz))
+        query = query.filter(
+            or_(
+                User.height >= int(c_tz),
+                User.height.is_(None),
+                User.height == 0,
+            )
+        )
 
     if c_pic:
         query = query.filter(
