@@ -162,3 +162,18 @@ https://accounts.zoho.com/home#profile/personal
 
 sendgrid.com
 
+
+
+//BOT (Groq) - /api/bot/ask
+The Q&A bot needs a Groq API key. It is read from the environment, with
+fastapi_server/.env as a fallback for dev. .env is gitignored and is NOT
+copied by the rsync deploy line above - create it on the server once:
+
+  cp .env.example .env      # then paste the key into GROQ_API_KEY
+  # or export it in the shell that starts uvicorn:
+  export GROQ_API_KEY=gsk_...
+
+Keys are managed at https://console.groq.com/keys
+Without a key the endpoint answers 503 and the widget shows an error.
+The bot's knowledge base is fastapi_server/knowledge/about_us.md - a manual
+copy of the About Us page; update it whenever that page's text changes.

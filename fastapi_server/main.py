@@ -34,6 +34,7 @@ from routes.admin_reports import admin_reports_router
 from routes.admin_banners import admin_banners_router
 from routes.admin_albums import admin_albums_router, public_albums_router
 from routes.mail_sender import mail_sender_router
+from routes.bot import bot_router
 
 from helper import (
     ensure_image_content_type,
@@ -130,6 +131,7 @@ app.include_router(admin_banners_router)
 app.include_router(admin_albums_router)
 app.include_router(public_albums_router)
 app.include_router(mail_sender_router, prefix="/api")
+app.include_router(bot_router)
 
 
 # ---------------------------------------------------------------------

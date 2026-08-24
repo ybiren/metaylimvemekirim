@@ -49,6 +49,9 @@ fastapi_server/node_modules
 fastapi_server/.venv
 fastapi_server/data
 
+# Groq / bot secrets
+fastapi_server/.env
+
 # Python bytecode cache
 __pycache__/
 *.pyc

@@ -8,6 +8,7 @@ import { PwaUpdateComponent } from './components/pwa-install/pwa-update.componen
 import { LoginComponent } from './components/login/login.component';
 import { TopMenuComponent } from './components/top-menu/top-menu.component';
 import { UpdatesTickerComponent } from './components/updates-ticker/updates-ticker.component';
+import { BotWidgetComponent } from './components/bot/bot-widget.component';
 import { NgxSpinnerModule } from 'ngx-spinner';
 import { PresenceService } from './services/presence.service';
 import { Subscription } from 'rxjs';
@@ -28,7 +29,8 @@ import { ToastService } from './services/toast.service';
     PwaUpdateComponent,
     LoginComponent,
     TopMenuComponent,
-    UpdatesTickerComponent
+    UpdatesTickerComponent,
+    BotWidgetComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
