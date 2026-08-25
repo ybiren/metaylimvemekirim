@@ -166,12 +166,19 @@ sendgrid.com
 
 //BOT (Groq) - /api/bot/ask
 The Q&A bot needs a Groq API key. It is read from the environment, with
-fastapi_server/.env as a fallback for dev. .env is gitignored and is NOT
-copied by the rsync deploy line above - create it on the server once:
+fastapi_server/.env as a fallback. .env is gitignored, but the rsync line
+above only excludes .venv/, __pycache__/ and data/ - so .env IS copied to
+prod along with the code. Create it once locally:
 
   cp .env.example .env      # then paste the key into GROQ_API_KEY
-  # or export it in the shell that starts uvicorn:
-  export GROQ_API_KEY=gsk_...
+
+httpx and python-dotenv are new dependencies. rsync excludes .venv/, so
+after deploying you must install them on the server once:
+
+  cd /root/fastapi_server && source .venv/bin/activate
+  pip install -r requirements.txt
+  pkill -f uvicorn
+  nohup uvicorn main:app --host 0.0.0.0 --port 8000 &
 
 Keys are managed at https://console.groq.com/keys
 Without a key the endpoint answers 503 and the widget shows an error.
