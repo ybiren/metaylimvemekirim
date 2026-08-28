@@ -13,6 +13,10 @@ export interface BotAnswer {
   answer: string;
 }
 
+export interface BotTranscript {
+  text: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class BotService {
 
@@ -24,6 +28,16 @@ export class BotService {
   ask(question: string, history: BotTurn[] = []): Observable<BotAnswer> {
     return this.http
       .post<BotAnswer>(`${this.baseUrl}/api/bot/ask`, { question, history })
+      .pipe(catchError(this.handleError));
+  }
+
+  /** Sends a recording to be turned into Hebrew text. The audio is not stored
+   *  server-side - it is forwarded for transcription and dropped. */
+  transcribe(audio: Blob, filename: string): Observable<BotTranscript> {
+    const form = new FormData();
+    form.append('file', audio, filename);
+    return this.http
+      .post<BotTranscript>(`${this.baseUrl}/api/bot/transcribe`, form)
       .pipe(catchError(this.handleError));
   }
 

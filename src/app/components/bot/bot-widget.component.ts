@@ -2,11 +2,13 @@ import {
   AfterViewChecked,
   Component,
   ElementRef,
+  OnDestroy,
+  PLATFORM_ID,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BotService, BotTurn } from '../../services/bot.service';
 
@@ -21,6 +23,21 @@ const GREETING =
 /** How many earlier turns travel with each question. The server trims to its
  *  own limit as well - this only keeps the request small. */
 const HISTORY_TURNS = 6;
+
+/** A transcript lands in the box for the user to check before sending. Hebrew
+ *  speech recognition mangles names and slang, and answering the wrong question
+ *  confidently is worse than one extra tap. Set true for WhatsApp-style
+ *  send-on-release. */
+const AUTO_SEND_AFTER_SPEECH = false;
+
+/** Recordings stop themselves here so a forgotten mic cannot upload minutes of
+ *  audio. The server refuses anything over 8MB regardless. */
+const MAX_RECORDING_MS = 60_000;
+
+/** Under this, a press reads as a tap: recording continues until the next tap,
+ *  which is what desktop users expect. Above it, it is a WhatsApp-style hold
+ *  and releasing ends the recording. */
+const TAP_THRESHOLD_MS = 300;
 
 @Component({
   selector: 'app-bot-widget',
@@ -42,6 +59,14 @@ const HISTORY_TURNS = 6;
           @for (m of messages(); track $index) {
             <div class="bot-msg" [class.bot-msg--user]="m.role === 'user'">
               <div class="bot-bubble">{{ m.text }}</div>
+
+              @if (m.role === 'assistant' && canSpeak()) {
+                <button
+                  type="button"
+                  class="bot-speak"
+                  [attr.aria-label]="speaking() === $index ? 'עצירת ההקראה' : 'הקראת התשובה'"
+                  (click)="toggleSpeak($index, m.text)">{{ speaking() === $index ? '⏹' : '🔊' }}</button>
+              }
             </div>
           }
 
@@ -58,20 +83,44 @@ const HISTORY_TURNS = 6;
           }
         </div>
 
+        @if (recording()) {
+          <div class="bot-rec">
+            <span class="bot-rec__dot"></span>
+            <span class="bot-rec__time">{{ elapsedLabel() }}</span>
+            <span class="bot-rec__hint">מקליט… שחררו לסיום</span>
+            <button
+              type="button"
+              class="bot-rec__cancel"
+              (click)="cancelRecording()">ביטול</button>
+          </div>
+        }
+
         <form class="bot-panel__form" (ngSubmit)="send()">
           <textarea
             class="bot-input"
             rows="1"
             maxlength="500"
-            placeholder="כתבו שאלה..."
+            [placeholder]="transcribing() ? 'מתמלל…' : 'כתבו שאלה...'"
             [(ngModel)]="draft"
             [ngModelOptions]="{ standalone: true }"
             (keydown)="onKeydown($event)"></textarea>
 
+          @if (canRecord()) {
+            <button
+              type="button"
+              class="bot-mic"
+              [class.bot-mic--on]="recording()"
+              [disabled]="pending() || transcribing()"
+              aria-label="הקלטת שאלה"
+              (pointerdown)="onMicDown($event)"
+              (pointerup)="onMicUp()"
+              (pointercancel)="cancelRecording()">🎤</button>
+          }
+
           <button
             type="submit"
             class="bot-send"
-            [disabled]="pending() || !draft.trim()">שלח</button>
+            [disabled]="pending() || transcribing() || !draft.trim()">שלח</button>
         </form>
       </section>
     }
@@ -168,6 +217,8 @@ const HISTORY_TURNS = 6;
 
       .bot-msg {
         display: flex;
+        align-items: flex-end;
+        gap: 6px;
         justify-content: flex-start;
       }
 
@@ -189,6 +240,23 @@ const HISTORY_TURNS = 6;
       .bot-msg--user .bot-bubble {
         background: #24a859;
         color: #fff;
+      }
+
+      /* Read-aloud button next to each answer */
+      .bot-speak {
+        flex: none;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-size: 0.95rem;
+        line-height: 1;
+        padding: 4px;
+        opacity: 0.55;
+        transition: opacity 0.15s ease;
+      }
+
+      .bot-speak:hover {
+        opacity: 1;
       }
 
       /* Typing dots */
@@ -232,10 +300,60 @@ const HISTORY_TURNS = 6;
         text-align: center;
       }
 
+      /* Recording strip */
+      .bot-rec {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: #fff4f4;
+        border-top: 1px solid #f3d5d5;
+        font-size: 0.85rem;
+        color: #8a2b2b;
+      }
+
+      .bot-rec__dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #d93636;
+        animation: bot-pulse 1s infinite ease-in-out;
+      }
+
+      @keyframes bot-pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.25;
+        }
+      }
+
+      .bot-rec__time {
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+      }
+
+      .bot-rec__hint {
+        flex: 1;
+        opacity: 0.8;
+      }
+
+      .bot-rec__cancel {
+        border: none;
+        background: transparent;
+        color: #8a2b2b;
+        text-decoration: underline;
+        cursor: pointer;
+        font: inherit;
+        padding: 0;
+      }
+
       .bot-panel__form {
         display: flex;
         align-items: flex-end;
-        gap: 8px;
+        gap: 6px;
         padding: 10px 12px;
         border-top: 1px solid #e3e9f2;
         background: #ffffff;
@@ -255,6 +373,34 @@ const HISTORY_TURNS = 6;
       .bot-input:focus {
         outline: 2px solid rgba(36, 168, 89, 0.35);
         outline-offset: 1px;
+      }
+
+      .bot-mic {
+        flex: none;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 1px solid #c9d6ef;
+        background: #ffffff;
+        font-size: 1.05rem;
+        line-height: 1;
+        cursor: pointer;
+        /* stop the long-press text selection / callout on mobile */
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+      }
+
+      .bot-mic--on {
+        background: #d93636;
+        border-color: #d93636;
+        transform: scale(1.08);
+      }
+
+      .bot-mic:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
       }
 
       .bot-send {
@@ -287,27 +433,77 @@ const HISTORY_TURNS = 6;
     `,
   ],
 })
-export class BotWidgetComponent implements AfterViewChecked {
+export class BotWidgetComponent implements AfterViewChecked, OnDestroy {
 
   private bot = inject(BotService);
   private log = viewChild<ElementRef<HTMLDivElement>>('log');
+  private isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   open = signal(false);
   pending = signal(false);
   error = signal('');
   messages = signal<BotMessage[]>([{ role: 'assistant', text: GREETING }]);
 
+  // voice input
+  canRecord = signal(false);
+  recording = signal(false);
+  transcribing = signal(false);
+  elapsedMs = signal(0);
+
+  // voice output
+  canSpeak = signal(false);
+  speaking = signal<number | null>(null);
+
   draft = '';
 
   private scrollPending = false;
+  private recorder?: MediaRecorder;
+  private stream?: MediaStream;
+  private chunks: Blob[] = [];
+  private cancelled = false;
+  private pressedAt = 0;
+  private holding = false;
+  private timer?: ReturnType<typeof setInterval>;
+  private stopAt?: ReturnType<typeof setTimeout>;
+  private heVoice: SpeechSynthesisVoice | null = null;
+
+  constructor() {
+    if (!this.isBrowser) return;
+
+    // getUserMedia is undefined outside a secure context, so this also covers
+    // the case of the site being opened over plain http.
+    this.canRecord.set(
+      !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined'
+    );
+
+    if ('speechSynthesis' in window) {
+      this.loadVoice();
+      // getVoices() is usually empty on the first call - the list arrives
+      // asynchronously, so without this the button never appears.
+      speechSynthesis.addEventListener('voiceschanged', this.loadVoice);
+    }
+  }
+
+  private loadVoice = () => {
+    this.heVoice =
+      speechSynthesis.getVoices().find(v => v.lang?.toLowerCase().startsWith('he')) ?? null;
+    this.canSpeak.set(!!this.heVoice);
+  };
+
+  elapsedLabel() {
+    const s = Math.floor(this.elapsedMs() / 1000);
+    return `0:${String(s).padStart(2, '0')}`;
+  }
 
   toggle() {
     this.open.update(v => !v);
     if (this.open()) this.scrollPending = true;
+    else this.stopSpeaking();
   }
 
   close() {
     this.open.set(false);
+    this.stopSpeaking();
   }
 
   /** Enter sends, Shift+Enter starts a new line - what every chat box does. */
@@ -317,6 +513,158 @@ export class BotWidgetComponent implements AfterViewChecked {
       this.send();
     }
   }
+
+  // ---------------------------------------------------------------- recording
+
+  onMicDown(event: PointerEvent) {
+    event.preventDefault();
+    // A press while already recording (tap mode) means "stop".
+    if (this.recording()) {
+      this.finishRecording();
+      return;
+    }
+    this.pressedAt = Date.now();
+    this.holding = true;
+    this.startRecording();
+  }
+
+  onMicUp() {
+    if (!this.holding) return;
+    this.holding = false;
+    // A quick tap leaves the recorder running until the next tap; a real hold
+    // ends when the finger lifts, the way a WhatsApp voice note does.
+    if (Date.now() - this.pressedAt < TAP_THRESHOLD_MS) return;
+    this.finishRecording();
+  }
+
+  private async startRecording() {
+    this.error.set('');
+    this.cancelled = false;
+    this.chunks = [];
+
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      // Denied, dismissed, or no microphone - all look the same here.
+      this.holding = false;
+      this.error.set('אין גישה למיקרופון. אפשר לכתוב את השאלה במקום.');
+      return;
+    }
+
+    // The recording never left as a hold - the user let go while the permission
+    // prompt was up, so there is nothing to record.
+    if (!this.holding && Date.now() - this.pressedAt >= TAP_THRESHOLD_MS) {
+      this.releaseStream();
+      return;
+    }
+
+    const mime = this.pickMimeType();
+    this.recorder = new MediaRecorder(this.stream, mime ? { mimeType: mime } : undefined);
+    this.recorder.ondataavailable = e => {
+      if (e.data.size) this.chunks.push(e.data);
+    };
+    this.recorder.onstop = () => this.onRecorderStopped();
+    this.recorder.start();
+
+    this.recording.set(true);
+    this.elapsedMs.set(0);
+    const startedAt = Date.now();
+    this.timer = setInterval(() => this.elapsedMs.set(Date.now() - startedAt), 250);
+    this.stopAt = setTimeout(() => this.finishRecording(), MAX_RECORDING_MS);
+  }
+
+  /** Chrome and Android produce webm/opus; iOS Safari only does mp4/aac. */
+  private pickMimeType(): string {
+    const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
+    return candidates.find(t => MediaRecorder.isTypeSupported?.(t)) ?? '';
+  }
+
+  private finishRecording() {
+    if (!this.recording()) return;
+    this.clearTimers();
+    this.recording.set(false);
+    this.recorder?.stop();
+  }
+
+  cancelRecording() {
+    if (!this.recording()) {
+      this.releaseStream();
+      return;
+    }
+    this.cancelled = true;
+    this.holding = false;
+    this.finishRecording();
+  }
+
+  private onRecorderStopped() {
+    const type = this.recorder?.mimeType || 'audio/webm';
+    const blob = new Blob(this.chunks, { type });
+    this.releaseStream();
+
+    if (this.cancelled || !blob.size) return;
+
+    const ext = type.includes('mp4') ? 'm4a' : 'webm';
+    this.transcribing.set(true);
+
+    this.bot.transcribe(blob, `question.${ext}`).subscribe({
+      next: res => {
+        this.transcribing.set(false);
+        const text = (res.text || '').trim();
+        if (!text) {
+          this.error.set('לא זיהינו מה נאמר. נסו שוב או כתבו את השאלה.');
+          return;
+        }
+        this.draft = this.draft ? `${this.draft} ${text}` : text;
+        if (AUTO_SEND_AFTER_SPEECH) this.send();
+      },
+      error: err => {
+        this.transcribing.set(false);
+        this.error.set(
+          err?.error?.detail || 'לא הצלחנו לתמלל את ההקלטה. נסו שוב.'
+        );
+      },
+    });
+  }
+
+  private releaseStream() {
+    // Without this the browser keeps showing the "recording" indicator and the
+    // microphone stays held open.
+    this.stream?.getTracks().forEach(t => t.stop());
+    this.stream = undefined;
+    this.recorder = undefined;
+  }
+
+  private clearTimers() {
+    if (this.timer) clearInterval(this.timer);
+    if (this.stopAt) clearTimeout(this.stopAt);
+    this.timer = undefined;
+    this.stopAt = undefined;
+  }
+
+  // ------------------------------------------------------------------ speech
+
+  toggleSpeak(index: number, text: string) {
+    if (this.speaking() === index) {
+      this.stopSpeaking();
+      return;
+    }
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    if (this.heVoice) u.voice = this.heVoice;
+    u.lang = this.heVoice?.lang || 'he-IL';
+    u.onend = () => this.speaking.set(null);
+    u.onerror = () => this.speaking.set(null);
+    this.speaking.set(index);
+    speechSynthesis.speak(u);
+  }
+
+  private stopSpeaking() {
+    if (!this.isBrowser || !('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    this.speaking.set(null);
+  }
+
+  // -------------------------------------------------------------------- chat
 
   send() {
     const question = this.draft.trim();
@@ -365,5 +713,14 @@ export class BotWidgetComponent implements AfterViewChecked {
     if (!el) return;
     this.scrollPending = false;
     el.scrollTop = el.scrollHeight;
+  }
+
+  ngOnDestroy() {
+    this.clearTimers();
+    this.releaseStream();
+    if (this.isBrowser && 'speechSynthesis' in window) {
+      speechSynthesis.removeEventListener('voiceschanged', this.loadVoice);
+      speechSynthesis.cancel();
+    }
   }
 }
