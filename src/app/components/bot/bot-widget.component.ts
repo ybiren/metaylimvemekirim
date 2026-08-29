@@ -39,6 +39,19 @@ const MAX_RECORDING_MS = 60_000;
  *  and releasing ends the recording. */
 const TAP_THRESHOLD_MS = 300;
 
+/** Anything shorter than this holds no speech, and Whisper answers silence by
+ *  inventing a sentence rather than returning nothing - so it is discarded
+ *  here instead of being uploaded. The usual cause is the first use, where the
+ *  permission prompt eats the whole press. */
+const MIN_RECORDING_MS = 700;
+
+/** Peak amplitude, 0-127 away from the silent midpoint, that a recording has to
+ *  reach to count as speech. Whisper answers silence with a confident stock
+ *  phrase - in Hebrew when Hebrew is requested - so silence has to be caught
+ *  here rather than filtered out of the transcript afterwards. Deliberately
+ *  low: wrongly rejecting a quiet speaker is worse than the odd invented line. */
+const SILENCE_PEAK = 5;
+
 @Component({
   selector: 'app-bot-widget',
   standalone: true,
@@ -462,8 +475,12 @@ export class BotWidgetComponent implements AfterViewChecked, OnDestroy {
   private chunks: Blob[] = [];
   private cancelled = false;
   private pressedAt = 0;
+  private startedAt = 0;
   private holding = false;
   private timer?: ReturnType<typeof setInterval>;
+  private audioCtx?: AudioContext;
+  private analyser?: AnalyserNode;
+  private peak = 0;
   private stopAt?: ReturnType<typeof setTimeout>;
   private heVoice: SpeechSynthesisVoice | null = null;
 
@@ -539,6 +556,9 @@ export class BotWidgetComponent implements AfterViewChecked, OnDestroy {
 
   private async startRecording() {
     this.error.set('');
+    // Starting a recording replaces whatever is in the box - a new question is
+    // being asked, not added to the last one.
+    this.draft = '';
     this.cancelled = false;
     this.chunks = [];
 
@@ -559,18 +579,54 @@ export class BotWidgetComponent implements AfterViewChecked, OnDestroy {
     }
 
     const mime = this.pickMimeType();
-    this.recorder = new MediaRecorder(this.stream, mime ? { mimeType: mime } : undefined);
+    // MediaRecorder's default opus bitrate is low enough to blur consonants,
+    // which Hebrew recognition is sensitive to. 128kbps of speech is still a
+    // few hundred KB a minute, well inside the server's 8MB cap.
+    this.recorder = new MediaRecorder(this.stream, {
+      ...(mime ? { mimeType: mime } : {}),
+      audioBitsPerSecond: 128_000,
+    });
     this.recorder.ondataavailable = e => {
       if (e.data.size) this.chunks.push(e.data);
     };
     this.recorder.onstop = () => this.onRecorderStopped();
     this.recorder.start();
 
+    this.watchLevel();
+
     this.recording.set(true);
     this.elapsedMs.set(0);
     const startedAt = Date.now();
-    this.timer = setInterval(() => this.elapsedMs.set(Date.now() - startedAt), 250);
+    this.startedAt = startedAt;
+    this.timer = setInterval(() => {
+      this.elapsedMs.set(Date.now() - startedAt);
+      this.sampleLevel();
+    }, 100);
     this.stopAt = setTimeout(() => this.finishRecording(), MAX_RECORDING_MS);
+  }
+
+  /** Taps the live stream so we can tell speech from an open mic in a quiet
+   *  room. Failure here is not fatal - it just means no silence check. */
+  private watchLevel() {
+    this.peak = 0;
+    try {
+      this.audioCtx = new AudioContext();
+      this.analyser = this.audioCtx.createAnalyser();
+      this.analyser.fftSize = 1024;
+      this.audioCtx.createMediaStreamSource(this.stream!).connect(this.analyser);
+    } catch {
+      this.analyser = undefined;
+    }
+  }
+
+  private sampleLevel() {
+    if (!this.analyser) return;
+    const buf = new Uint8Array(this.analyser.fftSize);
+    this.analyser.getByteTimeDomainData(buf);
+    for (const v of buf) {
+      const amp = Math.abs(v - 128);
+      if (amp > this.peak) this.peak = amp;
+    }
   }
 
   /** Chrome and Android produce webm/opus; iOS Safari only does mp4/aac. */
@@ -603,6 +659,18 @@ export class BotWidgetComponent implements AfterViewChecked, OnDestroy {
 
     if (this.cancelled || !blob.size) return;
 
+    if (Date.now() - this.startedAt < MIN_RECORDING_MS) {
+      this.error.set('ההקלטה קצרה מדי. החזיקו את הכפתור ודברו.');
+      return;
+    }
+
+    // analyser undefined means the level check could not run; upload anyway
+    // rather than blocking a recording we simply could not measure.
+    if (this.analyser && this.peak < SILENCE_PEAK) {
+      this.error.set('לא שמענו כלום. בדקו את המיקרופון ונסו שוב.');
+      return;
+    }
+
     const ext = type.includes('mp4') ? 'm4a' : 'webm';
     this.transcribing.set(true);
 
@@ -611,10 +679,12 @@ export class BotWidgetComponent implements AfterViewChecked, OnDestroy {
         this.transcribing.set(false);
         const text = (res.text || '').trim();
         if (!text) {
+          // The server discards transcriptions with no Hebrew in them - those
+          // are Whisper inventing words over silence, not something said.
           this.error.set('לא זיהינו מה נאמר. נסו שוב או כתבו את השאלה.');
           return;
         }
-        this.draft = this.draft ? `${this.draft} ${text}` : text;
+        this.draft = text;
         if (AUTO_SEND_AFTER_SPEECH) this.send();
       },
       error: err => {
@@ -632,6 +702,9 @@ export class BotWidgetComponent implements AfterViewChecked, OnDestroy {
     this.stream?.getTracks().forEach(t => t.stop());
     this.stream = undefined;
     this.recorder = undefined;
+    this.analyser = undefined;
+    this.audioCtx?.close().catch(() => {});
+    this.audioCtx = undefined;
   }
 
   private clearTimers() {

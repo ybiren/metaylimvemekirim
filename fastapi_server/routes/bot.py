@@ -7,6 +7,7 @@ so the API key stays on the server.
 
 import logging
 import os
+import re
 import time
 from pathlib import Path
 from typing import Dict, List, Literal, Optional
@@ -32,7 +33,18 @@ GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_TRANSCRIBE_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 # Groq meters audio on its own quota (2,000 requests/day), separate from the
 # chat token budget - voice input costs the /ask endpoint nothing.
-GROQ_STT_MODEL = os.getenv("GROQ_STT_MODEL", "whisper-large-v3-turbo")
+# Not the -turbo variant: it is distilled for speed and loses accuracy on
+# lower-resource languages, which showed up as mangled Hebrew ("עשוד" for
+# "לעשות"). Full large-v3 is slower per request and worth it here.
+GROQ_STT_MODEL = os.getenv("GROQ_STT_MODEL", "whisper-large-v3")
+
+# Whisper takes a prompt as pseudo-context to bias its vocabulary. Naming the
+# site's own words stops it guessing at them phonetically. Keep it short -
+# a long prompt makes Whisper start echoing it back as transcript.
+STT_PROMPT = (
+    "שאלות של גולשים על אתר פגוש אותי: אירועים, טיולים, מסיבות, קהילות, "
+    "אלבומי תמונות, בלוגים, צ'אט, הודעות, הרשמה, פרופיל, חינם, קידום."
+)
 
 # The knowledge base never changes while the process runs - read it once
 # instead of hitting the disk on every question.
@@ -53,6 +65,13 @@ _audio_hits: Dict[str, List[float]] = {}
 # The widget caps recordings at 60s; this is the backstop for anything that
 # posts here directly. Opus at 60s is well under a megabyte.
 MAX_AUDIO_BYTES = 8 * 1024 * 1024
+
+# Whisper never returns an empty string. Given silence or a fraction of a
+# second of audio it invents a sentence, often in an unrelated language
+# ("Ert pu einhvern vega ad harta?"). Asking for Hebrew does not stop it. Any
+# result without a single Hebrew letter is one of these, not something the
+# user said.
+HEBREW_RE = re.compile(r"[֐-׿]")
 
 NO_ANSWER = 'לא מצאתי את זה במידע שיש לי. אפשר לכתוב לנו בדף "צור קשר" ונשמח לעזור.'
 
@@ -213,7 +232,13 @@ async def transcribe(request: Request, file: UploadFile = File(...)):
                 },
                 # Whisper auto-detects language, but saying "he" stops it
                 # transliterating Hebrew into Latin characters on short clips.
-                data={"model": GROQ_STT_MODEL, "language": "he"},
+                data={
+                    "model": GROQ_STT_MODEL,
+                    "language": "he",
+                    "prompt": STT_PROMPT,
+                    # Greedy decoding invents less than sampling does.
+                    "temperature": "0",
+                },
             )
     except httpx.HTTPError as exc:
         log.error("Groq transcription failed: %s", exc)
@@ -236,6 +261,10 @@ async def transcribe(request: Request, file: UploadFile = File(...)):
         log.error("Unexpected transcription response: %s", exc)
         raise HTTPException(status_code=502, detail="לא הצלחנו לתמלל את ההקלטה.")
 
-    # Whisper emits a stock phrase for silence rather than an empty string; the
-    # widget shows "say it again" instead of putting nonsense in the box.
+    if text and not HEBREW_RE.search(text):
+        log.info("Discarding non-Hebrew transcription (hallucination): %r", text[:80])
+        text = ""
+
+    # An empty string tells the widget to say "we did not catch that" rather
+    # than dropping invented words into the question box.
     return {"text": text[:MAX_QUESTION_CHARS]}
