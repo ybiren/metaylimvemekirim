@@ -11,6 +11,28 @@ export function hebrewNameValidator(ctrl: AbstractControl): ValidationErrors | n
   return /^[א-ת\s'-]+$/.test(v) ? null : { hebrewOnly: true };
 }
 
+/** Strips a phone down to what is worth storing: a leading + and digits.
+ *  Chrome autofills in whatever shape it saved - "(050) 123-4567",
+ *  "+972 50-123-4567" - and without this those reach the database verbatim. */
+export function normalizePhone(value: string): string {
+  const v = (value ?? '').trim();
+  const digits = v.replace(/\D/g, '');
+  return v.startsWith('+') ? `+${digits}` : digits;
+}
+
+/** Counts digits rather than characters, so separators and an international
+ *  prefix do not decide whether a number is valid. 9 covers an Israeli landline
+ *  without area code padding, 15 is the E.164 maximum. */
+export function phoneValidator(ctrl: AbstractControl): ValidationErrors | null {
+  const raw = (ctrl.value ?? '').trim();
+  if (!raw) return null; // Validators.required owns the empty case
+  if (!/^[0-9+\-\s().]*$/.test(raw)) return { phoneChars: true };
+  const digits = raw.replace(/\D/g, '').length;
+  if (digits < 9) return { phoneShort: true };
+  if (digits > 15) return { phoneLong: true };
+  return null;
+}
+
 export function passwordMatchValidator(group: AbstractControl): ValidationErrors | null {
   const p1 = group.get('password')?.value ?? '';
   const p2 = group.get('password2')?.value ?? '';

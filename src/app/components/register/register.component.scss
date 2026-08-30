@@ -177,6 +177,13 @@ img.avatar-preview {
 /* Errors & invalid groups */
 .errors small { color: #c62828; }
 
+.field .note {
+  display: block;
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
 .group-invalid .field input,
 .group-invalid .field select {
   border-color: #c62828;

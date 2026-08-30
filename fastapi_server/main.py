@@ -67,7 +67,8 @@ from helper import (
     like_user,
     freeze_user_db,
     delete_user_db,
-    set_email_verified
+    set_email_verified,
+    mask_phone
 )
 
 from sendgrid_test.send_mail import send_mail
@@ -137,6 +138,20 @@ app.include_router(bot_router)
 # ---------------------------------------------------------------------
 # Locks
 # ---------------------------------------------------------------------
+def public_user(u) -> UserBase:
+    """A user as other members may see them - phone masked.
+
+    Built through model_copy rather than by assigning to the ORM object: the
+    row is still attached to the session, and mutating it would let the mask be
+    flushed to the database on the next commit.
+    """
+    return UserBase.model_validate(u).model_copy(update={"phone": mask_phone(u.phone)})
+
+
+def public_users(rows) -> list[UserBase]:
+    return [public_user(u) for u in rows]
+
+
 users_lock = asyncio.Lock()
 messages_lock = asyncio.Lock()
 
@@ -565,7 +580,7 @@ async def get_users(payload: dict = Body(...), db: Session = Depends(get_db)):
         )
       )
      
-    return q.all()
+    return public_users(q.all())
     '''
     ensure_data_file(DATA_DIR, USERS_PATH)
     async with users_lock:
@@ -664,7 +679,7 @@ async def search_users(payload: Dict[str, Any], db: Session = Depends(get_db)):
     if c_online:
         users = [u for u in users if is_online(u.id)]
 
-    return users
+    return public_users(users)
        
 
 @app.post("/isLiked")
@@ -781,8 +796,23 @@ async def list_chat_rooms(db: Session = Depends(get_db)):
     return get_system_chat_rooms(db)
 
 @app.post("/user/{userid}", response_model=UserBase)
-async def get_user_by_id(userid: int, db: Session = Depends(get_db)):
-  return get_user(db,userid)
+async def get_user_by_id(
+    userid: int,
+    payload: dict = Body(default={}),
+    db: Session = Depends(get_db),
+):
+  user = get_user(db, userid)
+  if not user:
+    return user
+
+  # The registration form loads a user in order to save them again, so it needs
+  # the real number back - blanking it there would write the mask over the
+  # stored phone. Every other caller (a profile page) gets it masked.
+  # Nothing here proves the caller is the owner; no endpoint in this app does.
+  if payload.get("forEdit"):
+    return user
+
+  return public_user(user)
 
 @app.post("/freeze_user")
 async def freeze_user(payload: dict = Body(...), db: Session = Depends(get_db)):

@@ -32,7 +32,6 @@
       <div><strong>ת. לידה:</strong> {{ u.birth_day || '—' }}/{{ u.birth_month || '—' }}/{{ u.birth_year || '—' }}</div>
       <div><strong>מין:</strong> {{ textByValue(gender, u.gender)  || '—' }}</div>
       <div><strong>איזור:</strong> {{ textByValue(regions, u.country) || '—' }}</div>
-      <div><strong>טלפון:</strong> {{ u.phone || '—' }}</div>
       <div><strong>מצב משפחתי:</strong> {{ textByValue(familyStatus, u.ff) || '—' }}</div>
       <div><strong>הרגלי עישון:</strong> {{ textByValue(smokingStatus, u.smoking) || '—' }}</div>
     </div>

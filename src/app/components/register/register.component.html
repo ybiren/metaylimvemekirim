@@ -86,12 +86,15 @@
       </div>
     </div>
 
-    <label class="label" for="c_pcell">טלפון נייד</label>
+    <label class="label" for="c_pcell">טלפון נייד*</label>
     <div class="field">
-      <input id="c_pcell" type="text" formControlName="c_pcell" maxlength="13" placeholder="טלפון נייד" />
+      <input id="c_pcell" type="tel" inputmode="tel" autocomplete="tel" formControlName="c_pcell" maxlength="20" placeholder="טלפון נייד" />
+      <small class="note">(הטלפון שמור במערכת ולא יוצג בפרופיל)</small>
       <div class="errors" *ngIf="f.c_pcell.touched && f.c_pcell.invalid">
-        <small *ngIf="f.c_pcell.errors?.maxlength">עד 13 תווים</small>
-        <small *ngIf="f.c_pcell.errors?.pattern">ספרות, רווחים, + ו־- בלבד</small>
+        <small *ngIf="f.c_pcell.errors?.required">שדה חובה</small>
+        <small *ngIf="f.c_pcell.errors?.phoneChars">ספרות, רווחים, + ( ) ו־- בלבד</small>
+        <small *ngIf="f.c_pcell.errors?.phoneShort">מספר קצר מדי</small>
+        <small *ngIf="f.c_pcell.errors?.phoneLong">מספר ארוך מדי</small>
       </div>
     </div>
 

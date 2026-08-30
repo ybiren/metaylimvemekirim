@@ -820,6 +820,23 @@ async def get_user_and_index_by_email(
     return users[idx], idx, users
 
 
+def mask_phone(value: Optional[str]) -> Optional[str]:
+    """Hide a phone number from everyone except its owner.
+
+    Registration promises the number is stored but never shown, and the profile
+    page no longer prints it - but it still travelled in the JSON, so one
+    request for the user list handed over everyone's number at once. Keeping
+    the last two digits lets an owner recognise their own record without the
+    value being usable to contact anyone.
+    """
+    if not value:
+        return value
+    digits = [c for c in value if c.isdigit()]
+    if len(digits) <= 2:
+        return "*" * len(digits)
+    return "*" * (len(digits) - 2) + "".join(digits[-2:])
+
+
 def sanitize_user_for_response(u: Dict[str, Any]) -> Dict[str, Any]:
     redacted = dict(u)
     redacted.pop("password", None)

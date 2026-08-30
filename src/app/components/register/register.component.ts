@@ -10,7 +10,7 @@ import { RegisterService } from '../../services/register.service';
 import { AlbumService } from '../../services/album.service';
 import { UsersService } from '../../services/users.service';
 
-import { rangeValidator, hebrewNameValidator, passwordMatchValidator, emailExistsValidator } from '../../validators/form-validators';
+import { rangeValidator, hebrewNameValidator, phoneValidator, normalizePhone, passwordMatchValidator, emailExistsValidator } from '../../validators/form-validators';
 import { IOption, IUser } from '../../interfaces';
 import { getCurrentUserId } from '../../core/current-user';
 import { environment } from '../../../environments/environment';
@@ -107,7 +107,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
       c_birth_month: [0, [Validators.min(1), Validators.max(12)]],
       c_birth_year: [0, [Validators.min(1900)]],
       c_country: [0, [Validators.required]],
-      c_pcell: ['', [Validators.maxLength(13), Validators.pattern(/^[0-9+\-\s]*$/)]],
+      c_pcell: ['', [Validators.required, phoneValidator]],
       c_email: ['', [Validators.required, Validators.email]],
       c_url: ['', [Validators.pattern(/https?:\/\/[\w\-]+(\.[\w\-]+)+[/#?]?.*$/)]],
       c_fb: [''],
@@ -393,12 +393,12 @@ export class RegisterComponent implements OnInit, OnDestroy {
   private async fetchUser() {
         const found = JSON.parse(localStorage.getItem('user') ?? 'null') as IUser | null   ;
         if(found) {
-          this.user.set(await firstValueFrom(this.usersSrv.getUser(found.id)));
+          this.user.set(await firstValueFrom(this.usersSrv.getUser(found.id, true)));
         }
         else {// navigation from admin_user
           const admin_for_user = this.activatedRoute.snapshot.queryParamMap.get('admin_for_user');
           if(admin_for_user) {
-            this.user.set(await firstValueFrom(this.usersSrv.getUser(admin_for_user as any)));
+            this.user.set(await firstValueFrom(this.usersSrv.getUser(admin_for_user as any, true)));
           }
         }
 
@@ -492,7 +492,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     fd.append('c_birth_month', String(this.f.c_birth_month.value ?? 0));
     fd.append('c_birth_year', String(this.f.c_birth_year.value ?? 0));
     fd.append('c_country', String(this.f.c_country.value ?? 0));
-    fd.append('c_pcell', String(this.f.c_pcell.value ?? ''));
+    fd.append('c_pcell', normalizePhone(String(this.f.c_pcell.value ?? '')));
     fd.append('c_email', String(this.f.c_email.value ?? ''));
     fd.append('c_ff', String(this.f.c_ff.value ?? 0));
     fd.append('c_details', String(this.f.c_details.value ?? ''));

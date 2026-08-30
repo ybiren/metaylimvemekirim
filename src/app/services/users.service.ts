@@ -69,8 +69,10 @@ export class UsersService {
     return this.http.post<boolean>(`${this.baseUrl}/isLiked`, {from_user_id, to_user_id});
   }
 
-  getUser(userId: number): Observable<any> {
-    return this.http.post<any[]>(`${this.baseApi}/user/${userId}`,{});
+  /** @param forEdit the registration form loads a user in order to save them
+   *  again, so it needs the unmasked phone back. Viewers get it masked. */
+  getUser(userId: number, forEdit = false): Observable<any> {
+    return this.http.post<any[]>(`${this.baseApi}/user/${userId}`, { forEdit });
   }
 
   getAllUsers(onlyUsersThatLikedMe = null) {
