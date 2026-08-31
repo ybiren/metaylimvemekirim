@@ -16,9 +16,22 @@ html, body {
      phone. html/body have overflow-x: hidden, so there is no scrollbar to
      give it away; the page is simply clipped at the edges. */
   box-sizing: border-box;
-  width: min(95%, 800px);
+  /* 840 = the original 800px of content plus the 20px gutters, which now sit
+     inside the width rather than outside it. Keeps the desktop column exactly
+     the width it has always been. */
+  width: min(95%, 840px);
   margin: 0 auto;
   padding: 20px;
+}
+
+/* With border-box the padding comes out of the width, so on a phone the 5%
+   margin plus 40px of padding costs about a fifth of the screen. Give the
+   narrow case the full width and a smaller gutter. */
+@media (max-width: 600px) {
+  .app-shell {
+    width: 100%;
+    padding: 12px;
+  }
 }
 
 /* =========================
