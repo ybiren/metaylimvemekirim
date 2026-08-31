@@ -343,6 +343,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  max-width: 100%;
 
   padding: var(--pad-y) var(--pad-x);
   background: #f2f6f4;
@@ -350,7 +351,10 @@
   position: relative;
 }
 
-.chat__emoji { position: relative; }
+/* Neither control may shrink or be pushed out of the row: the input is the
+   only flexible part, so a narrow dialog squeezes it rather than sliding the
+   send and emoji buttons past the edge. */
+.chat__emoji { position: relative; flex: none; }
 
 .chat__emoji-btn {
   width: 38px;
@@ -421,6 +425,7 @@
 }
 
 .chat__send {
+  flex: none;
   border: 0;
   border-radius: 999px;
   padding: 8px 14px;

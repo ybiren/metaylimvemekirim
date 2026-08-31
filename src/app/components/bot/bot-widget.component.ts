@@ -10,6 +10,8 @@ import {
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Dialog } from '@angular/cdk/dialog';
+import { Subscription } from 'rxjs';
 import { BotService, BotTurn } from '../../services/bot.service';
 
 interface BotMessage {
@@ -52,11 +54,19 @@ const MIN_RECORDING_MS = 700;
  *  low: wrongly rejecting a quiet speaker is worse than the odd invented line. */
 const SILENCE_PEAK = 5;
 
+/** Movement under this reads as a tap that opens the chat; past it the press is
+ *  a drag and must not also toggle the panel. */
+const DRAG_SLOP_PX = 6;
+
+/** Where the user parked the button, so it stays put between visits. */
+const FAB_POS_KEY = 'bot-fab-offset';
+
 @Component({
   selector: 'app-bot-widget',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
+    @if (!dialogOpen()) {
     @if (open()) {
       <section class="bot-panel" dir="rtl">
         <header class="bot-panel__head">
@@ -141,8 +151,16 @@ const SILENCE_PEAK = 5;
     <button
       type="button"
       class="bot-fab"
+      [class.bot-fab--dragging]="dragging()"
+      [style.transform]="'translate(' + offset().x + 'px,' + offset().y + 'px)'"
       [attr.aria-label]="open() ? 'סגירת הצ׳אט' : 'פתיחת הצ׳אט'"
-      (click)="toggle()">{{ open() ? '✕' : '💬' }}</button>
+      #fab
+      (pointerdown)="onFabDown($event)"
+      (pointermove)="onFabMove($event)"
+      (pointerup)="onFabUp($event)"
+      (pointercancel)="onFabUp($event)"
+      (click)="onFabClick()">{{ open() ? '✕' : '💬' }}</button>
+    }
   `,
   styles: [
     `
@@ -150,7 +168,10 @@ const SILENCE_PEAK = 5;
         position: fixed;
         bottom: 16px;
         inset-inline-start: 16px;
-        z-index: 1200;
+        /* Must stay under the CDK overlay container (1000). Above it, this
+           button covers the chat window's send control - which sits in the
+           same bottom-start corner in RTL - and swallows the tap. */
+        z-index: 900;
         display: flex;
         flex-direction: column;
         align-items: flex-start;
@@ -161,6 +182,9 @@ const SILENCE_PEAK = 5;
 
       /* Floating button */
       .bot-fab {
+        /* the drag is handled in script, so the browser must not treat the
+           gesture as a page scroll */
+        touch-action: none;
         width: 56px;
         height: 56px;
         border-radius: 50%;
@@ -176,7 +200,13 @@ const SILENCE_PEAK = 5;
 
       .bot-fab:hover {
         background: #1d8b4a;
-        transform: translateY(-2px);
+      }
+
+      /* no transition while dragging, or the button lags behind the finger */
+      .bot-fab--dragging {
+        transition: none;
+        cursor: grabbing;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.35);
       }
 
       /* Panel */
@@ -449,7 +479,9 @@ const SILENCE_PEAK = 5;
 export class BotWidgetComponent implements AfterViewChecked, OnDestroy {
 
   private bot = inject(BotService);
+  private dialog = inject(Dialog);
   private log = viewChild<ElementRef<HTMLDivElement>>('log');
+  private fab = viewChild<ElementRef<HTMLButtonElement>>('fab');
   private isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   open = signal(false);
@@ -467,6 +499,13 @@ export class BotWidgetComponent implements AfterViewChecked, OnDestroy {
   canSpeak = signal(false);
   speaking = signal<number | null>(null);
 
+  // draggable launcher - it sits where the chat window's send button does
+  offset = signal<{ x: number; y: number }>({ x: 0, y: 0 });
+  dragging = signal(false);
+
+  /** A chat or profile dialog is modal: nothing of ours belongs on top of it. */
+  dialogOpen = signal(false);
+
   draft = '';
 
   private scrollPending = false;
@@ -483,6 +522,10 @@ export class BotWidgetComponent implements AfterViewChecked, OnDestroy {
   private peak = 0;
   private stopAt?: ReturnType<typeof setTimeout>;
   private heVoice: SpeechSynthesisVoice | null = null;
+  private dragFrom = { x: 0, y: 0 };
+  private dragOrigin = { x: 0, y: 0 };
+  private dragMoved = false;
+  private dialogSubs: Subscription[] = [];
 
   constructor() {
     if (!this.isBrowser) return;
@@ -492,6 +535,15 @@ export class BotWidgetComponent implements AfterViewChecked, OnDestroy {
     this.canRecord.set(
       !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined'
     );
+
+    this.restoreOffset();
+
+    this.dialogSubs.push(
+      this.dialog.afterOpened.subscribe(() => this.dialogOpen.set(true)),
+      this.dialog.afterAllClosed.subscribe(() => this.dialogOpen.set(false))
+    );
+    window.addEventListener('resize', this.reclamp);
+    window.addEventListener('orientationchange', this.reclamp);
 
     if ('speechSynthesis' in window) {
       this.loadVoice();
@@ -511,6 +563,103 @@ export class BotWidgetComponent implements AfterViewChecked, OnDestroy {
     const s = Math.floor(this.elapsedMs() / 1000);
     return `0:${String(s).padStart(2, '0')}`;
   }
+
+  // ------------------------------------------------------------ moving the FAB
+
+  onFabDown(event: PointerEvent) {
+    this.dragFrom = { x: event.clientX, y: event.clientY };
+    this.dragOrigin = { ...this.offset() };
+    this.dragMoved = false;
+    this.dragging.set(true);
+    // keeps the moves coming even when the finger leaves the button
+    (event.target as HTMLElement).setPointerCapture?.(event.pointerId);
+  }
+
+  onFabMove(event: PointerEvent) {
+    if (!this.dragging()) return;
+    const dx = event.clientX - this.dragFrom.x;
+    const dy = event.clientY - this.dragFrom.y;
+
+    if (!this.dragMoved && Math.hypot(dx, dy) < DRAG_SLOP_PX) return;
+    this.dragMoved = true;
+    event.preventDefault();
+
+    this.offset.set(
+      this.clamp(
+        event.target as HTMLElement,
+        this.dragOrigin.x + dx,
+        this.dragOrigin.y + dy
+      )
+    );
+  }
+
+  onFabUp(event: PointerEvent) {
+    if (!this.dragging()) return;
+    this.dragging.set(false);
+    (event.target as HTMLElement).releasePointerCapture?.(event.pointerId);
+
+    if (this.dragMoved) this.saveOffset();
+  }
+
+  /** Click also covers Enter and Space, so the button stays usable from a
+   *  keyboard - pointerup alone would have broken that. */
+  onFabClick() {
+    if (this.dragMoved) {
+      this.dragMoved = false; // consumed: the next click is a real one
+      return;
+    }
+    this.toggle();
+  }
+
+  /** Keeps the button fully on screen, whatever it was dragged over. */
+  private clamp(el: HTMLElement, x: number, y: number) {
+    const r = el.getBoundingClientRect();
+    // where the button sits with the offset currently applied
+    const left = r.left - this.offset().x;
+    const top = r.top - this.offset().y;
+    const margin = 8;
+    const minX = margin - left;
+    const maxX = window.innerWidth - r.width - margin - left;
+    const minY = margin - top;
+    const maxY = window.innerHeight - r.height - margin - top;
+    return {
+      x: Math.min(Math.max(x, minX), maxX),
+      y: Math.min(Math.max(y, minY), maxY),
+    };
+  }
+
+  /** A spot that was on screen in landscape can be outside it in portrait. */
+  private reclamp = () => {
+    const el = this.fab()?.nativeElement;
+    if (!el) return;
+    const o = this.offset();
+    const next = this.clamp(el, o.x, o.y);
+    if (next.x !== o.x || next.y !== o.y) {
+      this.offset.set(next);
+      this.saveOffset();
+    }
+  };
+
+  private restoreOffset() {
+    try {
+      const raw = localStorage.getItem(FAB_POS_KEY);
+      if (!raw) return;
+      const p = JSON.parse(raw);
+      if (typeof p?.x === 'number' && typeof p?.y === 'number') this.offset.set(p);
+    } catch {
+      // private browsing, or a value from an older build - the default is fine
+    }
+  }
+
+  private saveOffset() {
+    try {
+      localStorage.setItem(FAB_POS_KEY, JSON.stringify(this.offset()));
+    } catch {
+      // not being able to remember the spot is not worth breaking the drag
+    }
+  }
+
+  // ---------------------------------------------------------------------- chat
 
   toggle() {
     this.open.update(v => !v);
@@ -789,6 +938,11 @@ export class BotWidgetComponent implements AfterViewChecked, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.dialogSubs.forEach(s => s.unsubscribe());
+    if (this.isBrowser) {
+      window.removeEventListener('resize', this.reclamp);
+      window.removeEventListener('orientationchange', this.reclamp);
+    }
     this.clearTimers();
     this.releaseStream();
     if (this.isBrowser && 'speechSynthesis' in window) {

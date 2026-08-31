@@ -143,6 +143,10 @@
 }
 
 /* Keep two columns even on small screens (no stacking) */
-@media (max-width: 720px) {
-  .grid { grid-template-columns: max-content 1fr; }
+/* This block used to repeat the desktop value (max-content 1fr) verbatim, so
+   it changed nothing: the label column stayed max-content at every width and a
+   long label such as "חברים בעלי תמונות בלבד" pushed the grid wider than the
+   screen. Stacking is the only thing that reliably fits a narrow phone. */
+@media (max-width: 720px), (pointer: coarse) and (max-width: 1024px) {
+  .grid { grid-template-columns: 1fr; }
 }

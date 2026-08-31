@@ -15,6 +15,7 @@ import { ShareUrlService } from '../../services/share-url.service';
 import { LoginService } from '../../services/login.service';
 import { FreezeProfileDialogComponent, FreezeProfileResult } from '../user-details/freeze-profile-dialog.component';
 import { DeleteProfileDialogComponent, DeleteProfileResult } from '../user-details/delete-profile-dialog.component';
+import { isMobileLayout } from '../../core/is-mobile';
 
 
 @Component({
@@ -92,7 +93,7 @@ export class TopMenuComponent implements OnInit, OnDestroy {
   }
 
   openChat(peerId: number, lastPreview: string, peerName: string) {
-    const isMobile = window.innerWidth < 600;
+    const isMobile = isMobileLayout();
     if(lastPreview.includes("קבלת לייק מ")) {
       this.router.navigate([`/user/${peerId}`]);
     } else {
@@ -109,7 +110,7 @@ export class TopMenuComponent implements OnInit, OnDestroy {
   }
 
   openReminder(cId: string, cName: string) {
-    const isMobile = window.innerWidth < 600;
+    const isMobile = isMobileLayout();
 
     this.dialog.open(SendReminderComponent, {
       data: { cId, cName },

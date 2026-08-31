@@ -5,6 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ChatService } from '../../services/chat.service';
 import { Dialog } from '@angular/cdk/dialog';
 import { ChatWindowComponent } from '../chat-window/chat-window.component';
+import { isMobileLayout } from '../../core/is-mobile';
 
 export interface ChatRoom {
   id: number;
@@ -56,7 +57,7 @@ export class ChatSystemRoomsComponent {
   }
 
   openChat(chatId: number, roomName: string) {
-    const isMobile = window.innerWidth < 600;
+    const isMobile = isMobileLayout();
     this.dialog.open(ChatWindowComponent, {
           data: { peerId: chatId , roomName },
           panelClass: isMobile ? 'im-dialog--mobile' : 'im-dialog--desktop',

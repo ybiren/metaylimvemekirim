@@ -20,6 +20,7 @@ import { ReportProfileDialogComponent, ReportProfileResult } from './report-prof
 import { ShareUrlService } from '../../services/share-url.service';
 import { ChatService } from '../../services/chat.service';
 import { SMOKING_STATUS_TOKEN } from '../../consts/smoking-status.consts';
+import { isMobileLayout } from '../../core/is-mobile';
 
 
 @Component({
@@ -191,7 +192,7 @@ export class UserDetailsComponent implements OnInit {
     const me = this.loggedInUser();
     if (!u || !me) return;
 
-    const isMobile = window.innerWidth < 600;
+    const isMobile = isMobileLayout();
     this.dialog.open(ChatWindowComponent, {
       data: { peerId: this.id, peerName: this.user().name },
       panelClass: isMobile ? 'im-dialog-mobile' : 'im-dialog-desktop',
@@ -213,7 +214,7 @@ export class UserDetailsComponent implements OnInit {
     const u = this.user();
     if (!u) return;
     const me = this.loggedInUser();
-    const isMobile = window.innerWidth < 600;
+    const isMobile = isMobileLayout();
 
     const ref = this.dialog.open<ReportProfileResult>(ReportProfileDialogComponent, {
       data: { reportedUserName: u.name, isMobile },

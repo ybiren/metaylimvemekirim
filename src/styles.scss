@@ -11,6 +11,11 @@ html, body {
 
 /* Optional page wrapper if you want a max width on pages (not dialogs) */
 .app-shell {
+  /* Without this the 20px padding is added ON TOP of the 95% width, so the
+     shell is 95vw + 40px - wider than the screen on every page, on every
+     phone. html/body have overflow-x: hidden, so there is no scrollbar to
+     give it away; the page is simply clipped at the edges. */
+  box-sizing: border-box;
   width: min(95%, 800px);
   margin: 0 auto;
   padding: 20px;
