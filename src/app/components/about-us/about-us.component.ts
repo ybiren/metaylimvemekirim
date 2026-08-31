@@ -11,12 +11,12 @@ import { CommonModule } from '@angular/common';
       <header class="about-header">
         <div class="about-header__logo">
           <a routerLink="/home">
-            <img src="assets/images/logo.jpg" alt="פגוש אותי" />
+            <img src="assets/images/logo.jpg" alt="מטיילים ומכירים" />
           </a>
         </div>
 
         <div class="about-header__text">
-          <h1>אודות פגוש אותי</h1>
+          <h1>אודות מטיילים ומכירים</h1>
           <p>
             פורטל אירועים ורשת חברתית שמחברת בין אנשים, טיולים, מסיבות, קהילות
             ובלוגים – הכול במקום אחד, ללא עלות שימוש.
@@ -38,7 +38,7 @@ import { CommonModule } from '@angular/common';
         <!-- Long text column -->
         <article class="about-body">
           <p>
-            אתר <strong>פגוש אותי</strong> הוא פורטל אירועים ורשת חברתית. השימוש
+            אתר <strong>מטיילים ומכירים</strong> הוא פורטל אירועים ורשת חברתית. השימוש
             באתר <strong>חינמי</strong> – גם לפתיחת פרופיל אישי וגם ליצירת
             אירועים.
           </p>
@@ -79,7 +79,7 @@ import { CommonModule } from '@angular/common';
           </p>
 
           <p>מקווים שתיהנו מהגלישה באתר,</p>
-          <p><strong>צוות אתר פגוש אותי</strong></p>
+          <p><strong>צוות אתר מטיילים ומכירים</strong></p>
         </article>
 
         <!-- Feature cards grid -->

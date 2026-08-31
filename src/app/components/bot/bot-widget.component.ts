@@ -20,7 +20,7 @@ interface BotMessage {
 }
 
 const GREETING =
-  'שלום! אני העוזר של פגוש אותי. אפשר לשאול אותי כל שאלה על האתר – מה אפשר לעשות בו, האם יש עלות, איך פותחים פרופיל ועוד.';
+  'שלום! אני העוזר של מטיילים ומכירים. אפשר לשאול אותי כל שאלה על האתר – מה אפשר לעשות בו, האם יש עלות, איך פותחים פרופיל ועוד.';
 
 /** How many earlier turns travel with each question. The server trims to its
  *  own limit as well - this only keeps the request small. */
