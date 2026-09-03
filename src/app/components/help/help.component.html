@@ -1,49 +1,42 @@
-<div class="help-page" dir="rtl">
-  <div class="columns">
-    <!-- LEFT -->
-    <section class="panel">
-      <h2 class="panel-title">{{ leftTitle }}</h2>
+<section class="help-shell" dir="rtl">
+  <header class="help-header">
+    <h1>עזרה ומדריך שימוש</h1>
+    <p>כל מה שצריך לדעת כדי להשתמש באתר. לא מצאתם את מה שחיפשתם? אפשר לשאול את הבוט בתחתית המסך או לכתוב לנו.</p>
+    <a routerLink="/contact" class="help-cta">צור קשר</a>
+  </header>
 
-      <ul class="links">
-        <li class="link-row" *ngFor="let l of leftLinks">
-          <span class="bullet" aria-hidden="true"></span>
+  @if (loading()) {
+    <p class="help-state">טוען…</p>
+  } @else if (failed()) {
+    <p class="help-state help-state--error">
+      לא הצלחנו לטעון את המדריך כרגע. נסו לרענן את הדף, או
+      <a routerLink="/contact">כתבו לנו</a>.
+    </p>
+  } @else {
+    <nav class="help-toc" aria-label="תוכן העניינים">
+      @for (s of sections(); track s.title) {
+        <a [href]="'#h-' + $index">{{ s.title }}</a>
+      }
+    </nav>
 
-          <!-- פנימי -->
-          <a *ngIf="!l.external" class="link" [routerLink]="l.href">{{ l.text }}</a>
+    <div class="help-body">
+      @for (s of sections(); track s.title) {
+        <article class="help-section" [id]="'h-' + $index">
+          <h2>{{ s.title }}</h2>
 
-          <!-- חיצוני -->
-          <a *ngIf="l.external" class="link" [href]="l.href" target="_blank" rel="noopener">{{ l.text }}</a>
-        </li>
-      </ul>
-    </section>
+          @for (p of s.paragraphs; track $index) {
+            <p>{{ p }}</p>
+          }
 
-    <div class="divider" aria-hidden="true"></div>
-
-    <!-- RIGHT -->
-    <section class="panel">
-      <h2 class="panel-title">{{ rightTitle }}</h2>
-
-      <ul class="links compact">
-        <li class="link-row" *ngFor="let l of rightTopLinks">
-          <span class="bullet" aria-hidden="true"></span>
-          <a class="link" [routerLink]="l.href">{{ l.text }}</a>
-        </li>
-      </ul>
-
-      <p class="notice">
-        {{ rightNotice }}
-      </p>
-
-      <div class="preview">
-        <img class="preview-img" [src]="previewImageUrl" alt="תצוגה מקדימה" />
-      </div>
-
-      <ul class="links compact bottom">
-        <li class="link-row" *ngFor="let l of rightBottomLinks">
-          <span class="bullet" aria-hidden="true"></span>
-          <a class="link" [routerLink]="l.href">{{ l.text }}</a>
-        </li>
-      </ul>
-    </section>
-  </div>
-</div>
+          @if (s.bullets.length) {
+            <ul>
+              @for (b of s.bullets; track $index) {
+                <li>{{ b }}</li>
+              }
+            </ul>
+          }
+        </article>
+      }
+    </div>
+  }
+</section>

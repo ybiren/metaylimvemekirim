@@ -274,3 +274,17 @@ async def transcribe(request: Request, file: UploadFile = File(...)):
     # An empty string tells the widget to say "we did not catch that" rather
     # than dropping invented words into the question box.
     return {"text": text[:MAX_QUESTION_CHARS]}
+
+
+@bot_router.get("/knowledge")
+def knowledge():
+    """The bot's knowledge base as plain markdown, for the help page.
+
+    The help page and the bot answer from the same document rather than from
+    two copies that drift apart. The leading HTML comment is a note to whoever
+    maintains the file and is not shown to visitors.
+    """
+    text = _KNOWLEDGE
+    if text.lstrip().startswith("<!--"):
+        text = text.split("-->", 1)[-1].lstrip()
+    return {"markdown": text}

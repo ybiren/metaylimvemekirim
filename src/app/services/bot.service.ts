@@ -17,6 +17,10 @@ export interface BotTranscript {
   text: string;
 }
 
+export interface BotKnowledge {
+  markdown: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class BotService {
 
@@ -28,6 +32,14 @@ export class BotService {
   ask(question: string, history: BotTurn[] = []): Observable<BotAnswer> {
     return this.http
       .post<BotAnswer>(`${this.baseUrl}/api/bot/ask`, { question, history })
+      .pipe(catchError(this.handleError));
+  }
+
+  /** The document the bot answers from, rendered by the help page so the two
+   *  can never drift apart. */
+  knowledge(): Observable<BotKnowledge> {
+    return this.http
+      .get<BotKnowledge>(`${this.baseUrl}/api/bot/knowledge`)
       .pipe(catchError(this.handleError));
   }
 
