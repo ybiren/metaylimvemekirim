@@ -15,7 +15,7 @@
   } @else {
     <nav class="help-toc" aria-label="תוכן העניינים">
       @for (s of sections(); track s.title) {
-        <a [href]="'#h-' + $index">{{ s.title }}</a>
+        <a routerLink="." [fragment]="'h-' + $index">{{ s.title }}</a>
       }
     </nav>
 

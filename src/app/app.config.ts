@@ -28,6 +28,9 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(withEventReplay()),
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
+    // No withInMemoryScrolling: its anchorScrolling goes through
+    // ViewportScroller, which scrolls the window, and styles.scss makes <body>
+    // the scrolling box instead. The help page scrolls to its own fragments.
     provideRouter(appRoutes),
     provideHttpClient(withInterceptorsFromDi()),   // ⬅️ use FromDi
     provideServiceWorker('custom-sw.js', {
