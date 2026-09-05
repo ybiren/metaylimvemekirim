@@ -183,7 +183,7 @@ after deploying you must install them on the server once:
 Keys are managed at https://console.groq.com/keys
 Without a key the endpoint answers 503 and the widget shows an error.
 The bot's knowledge base is fastapi_server/knowledge/bot_knowledge.md, built
-from bot.docx. It is read once at import, so the server must be restarted
-after changing it. The chapters of bot.docx written for whoever maintains the
-bot - source priority, internal structure, behaviour rules - are deliberately
-NOT in it; the behaviour rules live in SYSTEM_PROMPT in routes/bot.py.
+from 6.docx (the user guide, which replaced bot.docx). It is read once at
+import, so the server must be restarted after changing it. The guide is
+written entirely for visitors; the bot's behaviour rules are not in it, they
+live in SYSTEM_PROMPT in routes/bot.py.

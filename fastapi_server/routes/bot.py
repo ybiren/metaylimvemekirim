@@ -1,6 +1,6 @@
 """Q&A bot endpoint.
 
-The knowledge base is knowledge/bot_knowledge.md, built from bot.docx. Groq
+The knowledge base is knowledge/bot_knowledge.md, built from 6.docx. Groq
 is called from here and never from the browser, so the API key stays on the
 server.
 """
@@ -75,7 +75,7 @@ HEBREW_RE = re.compile(r"[֐-׿]")
 
 NO_ANSWER = 'לא מצאתי את זה במידע שיש לי. אפשר לכתוב לנו בדף "צור קשר" ונשמח לעזור.'
 
-SYSTEM_PROMPT = f"""אתה הבוט של אתר "פגוש אותי" - פורטל אירועים ורשת חברתית.
+SYSTEM_PROMPT = f"""אתה הבוט של אתר "מטיילים ומכירים" - פורטל אירועים ורשת חברתית.
 תפקידך לענות על שאלות גולשים אך ורק לפי בסיס הידע שמופיע בהמשך.
 
 כללים:
