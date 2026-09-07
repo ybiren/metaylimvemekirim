@@ -65,8 +65,33 @@ export class ShareUrlService {
   }
 
   private shareWhatsapp(title: string, sharedUrl) {
-    const text = `${title}\n${sharedUrl}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+    const text = encodeURIComponent(`${title}\n${sharedUrl}`);
+    const waMe = `https://wa.me/?text=${text}`;
+
+    // wa.me is a web page that deep-links on to the app, and the link it
+    // builds names the consumer package (com.whatsapp) explicitly. A phone
+    // carrying only WhatsApp Business (com.whatsapp.w4b) lands on "WhatsApp
+    // is not installed" instead of a chat. The whatsapp:// scheme is
+    // registered by both apps, so it reaches whichever one is really there.
+    // Desktop keeps wa.me, which resolves to web.whatsapp.com and has no
+    // such split.
+    if (!this.isMobile()) {
+      window.open(waMe, '_blank', 'noopener');
+      return;
+    }
+
+    // Nothing reports back whether a custom scheme was handled. If an app
+    // takes over, the page is hidden well before this fires; if no WhatsApp
+    // of either flavour is installed, the page stays put and wa.me gets its
+    // turn rather than the tap doing nothing at all.
+    const fallback = window.setTimeout(() => {
+      window.location.href = waMe;
+    }, 1500);
+    const cancel = () => window.clearTimeout(fallback);
+    window.addEventListener('pagehide', cancel, { once: true });
+    document.addEventListener('visibilitychange', cancel, { once: true });
+
+    window.location.href = `whatsapp://send?text=${text}`;
   }
 
   private shareFacebook(sharedUrl) {
