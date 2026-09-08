@@ -67,4 +67,5 @@ class UserBase(BaseModel):
 
     isfreezed: Optional[bool] = False  
     isdeleted: Optional[bool] = False
+    is_blocked: Optional[bool] = False
     is_email_verified: Optional[bool] = False

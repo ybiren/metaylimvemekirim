@@ -382,6 +382,13 @@ async def chat_threads(
     peer_ids = set(received_from) | set(sent_to)
 
     for peer in peer_ids:
+        # A blocked account drops out of the other side's chat list too. This
+        # also covers a peer row that no longer resolves at all, which the
+        # peerName lookup below used to blow up on.
+        peer_user = get_user(db, peer)
+        if not peer_user or peer_user.is_blocked:
+            continue
+
         room_filter = or_(
             and_(ChatMessage.from_user_id == user, ChatMessage.to_user_id == peer),
             and_(ChatMessage.from_user_id == peer, ChatMessage.to_user_id == user),
@@ -415,7 +422,7 @@ async def chat_threads(
             {
                 "roomId": _room_id(user, peer),
                 "peerId": peer,
-                "peerName": get_user(db, peer).name,
+                "peerName": peer_user.name,
                 "lastAt": _dt_to_iso_utc(last_msg.sent_at) or "",
                 "lastFromUserId": last_msg.from_user_id,
                 "lastPreview": (last_msg.content[:120] if last_msg.content else ""),

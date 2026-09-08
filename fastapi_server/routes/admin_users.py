@@ -1,9 +1,10 @@
 # routes/admin_users.py
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, func, desc, asc
 from db import get_db
+from helper import set_user_blocked_db
 from models.user import User
 
 admin_users_router = APIRouter(prefix="/api/admin/users", tags=["admin-users"])
@@ -65,6 +66,7 @@ def admin_list_users(
                 "created_at": u.created_at,
                 "last_seen_at": u.last_seen_at,
                 "isfreezed": u.isfreezed,
+                "is_blocked": bool(u.is_blocked),
                 "status": "מוקפא" if u.isfreezed else "פעיל",
             }
             for u in items
@@ -73,3 +75,18 @@ def admin_list_users(
         "page": page,
         "page_size": page_size,
     }
+
+
+@admin_users_router.patch("/{user_id}/block")
+def admin_set_user_blocked(
+    user_id: int,
+    payload: dict = Body(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Block or unblock an account. The body carries the wanted state -
+    {"is_blocked": true} - so a stale grid row cannot flip the wrong way.
+    """
+    is_blocked = bool(payload.get("is_blocked"))
+    user = set_user_blocked_db(db, user_id, is_blocked)
+    return {"ok": True, "id": user.id, "is_blocked": bool(user.is_blocked)}

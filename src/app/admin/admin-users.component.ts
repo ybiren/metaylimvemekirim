@@ -18,6 +18,7 @@ type AdminUser = {
   created_at?: string | null;
   last_seen_at?: string | null;
   status?: string | null;
+  is_blocked?: boolean;
 };
 
 @Component({
@@ -233,12 +234,20 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
 
     { field: 'status', headerName: 'סטאטוס', flex: 1.2 },
 
+    {
+      field: 'is_blocked',
+      headerName: 'חסום',
+      width: 110,
+      minWidth: 110,
+      valueFormatter: (p: ValueFormatterParams) => (p.value ? 'כן' : 'לא'),
+    },
+
     // ✅ Actions column (ערוך + מחק)
     {
       headerName: 'פעולות',
       field: 'actions',
-      width: 220,
-      minWidth: 220,
+      width: 330,
+      minWidth: 330,
       sortable: false,
       filter: false,
       floatingFilter: false,
@@ -275,7 +284,18 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
           this.deleteUser(params.data as AdminUser);
         });
 
+        // 🚫 Block / unblock
+        const blocked = !!params?.data?.is_blocked;
+        const blockBtn = document.createElement('button');
+        blockBtn.textContent = blocked ? 'שחרר חסימה' : 'חסום';
+        blockBtn.className = blocked ? 'btn btn--primary' : 'btn btn--danger';
+        blockBtn.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          this.setBlocked(params.data as AdminUser, !blocked);
+        });
+
         wrap.appendChild(editBtn);
+        wrap.appendChild(blockBtn);
         wrap.appendChild(delBtn);
         return wrap;
       },
@@ -337,6 +357,27 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error('admin users load failed', err);
           this.rowData.set([]);
+        },
+      });
+  }
+
+  setBlocked(user: AdminUser, block: boolean) {
+    if (!user?.id) return;
+
+    const ok = confirm(
+      block
+        ? `לחסום את משתמש #${user.id} (${user.username}) ? לא יוכל להתחבר לאתר.`
+        : `לשחרר את החסימה על משתמש #${user.id} (${user.username}) ?`
+    );
+    if (!ok) return;
+
+    this.http
+      .patch(this.api(`/api/admin/users/${user.id}/block`), { is_blocked: block })
+      .subscribe({
+        next: () => this.load(),
+        error: (err) => {
+          console.error('block user failed', err);
+          alert(block ? 'החסימה נכשלה' : 'שחרור החסימה נכשל');
         },
       });
   }

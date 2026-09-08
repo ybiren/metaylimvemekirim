@@ -61,7 +61,13 @@ export class LoginComponent {
       },
       error: (err) => {
         console.error('Login error:', err);
-        this.error = 'שגיאה בכניסה, בדוק דוא"ל או סיסמה.';
+        // A blocked account (403) fails for a reason the user cannot fix by
+        // retyping the password, so show what the server said instead of
+        // sending them back to check their credentials.
+        this.error =
+          err?.status === 403 && err?.error?.detail
+            ? err.error.detail
+            : 'שגיאה בכניסה, בדוק דוא"ל או סיסמה.';
       },
     })
   

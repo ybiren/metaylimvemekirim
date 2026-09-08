@@ -58,6 +58,7 @@ from helper import (
     get_system_chat_rooms,
     get_user_by_email_pass,
     apply_user_filters,
+    exclude_blocked,
     get_user_by_email,
     hash_password,
     block_user,
@@ -546,7 +547,9 @@ async def get_users(payload: dict = Body(...), db: Session = Depends(get_db)):
     if not me:
         raise HTTPException(status_code=404, detail="User not found")
 
-    q = db.query(User)
+    # before the branch below, so a blocked account stays hidden on the likes
+    # lists too - those deliberately skip the preference filters
+    q = exclude_blocked(db.query(User))
 
     onlyUsersThatLikedMe = payload.get("onlyUsersThatLikedMe")
 
@@ -812,7 +815,33 @@ async def get_user_by_id(
   if payload.get("forEdit"):
     return user
 
+  # Hidden from the lists, so it must be hidden by direct address as well -
+  # otherwise the profile is still one typed URL away. Checked after forEdit
+  # so an admin can still open a blocked user in the edit form.
+  if user.is_blocked:
+    raise HTTPException(status_code=404, detail="User not found")
+
   return public_user(user)
+
+@app.get("/session/status")
+def session_status(userId: int = Query(...), db: Session = Depends(get_db)):
+    """
+    Is this stored session still allowed on the site?
+
+    Nothing in this app authenticates a request, so a browser that logged in
+    before the account was blocked keeps working off its own localStorage. The
+    client calls this on start-up and clears that copy when the answer is no.
+    """
+    user = get_user(db, userId)
+
+    if not user:
+        return {"ok": True, "valid": False, "reason": "missing"}
+
+    if user.is_blocked:
+        return {"ok": True, "valid": False, "reason": "blocked"}
+
+    return {"ok": True, "valid": True, "reason": None}
+
 
 @app.post("/freeze_user")
 async def freeze_user(payload: dict = Body(...), db: Session = Depends(get_db)):

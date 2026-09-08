@@ -63,6 +63,14 @@ def get_user_by_email_pass(db, c_email: str, password: str):
             detail="Bad credentials"
         )
 
+    # Checked only after the password matches: answering "blocked" to anyone
+    # who types the address would tell a stranger the account exists.
+    if user.is_blocked:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="החשבון שלך נחסם על ידי הנהלת האתר."
+        )
+
     # ✅ Update last_seen_at
     user.last_seen_at = datetime.now(timezone.utc)
     db.commit()
@@ -392,12 +400,25 @@ def is_user_liked(
     return db.execute(stmt).scalar()
 
 ####################################################################
+def exclude_blocked(q):
+    """
+    Drop admin-blocked accounts from a query over User.
+
+    Applied everywhere one member can see another - the browse list, search,
+    a profile page, the chat thread list. Deliberately NOT applied inside
+    get_user(), which the server also calls for its own bookkeeping (sending
+    a like notification, resolving a name) where the account still has to
+    resolve.
+    """
+    return q.filter(User.is_blocked.is_(False))
+
+####################################################################
 def search_user(
     db: Session,
     c_gender, c_ff, c_country, c_smoking,
     c_tz, c_pic, c_ages1, c_ages2, c_name
 ):
-    query = db.query(User)
+    query = exclude_blocked(db.query(User))
 
     if c_gender not in (None, 9, "9"):
         query = query.filter(User.gender == int(c_gender))
@@ -473,6 +494,27 @@ def freeze_user_db(db: Session, user_id: int) -> User:
         raise HTTPException(status_code=404, detail="User not found")
 
     user.isfreezed = not user.isfreezed
+
+    db.commit()
+    db.refresh(user)
+
+    return user
+
+####################################################################
+def set_user_blocked_db(db: Session, user_id: int, is_blocked: bool) -> User:
+    """
+    Admin block/unblock. Named apart from block_user() above, which is one
+    member blocking another and writes to user_blocks.
+
+    Takes the wanted state rather than toggling: the admin grid can be showing
+    a stale row, and a toggle would then flip the account the wrong way.
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.is_blocked = bool(is_blocked)
 
     db.commit()
     db.refresh(user)

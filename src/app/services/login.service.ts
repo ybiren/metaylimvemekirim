@@ -16,6 +16,18 @@ export class LoginService {
     return this.http.post(`${environment.apibase}/login`, formData);
   }
 
+  /**
+   * Is the session stored in this browser still allowed on the site?
+   * Nothing authenticates a request, so a browser that logged in before the
+   * account was blocked keeps working until someone asks.
+   */
+  checkSession(userId: number) {
+    return this.http.get<{ ok: boolean; valid: boolean; reason: string | null }>(
+      `${environment.apibase}/session/status`,
+      { params: { userId } }
+    );
+  }
+
   onLogin() {
     this.onLogin$.next(true);
   }

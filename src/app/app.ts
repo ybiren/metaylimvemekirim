@@ -1,5 +1,5 @@
-import { Component, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, effect, inject, OnDestroy, OnInit, PLATFORM_ID, signal } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router, RouterModule, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { PwaInstallComponent } from './components/pwa-install/pwa-install.component';
@@ -43,6 +43,7 @@ export class App implements OnInit, OnDestroy{
   private usersSvc = inject(UsersService);
   private loginService = inject(LoginService);
   private toast = inject(ToastService);
+  private isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   spinnerTplHtml = `
     <div class="lds-dual-ring"></div>
@@ -133,6 +134,44 @@ export class App implements OnInit, OnDestroy{
     
   ngOnInit() {
     this.usersSvc.load();
+    this.enforceSession();
+  }
+
+  /**
+   * A browser that logged in before the account was blocked keeps working off
+   * its own copy in localStorage - no request in this app proves who is
+   * calling. So on every start-up ask the server whether that stored session
+   * is still allowed, and drop it when it is not.
+   */
+  private enforceSession() {
+    if (!this.isBrowser) return;
+
+    const id = getCurrentUserId();
+    if (!id) return;
+
+    this.loginService.checkSession(id).subscribe({
+      next: (res) => {
+        if (res?.valid === false) this.forceLogout(res.reason);
+      },
+      // A server that cannot be reached says nothing about the account, so
+      // leave the session alone rather than throwing people out on a blip.
+      error: () => {},
+    });
+  }
+
+  private forceLogout(reason: string | null) {
+    localStorage.clear();
+    this.userID.set(null);
+    this.presenceSub?.unsubscribe();
+    this.loginService.onLogout();
+
+    this.toast.show(
+      reason === 'blocked'
+        ? 'החשבון שלך נחסם על ידי הנהלת האתר.'
+        : 'ההתחברות פגה, יש להתחבר מחדש.'
+    );
+
+    this.router.navigateByUrl('/login');
   }
 
   ngOnDestroy() {

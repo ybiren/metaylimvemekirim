@@ -71,6 +71,10 @@ class User(Base):
     
     isfreezed = Column("isfreezed", Boolean)
     isdeleted = Column("isdeleted", Boolean)
+
+    # Set by an admin from /admin/users; blocks login. Not to be confused with
+    # the user_blocks table, which is one member blocking another.
+    is_blocked = Column(Boolean, nullable=False, server_default="false")
     is_email_verified = Column(Boolean, default=False)
 
     extra_images = Column(
