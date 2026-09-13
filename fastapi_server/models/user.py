@@ -35,7 +35,11 @@ class User(Base):
 
     email = Column(String(255), unique=True, index=True)  # matches unique index
 
-    password_hash = Column(String(255), nullable=False)
+    # Nullable since registering through Google: the provider proved the
+    # address, so such a member has no password at all until they set one
+    # through forgot-password. Password login rejects a null hash outright -
+    # see get_user_by_email_pass - so an empty column is never a way in.
+    password_hash = Column(String(255), nullable=True)
 
     ff = Column(Integer)
 

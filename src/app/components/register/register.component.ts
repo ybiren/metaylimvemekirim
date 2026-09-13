@@ -9,6 +9,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RegisterService } from '../../services/register.service';
 import { AlbumService } from '../../services/album.service';
 import { UsersService } from '../../services/users.service';
+import { LoginService } from '../../services/login.service';
+import { SocialAuthService } from '../../services/social-auth.service';
 
 import { rangeValidator, hebrewNameValidator, phoneValidator, normalizePhone, passwordMatchValidator, emailExistsValidator } from '../../validators/form-validators';
 import { IOption, IUser } from '../../interfaces';
@@ -41,6 +43,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
   private registerSrv = inject(RegisterService);
   private usersSrv = inject(UsersService);
   private albumSrv = inject(AlbumService);
+  private loginSrv = inject(LoginService);
+  private socialAuth = inject(SocialAuthService);
   private destroyRef = inject(DestroyRef);
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
@@ -72,6 +76,15 @@ export class RegisterComponent implements OnInit, OnDestroy {
   sessionID = signal<string>(Math.floor(Math.random() * 1_000_000_000).toString());
   submitting = signal<boolean>(false);
   serverMsg = signal<string>('');
+
+  /**
+   * The provider token of someone sent here by a social login that found no
+   * account. While it is set, this form asks for no password: the token proves
+   * the address is theirs, which is all a password would establish at this
+   * point, and the template hides the password section on the same flag.
+   */
+  socialCredential = '';
+  socialProvider = '';
 
   apiBase = environment.apibase;
 
@@ -161,8 +174,33 @@ export class RegisterComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Before fetchUser, because setModeValidators runs in there and has to know
+    // whether a password is going to be asked for.
+    this.readSocialState();
     this.fetchUser();
   }
+
+  /**
+   * Whatever the login page put in the navigation state on its way here.
+   *
+   * history.state rather than the URL keeps the token out of the address bar
+   * and the referrer header. It does survive a reload, which is deliberate - a
+   * refreshed form still knows what it is registering. An expired token is not
+   * a problem to solve here: the server re-checks it and fails the submit.
+   */
+  private readSocialState() {
+    const st = (history.state || {}) as Record<string, string>;
+    if (!st['socialCredential']) return;
+
+    this.socialCredential = st['socialCredential'];
+    this.socialProvider = st['socialProvider'] || 'google';
+    this.socialEmail = st['socialEmail'] || '';
+    this.socialName = st['socialName'] || '';
+  }
+
+  /** Shown by the form; the server still reads the address out of the token. */
+  socialEmail = '';
+  private socialName = '';
 
   ngOnDestroy(): void {
     if (this.profileObjectUrl) URL.revokeObjectURL(this.profileObjectUrl);
@@ -196,7 +234,27 @@ export class RegisterComponent implements OnInit, OnDestroy {
       email.setAsyncValidators([
         emailExistsValidator(this.usersSrv)
       ]);
-    
+
+      // Arrived from a social login: the token replaces the password, so drop
+      // both password rules and the cross-field match with them - otherwise an
+      // empty pair of hidden fields would keep the form permanently invalid.
+      // The address comes from the token too, so it is shown but not editable.
+      if (this.socialCredential) {
+        password.clearValidators();
+        password2.clearValidators();
+        password.setValue('');
+        password2.setValue('');
+
+        this.form.setValidators([
+          rangeValidator('filter_age_min', 'filter_age_max'),
+          rangeValidator('filter_height_min', 'filter_height_max'),
+        ]);
+
+        email.setValue(this.socialEmail);
+        email.clearAsyncValidators();
+        email.disable();
+      }
+
     } else {
       password.clearValidators();
       password2.clearValidators();
@@ -387,6 +445,66 @@ export class RegisterComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Someone who tried to sign in with Google or Facebook and turned out to
+   * have no profile here is sent over with what the provider knew about them.
+   *
+   * Only the two fields no provider can get wrong: everything a match depends
+   * on - age, region, what they are looking for - they still fill in
+   * themselves, and they still choose a password, since this site has no way
+   * in without one.
+   */
+  private prefillFromSocialLogin() {
+    // Query params are the older shape of the same hand-off, kept so a link
+    // somebody already has still opens a half-filled form.
+    const params = this.activatedRoute.snapshot.queryParamMap;
+    const email = this.socialEmail || params.get('email');
+    const name = this.socialName || params.get('name');
+
+    if (email) this.form.get('c_email')!.setValue(email);
+
+    if (name) {
+      // The provider gives a display name, which need not be the Hebrew name
+      // this form insists on. Planting one that fails would open the form with
+      // a red error under a field nobody has touched, so a name that does not
+      // pass is dropped and they get the empty box and its usual hint.
+      const ctrl = this.form.get('c_name')!;
+      ctrl.setValue(name);
+      if (ctrl.invalid) ctrl.setValue('');
+    }
+  }
+
+  /**
+   * Sign in the account that was just created, with the same token that got
+   * them through this form, and go straight to /home.
+   *
+   * The registration response is deliberately not used for this. It serialises
+   * the whole row - password hash included - while the login route answers
+   * through UserBase, so the login route stays the only thing that decides what
+   * a signed-in user looks like in localStorage.
+   */
+  private enterSiteWithSocial() {
+    const login$ =
+      this.socialProvider === 'facebook'
+        ? this.socialAuth.loginWithFacebook(this.socialCredential)
+        : this.socialAuth.loginWithGoogle(this.socialCredential);
+
+    login$.subscribe({
+      next: (user: any) => {
+        localStorage.setItem('user', JSON.stringify(user));
+        this.loginSrv.onLogin();
+        this.router.navigate(['/home']);
+      },
+      error: (err) => {
+        // The account was written a moment ago, so the only real cause is a
+        // token that expired while the form was being filled in. The login page
+        // fixes that with one fresh press of the same button.
+        console.error('Post-registration social login failed:', err);
+        this.router.navigate(['/login']);
+      },
+    });
+  }
+
   // --------------------
   // Load user data
   // --------------------
@@ -404,6 +522,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
         // ✅ set validators based on mode
         this.setModeValidators(!this.user());
+
+        if (!this.user()) this.prefillFromSocialLogin();
 
         const current = this.user();
         if (current) {
@@ -499,10 +619,16 @@ export class RegisterComponent implements OnInit, OnDestroy {
     fd.append('c_details1', String(this.f.c_details1.value ?? ''));
     fd.append('sessionID', this.sessionID());
 
-    // ✅ password ONLY on register
-    if (!this.user()) {
+    // ✅ password ONLY on register, and only when there is no token standing
+    // in for it
+    if (!this.user() && !this.socialCredential) {
       fd.append('password', String(this.f.password.value ?? ''));
       fd.append('password2', String(this.f.password2.value ?? ''));
+    }
+
+    if (this.socialCredential) {
+      fd.append('social_provider', this.socialProvider);
+      fd.append('social_credential', this.socialCredential);
     }
 
     const imageFile = this.form.get('c_image')!.value as File | null;
@@ -546,10 +672,15 @@ export class RegisterComponent implements OnInit, OnDestroy {
         this.submitting.set(false);
 
         setTimeout(() => {
-          if (!this.user()) {
-            this.router.navigate(['/verify-email']);
-          } else {
+          if (this.user()) {
             this.router.navigate(['/home']);
+          } else if (this.socialCredential) {
+            // They proved who they are a moment ago to get here, and the
+            // address arrived verified - so there is neither an emailed link to
+            // wait for nor anything left to ask them. Straight in.
+            this.enterSiteWithSocial();
+          } else {
+            this.router.navigate(['/verify-email']);
           }
         }, 400);
       },

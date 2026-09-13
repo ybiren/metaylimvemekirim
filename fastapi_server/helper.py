@@ -57,6 +57,15 @@ def get_user_by_email_pass(db, c_email: str, password: str):
             detail="Bad credentials"
         )
 
+    # Registered through Google and never set a password: there is nothing to
+    # compare against. Same answer as a wrong password, both so the form says
+    # something usable and so nobody can tell the two apart from outside.
+    if not user.password_hash:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Bad credentials"
+        )
+
     if not pwd_context.verify(password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -164,12 +173,31 @@ def apply_user_filters(q, me):
 def hash_password(raw: str) -> str:
     return pwd_context.hash(raw)
 
-def upsert_user(db: Session, user_fields: Dict[str, Any]) -> Tuple[User, bool]:
+def upsert_user(
+    db: Session,
+    user_fields: Dict[str, Any],
+    *,
+    allow_passwordless: bool = False,
+    email_verified: bool = False,
+) -> Tuple[User, bool]:
     """
     Upsert by email (SYNC):
     - if email exists -> update (EXCEPT password/password2)
     - else -> insert (can include password/password2)
     Returns: (user, created: bool)
+
+    The two keyword flags are for registration through Google, where the
+    provider has already proved the address belongs to whoever is filling in
+    the form. Both default to the ordinary behaviour, so every existing caller
+    keeps getting a password-bearing, unverified account.
+
+    - allow_passwordless: insert with no password_hash at all. Such a member
+      enters only through their provider until they set a password through
+      forgot-password, which is why /reset-password assigns the hash rather
+      than replacing a known one.
+    - email_verified: skip the emailed confirmation link. The link exists to
+      prove the address is reachable by the person registering, and a verified
+      provider token proves exactly that.
     """
     email = (user_fields.get("email") or "").strip().lower()
     if not email:
@@ -190,13 +218,15 @@ def upsert_user(db: Session, user_fields: Dict[str, Any]) -> Tuple[User, bool]:
         # INSERT
         raw_password = data.pop("password", None)
         data.pop("password2", None)
-        if not raw_password:
+        if not raw_password and not allow_passwordless:
             raise ValueError("password is required when creating a user")
 
-        data["password_hash"] = hash_password(raw_password)
+        # None, not the hash of an empty string: an empty password must never
+        # become something that can be typed at the login form.
+        data["password_hash"] = hash_password(raw_password) if raw_password else None
         data["isfreezed"] = False
         data["isdeleted"] = False
-        data["is_email_verified"] = False
+        data["is_email_verified"] = bool(email_verified)
 
         user = User(**data)
         db.add(user)

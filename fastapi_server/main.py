@@ -35,6 +35,7 @@ from routes.admin_banners import admin_banners_router
 from routes.admin_albums import admin_albums_router, public_albums_router
 from routes.mail_sender import mail_sender_router
 from routes.bot import bot_router
+from routes.social_login import social_login_router, social_identity
 
 from helper import (
     ensure_image_content_type,
@@ -134,6 +135,7 @@ app.include_router(admin_albums_router)
 app.include_router(public_albums_router)
 app.include_router(mail_sender_router, prefix="/api")
 app.include_router(bot_router)
+app.include_router(social_login_router)
 
 
 # ---------------------------------------------------------------------
@@ -203,6 +205,18 @@ def serve_root():
 @app.get("/help")
 def serve_root():
     return FileResponse(ANGULAR_DIR / "index.html", media_type="text/html")
+
+# Parked with the Facebook login it was written for - Meta wants a verified
+# business before that login can go live, so it waits for a later round.
+# Uncomment together with the button on the login page.
+#
+# Static HTML, not the Angular shell: Google and Facebook both fetch this URL
+# before they will let their login go live, and neither crawler runs
+# JavaScript. Source is public/privacy.html, copied into the bundle by the
+# build.
+# @app.get("/privacy")
+# def serve_privacy():
+#     return FileResponse(ANGULAR_DIR / "privacy.html", media_type="text/html")
 
 
 @app.get("/user/{userid}")
@@ -350,6 +364,13 @@ async def register(
     password: Optional[str] = Form(None),
     password2: Optional[str] = Form(None),
 
+    # Set by the registration form when the visitor arrived from a social
+    # login that found no account. The token stands in for the password: it
+    # proves the address is theirs, which is the only thing the password and
+    # the emailed link were proving at this point.
+    social_provider: Optional[str] = Form(None),
+    social_credential: Optional[str] = Form(None),
+
     sessionID: str = Form(...),
     c_pcell: str = Form(""),
     c_details: str = Form(""),
@@ -398,6 +419,23 @@ async def register(
         return str(v).lower() in ("true", "1", "yes", "on")
 
     
+    # Registering with a provider token instead of a password. The address is
+    # taken from whatever the provider says and the submitted c_email is
+    # ignored - the form field can be edited, the token cannot, and letting the
+    # field win would make a token for one address register another.
+    social_email: Optional[str] = None
+    if social_credential:
+        social_email, social_display_name = await social_identity(
+            social_provider or "google", social_credential
+        )
+        c_email = social_email
+
+        # Only as a fallback: this form insists on a Hebrew name, so whatever
+        # the visitor typed after the provider's suggestion failed validation
+        # is the better value.
+        if not (c_name or "").strip():
+            c_name = social_display_name or ""
+
     user_fields: Dict[str, Any] = {
         "name": c_name,
         "gender": to_int(c_gender),
@@ -435,7 +473,12 @@ async def register(
         "notify_email": to_bool(notify_email),
     }
 
-    stored_user, created = upsert_user(db, user_fields)
+    stored_user, created = upsert_user(
+        db,
+        user_fields,
+        allow_passwordless=bool(social_email),
+        email_verified=bool(social_email),
+    )
     user_id = stored_user.id
 
     # -------------------------

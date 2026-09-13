@@ -44,6 +44,14 @@
         (click)="onNavLinkClick()"
         >צור קשר</a
       >
+
+      <!-- Privacy page, parked with the Facebook login it was written for.
+           A real href, not routerLink: /privacy is a static page served
+           outside the Angular app so that Meta's and Google's crawlers, which
+           run no JavaScript, can read it. The route that served it is
+           commented out in main.py as well - uncomment both together.
+      <a href="/privacy">פרטיות</a>
+      -->
       
       <a
         routerLink="/sms"

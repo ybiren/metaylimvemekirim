@@ -108,6 +108,12 @@
           האימייל כבר קיים במערכת
         </small>
       </div>
+      @if (socialCredential) {
+        <small class="note">
+          הכתובת הגיעה מחשבון {{ socialProvider === 'facebook' ? 'הפייסבוק' : 'ה-Google' }}
+          שאיתו התחברת, ולכן אינה ניתנת לשינוי כאן.
+        </small>
+      }
     </div>
 
     <label class="label" for="c_education">השכלה</label>
@@ -230,8 +236,22 @@
     </div>
   </div>
 
-  <!-- Password section ONLY on register -->
-  @if (!user()) {
+  <!-- Password section ONLY on register, and not when the visitor arrived with
+       a provider token - that already proves the address is theirs. -->
+  @if (!user() && socialCredential) {
+    <h2 class="section-header">כניסה לאתר</h2>
+    <div class="grid card">
+      <div class="field">
+        <small class="note">
+          ההרשמה מתבצעת עם חשבון {{ socialProvider === 'facebook' ? 'הפייסבוק' : 'ה-Google' }}
+          שלך, ולכן אין צורך בסיסמה - הכניסה לאתר תהיה באותו הכפתור שממנו הגעת.
+          אם תרצה סיסמה בהמשך, אפשר להגדיר אחת דרך "שכחתי סיסמא" בעמוד הכניסה.
+        </small>
+      </div>
+    </div>
+  }
+
+  @if (!user() && !socialCredential) {
     <h2 class="section-header">סיסמה לכניסה מאובטחת</h2>
     <div
       class="grid card"

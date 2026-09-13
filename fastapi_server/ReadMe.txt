@@ -187,3 +187,70 @@ from 6.docx (the user guide, which replaced bot.docx). It is read once at
 import, so the server must be restarted after changing it. The guide is
 written entirely for visitors; the bot's behaviour rules are not in it, they
 live in SYSTEM_PROMPT in routes/bot.py.
+
+
+//SOCIAL LOGIN (Google / Facebook) - /login/google, /login/facebook
+The login page can also sign members in through Google or Facebook. It signs
+in existing members only: registration here asks for a whole profile that
+neither provider can supply, so an unknown address gets a 404 and the client
+sends the visitor to /register with their name and email already filled in.
+
+Configured through the same fastapi_server/.env as the bot:
+
+  GOOGLE_CLIENT_ID       - an "OAuth client ID" of type "Web application" from
+                           https://console.cloud.google.com/apis/credentials
+                           List https://metaylimvemekirim.co.il and
+                           http://localhost:4200 under "Authorized JavaScript
+                           origins". Leave "Authorized redirect URIs" empty:
+                           the browser receives an ID token in the page and
+                           never navigates away, so there is nothing to redirect
+                           back to. There is no client secret to set either -
+                           Google signs the token and the server checks that
+                           signature, which needs only the public client id.
+  FACEBOOK_APP_ID
+  FACEBOOK_APP_SECRET    - an app at https://developers.facebook.com/apps with
+                           the "Facebook Login" product added. Under Facebook
+                           Login > Settings turn on "Login with the JavaScript
+                           SDK" and list https://metaylimvemekirim.co.il and
+                           http://localhost:4200 under "Allowed Domains for the
+                           JavaScript SDK". That is the setting this flow obeys
+                           - "Valid OAuth Redirect URIs" governs the redirect
+                           flow, which the client does not use.
+
+                           A new app starts in Development mode, where ONLY
+                           accounts holding a role on it (App roles > Roles)
+                           can log in - everyone else gets an error that looks
+                           like a broken button. Switch the app to Live before
+                           members use it. Live requires a privacy policy URL,
+                           data deletion instructions, an icon and a category,
+                           but email and public_profile are default permissions
+                           so there is no App Review to submit.
+
+Leave a provider's variables blank and its button never appears - the client
+asks GET /auth/config first and only draws what the server says is set up.
+The client ids are public; the Facebook secret is not, and never leaves the
+server. It is what proves to Facebook that a token was issued to OUR app -
+without that check any Facebook app's token would log its holder in here.
+
+Both providers require HTTPS and an origin they know about, so neither button
+works from an address you have not registered with them.
+
+Registering from a social login - POST /register with social_credential
+A visitor whose address has no profile is sent to the registration form with
+the provider token carried in the router state (never the URL - it is a
+credential). The form then asks for no password, and shows the address as
+read-only, because the token already proves the address is theirs, which is
+all the password and the emailed confirmation link prove at that point.
+
+The form posts the token back as social_provider + social_credential, and
+/register re-verifies it through the same code the login routes use. The
+address is taken from the provider's answer and the submitted c_email is
+ignored - otherwise a token for one address could register another. The row is
+then written with no password_hash and is_email_verified already true, so there
+is no confirmation mail to wait for.
+
+Such a member enters only through their provider until they set a password,
+which they can do at any time through "forgot password" - /reset-password
+assigns the hash rather than replacing a known one. Until then the password
+login answers "bad credentials", the same as a wrong password, so nothing about
+the account leaks to someone guessing at the form.

@@ -52,6 +52,69 @@
     }
   }
 
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 14px 0 4px;
+    color: #888;
+    font-size: 0.85em;
+
+    &::before,
+    &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #ddd;
+    }
+  }
+
+  .social {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  // Google renders its own button in here and sizes it itself; centring the
+  // iframe is all that is left to do.
+  .google-host {
+    display: flex;
+    justify-content: center;
+    min-height: 40px;
+  }
+
+  .facebook {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 1em;
+    background-color: #1877f2;
+    color: #fff;
+    transition: background-color 0.2s;
+
+    &:hover:not(:disabled) {
+      background-color: #145dbf;
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: default;
+    }
+
+    .fb-icon {
+      width: 20px;
+      height: 20px;
+      flex: none;
+    }
+  }
+
   .error {
     color: red;
     font-size: 0.9em;
