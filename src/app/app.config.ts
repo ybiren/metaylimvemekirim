@@ -14,6 +14,7 @@ import { provideServiceWorker } from '@angular/service-worker';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { NgxSpinnerModule } from 'ngx-spinner';
 import { LoadingInterceptor } from './interceptors/loading.interceptor';
+import { AdminTokenInterceptor } from './interceptors/admin-token.interceptor';
 import { REGIONS_TOKEN, regions } from './consts/regions.consts';
 import { gender, GENDER_TOKEN } from './consts/gender.consts';
 import { FAMILY_STATUS_TOKEN, familyStatus } from './consts/family-status.consts';
@@ -39,6 +40,7 @@ export const appConfig: ApplicationConfig = {
           }),
     importProvidersFrom(NgxSpinnerModule),
     { provide: HTTP_INTERCEPTORS, useClass: LoadingInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: AdminTokenInterceptor, multi: true },
      provideAnimations(),
      { provide: REGIONS_TOKEN, useValue: regions },
      { provide: GENDER_TOKEN, useValue: gender},

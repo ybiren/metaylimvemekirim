@@ -16,6 +16,7 @@ import { SmsUpdatesSignalFormComponent } from './components/sms-updates-signal-f
 import { ChatSystemRoomsComponent } from './components/chat-system-rooms/chat-system-rooms.component';
 import { LikesContainerComponent } from './components/likes-container/likes-container.component';
 import { AdminMainComponent } from './admin/admin-main.component';
+import { adminGuard } from './guards/admin.guard';
 import { LoginComponent } from './components/login/login.component';
 
 
@@ -55,10 +56,22 @@ export const appRoutes: Route[] = [
         .then(m => m.VerifyEmailComponent)
     },
 
+  // Outside the guard below on purpose: this is the one admin screen that has
+  // to be reachable without being signed in.
+  {
+    path: 'admin/login',
+    loadComponent: () =>
+      import('./admin/admin-login.component').then(m => m.AdminLoginComponent),
+  },
+
    // ✅ admin area
   {
     path: 'admin', 
     component: AdminMainComponent,
+    // Convenience, not protection: it keeps people out of screens whose every
+    // request would fail. The endpoints are guarded server-side by
+    // require_admin, which is what actually stops anything.
+    canActivate: [adminGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', loadComponent: () => import('./admin/admin-updates.component').then(m => m.AdminUpdatesComponent) },

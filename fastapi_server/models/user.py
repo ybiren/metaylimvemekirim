@@ -79,6 +79,19 @@ class User(Base):
     # Set by an admin from /admin/users; blocks login. Not to be confused with
     # the user_blocks table, which is one member blocking another.
     is_blocked = Column(Boolean, nullable=False, server_default="false")
+
+    # May open /admin and call the /api/admin endpoints. Granted in the
+    # database, deliberately: there is no screen that hands out this flag, so
+    # nobody can grant it to themselves through the site.
+    is_admin = Column(Boolean, nullable=False, server_default="false")
+
+    # What an admin's browser actually presents on each request. Issued at
+    # /api/admin/login and checked by require_admin - every other endpoint in
+    # this app trusts ids the client sends, which is fine for a profile page
+    # and not fine for blocking accounts.
+    # Indexed because it is looked up on every single admin request.
+    admin_token = Column(String(128), index=True)
+    admin_token_at = Column(DateTime(timezone=True))
     is_email_verified = Column(Boolean, default=False)
 
     extra_images = Column(

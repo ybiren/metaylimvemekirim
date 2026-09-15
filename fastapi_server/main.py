@@ -27,6 +27,7 @@ from routes.sms_updates import router2 as sms_updates_router
 from routes.push import router3 as push_router
 from ws.notify import router as notify_router, is_online
 from ws.chat import router as chat_router
+from routes.admin_auth import admin_auth_router, require_admin
 from routes.admin_updates import admin_updates_router
 from routes.admin_pages import public_pages_router,admin_pages_router
 from routes.admin_users import admin_users_router
@@ -125,13 +126,22 @@ app.include_router(notify_router)
 app.include_router(chat_router)
 app.include_router(sms_updates_router)
 app.include_router(push_router, prefix="/api")
-app.include_router(admin_updates_router)
+# Signing in and out is the one part of /api/admin that cannot require being
+# signed in already.
+app.include_router(admin_auth_router)
+
+# The guard goes on the routers rather than on each route, so an endpoint added
+# to any of these later is protected by existing, not by somebody remembering.
+# The public_* routers are deliberately not in this list: they serve the pages
+# and albums that visitors read.
+_admin_only = [Depends(require_admin)]
+app.include_router(admin_updates_router, dependencies=_admin_only)
 app.include_router(public_pages_router)
-app.include_router(admin_pages_router)
-app.include_router(admin_users_router)
-app.include_router(admin_reports_router)
-app.include_router(admin_banners_router)
-app.include_router(admin_albums_router)
+app.include_router(admin_pages_router, dependencies=_admin_only)
+app.include_router(admin_users_router, dependencies=_admin_only)
+app.include_router(admin_reports_router, dependencies=_admin_only)
+app.include_router(admin_banners_router, dependencies=_admin_only)
+app.include_router(admin_albums_router, dependencies=_admin_only)
 app.include_router(public_albums_router)
 app.include_router(mail_sender_router, prefix="/api")
 app.include_router(bot_router)
