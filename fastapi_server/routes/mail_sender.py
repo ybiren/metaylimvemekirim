@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -30,10 +31,10 @@ class ContactPayload(BaseModel):
 
 class ReportPayload(BaseModel):
     reportedUserId: int
-    reportedUserName: str | None = None
-    reporterUserId: int | None = None
-    reporterName: str | None = None
-    category: str | None = None
+    reportedUserName: Optional[str] = None
+    reporterUserId: Optional[int] = None
+    reporterName: Optional[str] = None
+    category: Optional[str] = None
     reason: str
 
 @mail_sender_router.post("/contact")

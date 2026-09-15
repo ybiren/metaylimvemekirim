@@ -582,7 +582,7 @@ def insert_push_subscription(
     db: Session,
     user_id: int,
     subscription: dict,
-    user_agent: str | None = None,
+    user_agent: Optional[str] = None,
 ) -> PushSubscription:
     endpoint = subscription.get("endpoint")
     if not endpoint:
@@ -768,7 +768,7 @@ async def find_user_image_path(
     base_dir: Path,
     images_dir: Path,
     users_path: Path,
-    allowed_exts: set[str] | None = None,
+    allowed_exts: Optional[set[str]] = None,
 ) -> Optional[Path]:
     allowed_exts = allowed_exts or {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"}
     
@@ -916,7 +916,7 @@ def sanitize_user_for_response(u: Dict[str, Any]) -> Dict[str, Any]:
     return redacted
 
 
-def calc_age(day, month, year, today: date | None = None) -> int | None:
+def calc_age(day, month, year, today: Optional[date] = None) -> Optional[int]:
     if today is None:
         today = date.today()
 

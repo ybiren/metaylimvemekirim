@@ -70,7 +70,7 @@ def _resolve_room(user_id: int, peer_id: int) -> str:
     return _room_id(user_id, peer_id)
 
 
-def _dt_to_iso_utc(dt: datetime | None) -> str | None:
+def _dt_to_iso_utc(dt: Optional[datetime]) -> Optional[str]:
     if not dt:
         return None
     return dt.astimezone(timezone.utc).isoformat()
@@ -174,7 +174,7 @@ def _insert_dm_message(
     peer_id: int,
     content: str,
     sent_at: datetime,
-    msg_id: str | None = None,
+    msg_id: Optional[str] = None,
 ) -> dict:
     # ✅ CHANGED: no chat_rooms insert anymore
     m = ChatMessage(

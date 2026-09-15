@@ -1,4 +1,5 @@
 # routes/admin_reports.py
+from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, func, desc, asc
@@ -11,8 +12,8 @@ admin_reports_router = APIRouter(prefix="/api/admin/reports", tags=["admin-repor
 
 @admin_reports_router.get("")
 def admin_list_reports(
-    q: str | None = Query(None, description="Search text"),
-    user_id: int | None = Query(None, description="Only reports on this profile"),
+    q: Optional[str] = Query(None, description="Search text"),
+    user_id: Optional[int] = Query(None, description="Only reports on this profile"),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     sort: str = Query("created_at"),
@@ -54,7 +55,7 @@ def admin_list_reports(
 
     # The reported profile's name is not copied into the row, so resolve the
     # names for this page in one query rather than per row.
-    names: dict[int, str | None] = {}
+    names: dict[int, Optional[str]] = {}
     ids = {r.user_id for r in items}
     if ids:
         names = {

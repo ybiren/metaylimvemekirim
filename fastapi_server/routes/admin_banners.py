@@ -140,7 +140,7 @@ async def create_banner(
     is_active: str = Form("true"),
     sort_order: str = Form("0"),
 
-    file: UploadFile | None = File(None),  # optional; but you can enforce it for create
+    file: Optional[UploadFile] = File(None),  # optional; but you can enforce it for create
 ):
     link_url = (link_url or "").strip()
     if not link_url:
@@ -192,7 +192,7 @@ async def update_banner(
     is_active: str = Form("true"),
     sort_order: str = Form("0"),
 
-    file: UploadFile | None = File(None),  # optional: replace image if provided
+    file: Optional[UploadFile] = File(None),  # optional: replace image if provided
 ):
     b = db.query(AdminBanner).filter(AdminBanner.id == banner_id).first()
     if not b:

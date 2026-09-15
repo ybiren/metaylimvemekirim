@@ -1,4 +1,5 @@
 # routes/admin_users.py
+from typing import Optional
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Body, Depends, Query
 from sqlalchemy.orm import Session
@@ -11,8 +12,8 @@ admin_users_router = APIRouter(prefix="/api/admin/users", tags=["admin-users"])
 
 @admin_users_router.get("")
 def admin_list_users(
-    q: str | None = Query(None, description="Search text"),
-    online: bool | None = Query(None, description="Only online users"),
+    q: Optional[str] = Query(None, description="Search text"),
+    online: Optional[bool] = Query(None, description="Only online users"),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     sort: str = Query("created_at"),
