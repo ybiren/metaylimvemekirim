@@ -28,7 +28,7 @@ from routes.push import router3 as push_router
 from ws.notify import router as notify_router, is_online
 from ws.chat import router as chat_router
 from routes.admin_auth import admin_auth_router, require_admin
-from routes.admin_updates import admin_updates_router
+from routes.admin_updates import admin_updates_router, public_updates_router
 from routes.admin_pages import public_pages_router,admin_pages_router
 from routes.admin_users import admin_users_router
 from routes.admin_reports import admin_reports_router
@@ -135,6 +135,10 @@ app.include_router(admin_auth_router)
 # The public_* routers are deliberately not in this list: they serve the pages
 # and albums that visitors read.
 _admin_only = [Depends(require_admin)]
+# The home page ticker reads GET /api/admin/updates, so that one route is not
+# behind the guard. It lives on its own router for exactly that reason; the
+# writes below still require an admin.
+app.include_router(public_updates_router)
 app.include_router(admin_updates_router, dependencies=_admin_only)
 app.include_router(public_pages_router)
 app.include_router(admin_pages_router, dependencies=_admin_only)

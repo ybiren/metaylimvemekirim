@@ -7,8 +7,18 @@ from models.site_link import SiteLink
 
 admin_updates_router = APIRouter(prefix="/api/admin", tags=["admin"])
 
+# Reading the list is not an admin action: it is the ticker every visitor sees
+# on the home page. It lives under /api/admin only because it was written
+# alongside the screen that edits it, and the URL stays as it is because
+# browsers are already asking for it - a tidier path would 404 for everyone
+# running a cached bundle.
+#
+# Separate router purely so main.py can require an admin for the writes below
+# without requiring one for this.
+public_updates_router = APIRouter(prefix="/api/admin", tags=["updates"])
 
-@admin_updates_router.get("/updates", response_model=List[dict])
+
+@public_updates_router.get("/updates", response_model=List[dict])
 def list_updates(db: Session = Depends(get_db)):
     rows = db.query(SiteLink).order_by(SiteLink.id.asc()).all()
     return [
