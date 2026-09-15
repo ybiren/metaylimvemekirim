@@ -168,10 +168,21 @@ const FAB_POS_KEY = 'bot-fab-offset';
         position: fixed;
         bottom: 16px;
         inset-inline-start: 16px;
-        /* Must stay under the CDK overlay container (1000). Above it, this
-           button covers the chat window's send control - which sits in the
-           same bottom-start corner in RTL - and swallows the tap. */
-        z-index: 900;
+        /* Above the sticky top menu (1000), or the header paints over the open
+           panel - the panel cannot lift itself out of this, since position
+           plus a z-index here makes :host a stacking context its children are
+           sealed inside.
+
+           This used to sit at 900 to stay under the CDK overlay container,
+           which is also 1000, so that the button could not cover the chat
+           window's send control - same bottom-start corner in RTL - and
+           swallow the tap. That is now handled properly: the whole widget is
+           behind @if (!dialogOpen()) and leaves the DOM while a dialog is up,
+           so there is nothing left to collide with.
+
+           Still below the toast (99999) and the two 9999 overlays, which are
+           meant to cover everything. */
+        z-index: 1100;
         display: flex;
         flex-direction: column;
         align-items: flex-start;

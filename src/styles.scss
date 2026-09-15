@@ -32,6 +32,20 @@ html, body {
     width: 100%;
     padding: 12px;
   }
+
+  /* Phone text reads from arm's length on a screen a fraction the size of a
+     monitor, so the base it is all measured from starts larger here. Every
+     font-size in the app is in rem, so this one number moves all of them
+     together and the proportions between them never change.
+
+     A percentage, not 18px: this multiplies whatever the visitor set as their
+     own font size in the phone's settings instead of overriding it. Someone who
+     asked their phone for large text gets large text, which a px value here
+     would silently take away from them. 112.5% is 18px against the usual
+     16px default. */
+  html {
+    font-size: 112.5%;
+  }
 }
 
 /* =========================

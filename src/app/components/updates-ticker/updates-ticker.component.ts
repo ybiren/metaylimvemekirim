@@ -149,7 +149,7 @@ const SPEED = 55;
 
       .ticker__item {
         padding: 0 10px;
-        font-size: 13.5px;
+        font-size: 0.84375rem;
         color: #0b2948;
         text-decoration: none;
         white-space: nowrap;
@@ -173,7 +173,7 @@ const SPEED = 55;
 
       .ticker__dot {
         color: #9db4c8;
-        font-size: 12px;
+        font-size: 0.75rem;
       }
 
       /* RTL: the run starts at the right, so it has to travel rightwards for
@@ -195,7 +195,7 @@ const SPEED = 55;
         }
         .ticker__item {
           padding: 0 8px;
-          font-size: 12.5px;
+          font-size: 0.78125rem;
         }
         .ticker__viewport::before,
         .ticker__viewport::after {
@@ -206,7 +206,7 @@ const SPEED = 55;
       @media (max-width: 340px) {
         .ticker__item {
           padding: 0 7px;
-          font-size: 12px;
+          font-size: 0.75rem;
         }
       }
 

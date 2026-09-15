@@ -164,7 +164,7 @@ type AdminReport = {
         white-space: pre-wrap;
         word-break: break-word;
         font-family: inherit;
-        font-size: 14px;
+        font-size: 0.875rem;
         line-height: 1.6;
         max-height: 40vh;
         overflow: auto;

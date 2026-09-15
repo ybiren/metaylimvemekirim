@@ -9,7 +9,7 @@ import { Component, Input } from '@angular/core';
       color: #fff;
       padding: 12px 18px;
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 0.875rem;
       box-shadow: 0 4px 14px rgba(0,0,0,.3);
       animation: fadein .25s ease-out;
     }

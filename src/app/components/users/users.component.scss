@@ -122,7 +122,7 @@
 
 .name {
   display: block; /* inline elements ignore overflow/text-overflow */
-  font-size: 15.5px;
+  font-size: 0.96875rem;
   font-weight: 700;
   color: #222;
   white-space: nowrap;
@@ -134,14 +134,14 @@
 }
 
 .age {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: #333;
   white-space: nowrap;
 }
 
 .online {
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   font-weight: 700;
   color: #0a7a0a;
   white-space: nowrap;
@@ -165,7 +165,7 @@
   background-color: #fff;
 
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
   color: #222;
   text-decoration: none;
@@ -194,7 +194,7 @@
   border-radius: 999px;
   background: transparent;
 
-  font-size: 22px;
+  font-size: 1.375rem;
   line-height: 1;
   color: #9ca3af;
 
@@ -241,7 +241,7 @@
   background-color: #fff;
 
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
 
   cursor: pointer;
@@ -253,7 +253,7 @@
 }
 
 .pager-info {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
   color: #333;
 }
@@ -266,7 +266,7 @@
 .no-users {
   text-align: center;
   padding: 24px 0;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 /* =====================================================
@@ -291,7 +291,7 @@
 
   /* header labels must not overflow the narrow fixed columns */
   .u-row--head {
-    font-size: 12.5px;
+    font-size: 0.78125rem;
   }
 
   /* stack the online badge under the name so both stay readable */
@@ -304,7 +304,7 @@
   .btn-like {
     width: 32px;
     height: 32px;
-    font-size: 19px;
+    font-size: 1.1875rem;
   }
 
   .avatar {
@@ -313,15 +313,15 @@
   }
 
   .name {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
 
   .age {
-    font-size: 13.5px;
+    font-size: 0.84375rem;
   }
 
   .online {
-    font-size: 12px;
+    font-size: 0.75rem;
   }
 
   .btn-profile {
@@ -330,7 +330,7 @@
     min-width: 0;
     height: 32px;
     padding: 0 6px;
-    font-size: 12.5px;
+    font-size: 0.78125rem;
     border-radius: 8px;
   }
 }
@@ -343,18 +343,18 @@
   }
 
   .u-row--head {
-    font-size: 11.5px;
+    font-size: 0.71875rem;
   }
 
   .btn-like {
     width: 28px;
     height: 28px;
-    font-size: 17px;
+    font-size: 1.0625rem;
   }
 
   .btn-profile {
     height: 30px;
-    font-size: 12px;
+    font-size: 0.75rem;
     padding: 0 4px;
   }
 }

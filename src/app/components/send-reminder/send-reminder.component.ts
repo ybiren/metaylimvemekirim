@@ -139,7 +139,7 @@ export interface SendReminderDialogData {
 
       .reminder-card__title {
         font-weight: 700;
-        font-size: 15px;
+        font-size: 0.9375rem;
       }
 
       /* Close (X) button — currently top-right */
@@ -150,7 +150,7 @@ export interface SendReminderDialogData {
         background: transparent;
         border: none;
         color: #ffffff;
-        font-size: 20px;
+        font-size: 1.25rem;
         line-height: 1;
         cursor: pointer;
         padding: 4px;
@@ -165,7 +165,7 @@ export interface SendReminderDialogData {
 
       label {
         font-weight: 600;
-        font-size: 13px;
+        font-size: 0.8125rem;
       }
 
       input,
@@ -185,7 +185,7 @@ export interface SendReminderDialogData {
 
       .err {
         color: #b00020;
-        font-size: 11px;
+        font-size: 0.6875rem;
       }
 
       .actions {

@@ -94,7 +94,7 @@
   max-width: 33.33%;
   min-width: 0;      /* קריטי למובייל */
   height: 42px;
-  font-size: 16px;   /* מונע zoom באייפון */
+  font-size: 1rem;   /* מונע zoom באייפון */
 }
 
 /* Profile image preview */
@@ -152,7 +152,7 @@ img.avatar-preview {
 
 .remove-btn {
   font: inherit;
-  font-size: 12px;
+  font-size: 0.75rem;
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid rgba(0,0,0,.15);

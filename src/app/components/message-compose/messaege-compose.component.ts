@@ -50,7 +50,7 @@ type ComposeDialogData = { fromId: number; toId: number; toName?: string };
     .sheet { background:#fff; border-radius:12px; border:1px solid #e5e7eb; }
     .hdr { display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid #f0f0f0; }
     .muted { color:#9aa3af; }
-    .x { border:none; background:transparent; font-size:18px; cursor:pointer; }
+    .x { border:none; background:transparent; font-size:1.125rem; cursor:pointer; }
     .body { padding:14px; display:flex; flex-direction:column; gap:10px; }
     .lbl { font-weight:600; }
     .area { width:100%; border:1px solid #e5e7eb; border-radius:10px; padding:10px 12px; resize:vertical; }

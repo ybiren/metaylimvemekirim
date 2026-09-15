@@ -193,7 +193,7 @@ type UpsertDto = Omit<IUpdateLink, 'id'>;
       margin-bottom:10px;
     }
 
-    .meta{ display:flex; gap:10px; font-size:13px; opacity:.85; }
+    .meta{ display:flex; gap:10px; font-size:0.8125rem; opacity:.85; }
     .err{ color:#b00020; opacity:1; }
 
     .table{
@@ -247,7 +247,7 @@ type UpsertDto = Omit<IUpdateLink, 'id'>;
     .badges{ display:flex; gap:6px; margin-top:4px; }
 
     .badge{
-      font-size:11px;
+      font-size:0.6875rem;
       padding:2px 8px;
       border-radius:999px;
       border:1px solid #ddd;

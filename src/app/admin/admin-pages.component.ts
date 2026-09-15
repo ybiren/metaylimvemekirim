@@ -165,7 +165,7 @@ type PageContentDto = { path: string; title: string; html: string };
       direction:rtl;
       text-align:right;
       min-height:520px;
-      font-size:16px;
+      font-size:1rem;
       line-height:1.6;
     }
 
@@ -197,7 +197,7 @@ type PageContentDto = { path: string; title: string; html: string };
     .html-box textarea{
       width:100%;
       font-family:monospace;
-      font-size:14px;
+      font-size:0.875rem;
       margin-top:10px;
       padding:10px;
     }

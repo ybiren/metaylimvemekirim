@@ -48,22 +48,27 @@ export interface ReportProfileDialogData {
   `,
   styles: [`
     .wrap{
+      /* Without this the padding is added ON TOP of the width, so the card is
+      100vw + 32px on a phone - the right-hand edge, and everything anchored
+      to it in RTL, hangs off the screen. Same trap as .app-shell in
+      styles.scss. */
+      box-sizing:border-box;
       font-family: Arial, Helvetica, sans-serif;
       padding:16px;
       width:min(400px, 92vw);
       background:#fff;
       border-radius:16px;
     }
-    .title{ margin:0 0 4px; font-size:18px; font-weight:800; color:#111827; }
-    .sub{ margin:0 0 12px; color:#0B3C5D; font-size:13px; font-weight:600; }
-    .lbl{ display:block; margin:10px 0 4px; font-size:13px; font-weight:700; color:#374151; }
+    .title{ margin:0 0 4px; font-size:1.125rem; font-weight:800; color:#111827; }
+    .sub{ margin:0 0 12px; color:#0B3C5D; font-size:0.8125rem; font-weight:600; }
+    .lbl{ display:block; margin:10px 0 4px; font-size:0.8125rem; font-weight:700; color:#374151; }
     .select, .textarea{
       width:100%;
       box-sizing:border-box;
       padding:10px 12px;
       border:1px solid #e5e7eb;
       border-radius:12px;
-      font-size:14px;
+      font-size:0.875rem;
       font-family: Arial, Helvetica, sans-serif;
       background:#fff;
       color:#111827;

@@ -286,7 +286,7 @@ type AlbumDto = {
       margin-bottom:10px;
     }
 
-    .meta{ display:flex; gap:10px; align-items:center; font-size:13px; opacity:.85; }
+    .meta{ display:flex; gap:10px; align-items:center; font-size:0.8125rem; opacity:.85; }
     .err{ color:#b00020; opacity:1; }
 
     .table{
@@ -353,7 +353,7 @@ type AlbumDto = {
       white-space:nowrap;
     }
     .desc{
-      font-size:12px;
+      font-size:0.75rem;
       opacity:.7;
       overflow:hidden;
       text-overflow:ellipsis;
@@ -364,7 +364,7 @@ type AlbumDto = {
     .badges{ display:flex; gap:6px; margin-top:4px; }
 
     .badge{
-      font-size:11px;
+      font-size:0.6875rem;
       padding:2px 8px;
       border-radius:999px;
       border:1px solid #ddd;
@@ -476,7 +476,7 @@ type AlbumDto = {
       position:absolute;
       bottom:4px;
       inset-inline-start:4px;
-      font-size:11px;
+      font-size:0.6875rem;
       padding:1px 6px;
       border-radius:999px;
       background:rgba(0,0,0,.6);

@@ -70,7 +70,7 @@ import { PwaStateService } from '../../services/pwa-state.service';
       border-radius: 16px;
 
       padding: 14px 24px;
-      font-size: 16px;
+      font-size: 1rem;
       font-weight: 600;
 
       cursor: pointer;
@@ -104,7 +104,7 @@ import { PwaStateService } from '../../services/pwa-state.service';
       border-radius: 14px;
 
       padding: 12px 22px;
-      font-size: 15px;
+      font-size: 0.9375rem;
       font-weight: 600;
 
       cursor: pointer;
@@ -144,7 +144,7 @@ import { PwaStateService } from '../../services/pwa-state.service';
 
     .installed-note {
       margin: 16px 0 0;
-      font-size: 15px;
+      font-size: 0.9375rem;
       font-weight: 600;
       color: #1f2937;
     }
@@ -162,18 +162,18 @@ import { PwaStateService } from '../../services/pwa-state.service';
       border-radius: 14px;
       padding: 12px 16px;
 
-      font-size: 14px;
+      font-size: 0.875rem;
       line-height: 1.6;
       color: #24303f;
     }
 
     .ios-share {
-      font-size: 16px;
+      font-size: 1rem;
     }
 
     .blocked {
       margin: 12px 0 0;
-      font-size: 13.5px;
+      font-size: 0.84375rem;
       color: #b45309;
     }
   `],

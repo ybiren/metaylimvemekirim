@@ -52,7 +52,7 @@
   border: 0;
   background: transparent;
   color: inherit;
-  font-size: 20px;
+  font-size: 1.25rem;
   padding: 6px;
   border-radius: 10px;
   cursor: pointer;
@@ -69,7 +69,7 @@
     color: #fff;
   }
 }
-.chat__status { font-size: 12px; opacity: .85; }
+.chat__status { font-size: 0.75rem; opacity: .85; }
 .chat__status.online { opacity: 1; }
 
 /* Menu */
@@ -177,7 +177,7 @@
   padding: 8px 10px;
   border-radius: 10px;
 
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 800;
   color: #075e54;
   white-space: nowrap;
@@ -224,7 +224,7 @@
   margin-bottom: 8px;
 }
 .chat__date {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 800;
   color: rgba(0,0,0,.55);
 }
@@ -254,7 +254,7 @@
 }
 
 .msg__sender {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 900;
   margin-bottom: 4px;
   color: #1b7f5a;
@@ -279,7 +279,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   opacity: .7;
   white-space: nowrap;
 }
@@ -288,7 +288,7 @@
   background: transparent;
   cursor: pointer;
   padding: 0 2px;
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1;
   opacity: .55;
 }
@@ -303,13 +303,13 @@
 .msg__ticks.read {
   color: #34b7f1;
   font-weight: 900;
-  font-size: 13px;
+  font-size: 0.8125rem;
   -webkit-text-stroke: 0.4px #34b7f1;
 }
 
 .chat__typing {
   margin: 8px 0;
-  font-size: 12px;
+  font-size: 0.75rem;
   opacity: .7;
 }
 
@@ -324,7 +324,7 @@
   background: #fff7d6;
   border-top: 1px solid var(--border);
 
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 800;
   color: #7a6a00;
 }
@@ -333,7 +333,7 @@
   border: 0;
   background: transparent;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: inherit;
   padding: 2px 6px;
 }
@@ -363,7 +363,7 @@
   border: 1px solid #c9d6cf;
   background: #fff;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1;
 }
 .chat__emoji-btn:hover { background: rgba(0,0,0,.04); }
@@ -409,7 +409,7 @@
   background: transparent;
   border-radius: 10px;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 .chat__emoji-item:hover { background: rgba(0,0,0,.06); }
 

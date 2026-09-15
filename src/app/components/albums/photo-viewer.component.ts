@@ -105,7 +105,7 @@ export interface IViewerPhoto {
 
       background: rgba(255, 255, 255, 0.15);
       color: #fff;
-      font-size: 20px;
+      font-size: 1.25rem;
       line-height: 1;
       cursor: pointer;
     }
@@ -122,7 +122,7 @@ export interface IViewerPhoto {
 
       background: rgba(255, 255, 255, 0.15);
       color: #fff;
-      font-size: 34px;
+      font-size: 2.125rem;
       line-height: 1;
       cursor: pointer;
     }
@@ -137,7 +137,7 @@ export interface IViewerPhoto {
       transform: translateX(50%);
 
       color: #fff;
-      font-size: 13px;
+      font-size: 0.8125rem;
       background: rgba(255, 255, 255, 0.15);
       padding: 4px 12px;
       border-radius: 999px;
@@ -156,7 +156,7 @@ export interface IViewerPhoto {
       .viewer__nav {
         width: 36px;
         height: 52px;
-        font-size: 26px;
+        font-size: 1.625rem;
         opacity: 0.75;
       }
     }

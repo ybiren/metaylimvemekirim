@@ -275,7 +275,7 @@ type AdminBanner = {
       }
       .drawer__title {
         font-weight: 800;
-        font-size: 18px;
+        font-size: 1.125rem;
       }
       .drawer__sub {
         opacity: 0.7;
@@ -348,18 +348,18 @@ type AdminBanner = {
       }
       .fileName {
         opacity: 0.85;
-        font-size: 13px;
+        font-size: 0.8125rem;
       }
 
       .hint {
         opacity: 0.75;
-        font-size: 13px;
+        font-size: 0.8125rem;
         margin-top: -2px;
       }
 
       .err {
         color: #c62828;
-        font-size: 13px;
+        font-size: 0.8125rem;
         margin-top: -4px;
       }
 

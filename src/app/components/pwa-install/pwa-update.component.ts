@@ -24,7 +24,7 @@ import { PwaStateService } from '../../services/pwa-state.service';
       border:none;
       border-radius:16px;
       padding:14px 24px;
-      font-size:16px;
+      font-size:1rem;
       font-weight:700;
       cursor:pointer;
     }

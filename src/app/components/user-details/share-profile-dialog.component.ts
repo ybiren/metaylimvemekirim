@@ -64,6 +64,11 @@ export interface ShareProfileDialogData {
   `,
   styles: [`
     .wrap{ 
+  /* Without this the padding is added ON TOP of the width, so the card is
+  100vw + 32px on a phone - the right-hand edge, and everything anchored
+  to it in RTL, hangs off the screen. Same trap as .app-shell in
+  styles.scss. */
+  box-sizing:border-box;
   font-family: Arial, Helvetica, sans-serif;
   padding:16px; 
   width:min(360px, 92vw); 
@@ -73,14 +78,14 @@ export interface ShareProfileDialogData {
 
 .title{ 
   margin:0 0 4px; 
-  font-size:18px; 
+  font-size:1.125rem; 
   font-weight:800; 
 }
 
 .sub{ 
   margin:0 0 12px; 
   color:#0B3C5D; 
-  font-size:13px;
+  font-size:0.8125rem;
   font-weight:600; 
 }
 
@@ -121,7 +126,7 @@ export interface ShareProfileDialogData {
   border:1px solid #e5e7eb;
   border-radius:12px;
   direction:ltr;
-  font-size:12px;
+  font-size:0.75rem;
   font-family: Arial, Helvetica, sans-serif; /* explicit for inputs */
   background:#fff;
   color:#111827;

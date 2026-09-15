@@ -25,6 +25,11 @@ export type DeleteProfileResult = 'yes' | 'no';
   `,
   styles: [`
     .wrap{
+      /* Without this the padding is added ON TOP of the width, so the card is
+      100vw + 32px on a phone - the right-hand edge, and everything anchored
+      to it in RTL, hangs off the screen. Same trap as .app-shell in
+      styles.scss. */
+      box-sizing:border-box;
       font-family: Arial, Helvetica, sans-serif;
       padding:16px;
       width:min(360px, 92vw);
@@ -34,7 +39,7 @@ export type DeleteProfileResult = 'yes' | 'no';
 
     .title{
       margin:0 0 16px;
-      font-size:18px;
+      font-size:1.125rem;
       font-weight:800;
       text-align:center;
     }
