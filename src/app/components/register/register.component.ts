@@ -3,7 +3,7 @@ import { Component, DestroyRef, OnInit, OnDestroy, inject, signal } from '@angul
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { RegisterService } from '../../services/register.service';
@@ -34,7 +34,7 @@ type ServerExtraItem = {
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss'],
 })
