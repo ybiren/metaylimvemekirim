@@ -49,6 +49,10 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   readonly EDIT_WINDOW_MS = EDIT_WINDOW_MS;
 
   roomName = '';
+
+  /** The member who looks after this room. Empty for a DM, and for a room
+   *  nobody has been assigned to yet. */
+  adminName = '';
   peerName= '';
   apiBase = environment.apibase;
 
@@ -91,7 +95,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   private injector = inject(Injector);
 
   private dlgData = inject(DIALOG_DATA, { optional: true }) as
-    | { peerId?: number; roomName?: string, peerName?: string }
+    | { peerId?: number; roomName?: string, peerName?: string, adminName?: string }
     | null;
 
   // -------------------------
@@ -125,6 +129,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     // Resolve peerId and room name from @Input or dialog data
     if (this.peerId == null) this.peerId = this.dlgData?.peerId;
     this.roomName = this.dlgData?.roomName ?? '';
+    this.adminName = this.dlgData?.adminName ?? '';
     this.peerName = this.dlgData?.peerName ?? '';
 
 

@@ -12,6 +12,9 @@ export interface ChatRoom {
   room_id: string;
   from_user_id: number;
   to_user_id: number;
+  /** The member who looks after the room, resolved by the server. */
+  user_id?: number | null;
+  admin_name?: string | null;
 }
 
 @Component({
@@ -56,10 +59,10 @@ export class ChatSystemRoomsComponent {
       });
   }
 
-  openChat(chatId: number, roomName: string) {
+  openChat(chatId: number, roomName: string, adminName?: string | null) {
     const isMobile = isMobileLayout();
     this.dialog.open(ChatWindowComponent, {
-          data: { peerId: chatId , roomName },
+          data: { peerId: chatId , roomName, adminName: adminName ?? '' },
           panelClass: isMobile ? 'im-dialog--mobile' : 'im-dialog--desktop',
           ...(isMobile
             ? { width: '100vw', height: '100vh' }

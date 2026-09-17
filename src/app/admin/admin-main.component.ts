@@ -15,6 +15,7 @@ import { AdminAuthService } from '../services/admin-auth.service';
       <a routerLink="/admin/banners" routerLinkActive="active">Admin Banners</a>
       <a routerLink="/admin/albums" routerLinkActive="active">Admin Albums</a>
       <a routerLink="/admin/reports" routerLinkActive="active">Admin Reports</a>
+      <a routerLink="/admin/rooms" routerLinkActive="active">Chat Rooms</a>
 
       <span class="admin-menu__who">
         @if (auth.adminName()) { {{ auth.adminName() }} }

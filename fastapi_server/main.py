@@ -32,6 +32,7 @@ from routes.admin_updates import admin_updates_router, public_updates_router
 from routes.admin_pages import public_pages_router,admin_pages_router
 from routes.admin_users import admin_users_router
 from routes.admin_reports import admin_reports_router
+from routes.admin_rooms import admin_rooms_router
 from routes.admin_banners import admin_banners_router
 from routes.admin_albums import admin_albums_router, public_albums_router
 from routes.mail_sender import mail_sender_router
@@ -144,6 +145,7 @@ app.include_router(public_pages_router)
 app.include_router(admin_pages_router, dependencies=_admin_only)
 app.include_router(admin_users_router, dependencies=_admin_only)
 app.include_router(admin_reports_router, dependencies=_admin_only)
+app.include_router(admin_rooms_router, dependencies=_admin_only)
 app.include_router(admin_banners_router, dependencies=_admin_only)
 app.include_router(admin_albums_router, dependencies=_admin_only)
 app.include_router(public_albums_router)

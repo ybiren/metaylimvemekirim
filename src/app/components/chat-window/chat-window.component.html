@@ -18,6 +18,11 @@
           <div class="chat__status" [class.online]="isPeerOnline()">
             {{ isPeerOnline() ? 'מחובר/ת' : 'לא מחובר/ת' }}
           </div>
+        } @else if (adminName) {
+          <!-- Same slot the online state uses in a DM: a room's equivalent of
+               "who am I talking to" is who looks after it. Nothing is shown for
+               a room with no admin, rather than an empty label. -->
+          <div class="chat__status">אחראי/ת: {{ adminName }}</div>
         }
       </div>
     </div>

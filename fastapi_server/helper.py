@@ -88,12 +88,32 @@ def get_user_by_email_pass(db, c_email: str, password: str):
     return user
 
 def get_system_chat_rooms(db: Session):
-    return (
-        db.query(ChatRoom)
+    """The system rooms, each with the name of the member who looks after it.
+
+    An outer join, so a room with no admin - or one whose admin has since been
+    deleted - is still a room, just without a name to show.
+    """
+    rows = (
+        db.query(ChatRoom, User.name)
+        .outerjoin(User, User.id == ChatRoom.user_id)
         .filter(ChatRoom.id < 0)
         .order_by(ChatRoom.id)
         .all()
     )
+
+    # Dicts rather than ORM objects: admin_name is not a column, and the
+    # response schema has to be able to read it off whatever this returns.
+    return [
+        {
+            "id": room.id,
+            "room_id": room.room_id,
+            "from_user_id": room.from_user_id,
+            "to_user_id": room.to_user_id,
+            "user_id": room.user_id,
+            "admin_name": admin_name,
+        }
+        for room, admin_name in rows
+    ]
 
 
 def calc_age_py(day, month, year):

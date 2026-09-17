@@ -39,14 +39,16 @@
         role="listitem"
         *ngFor="let r of rooms(); trackBy: trackById"
         type="button"
-        (click)="openChat(r.id, r.room_id)"
+        (click)="openChat(r.id, r.room_id, r.admin_name)"
         [attr.aria-label]="'פתח חדר ' + r.room_id"
       >
         <span class="room__icon" aria-hidden="true">#</span>
 
         <span class="room__content">
           <span class="room__title">{{ r.room_id }}</span>
-          <span class="room__meta">צ׳אט מערכת</span>
+          <span class="room__meta">
+            {{ r.admin_name ? 'אחראי/ת: ' + r.admin_name : 'צ׳אט מערכת' }}
+          </span>
         </span>
 
         <span class="room__chev" aria-hidden="true">›</span>
