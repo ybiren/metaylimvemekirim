@@ -126,6 +126,9 @@ export interface ShareProfileDialogData {
   border:1px solid #e5e7eb;
   border-radius:12px;
   direction:ltr;
+  /* Below 16px the browser zooms the page in when this is focused and does not
+     zoom back out, which pushes the dialog's own buttons off the screen. Lifted
+     only on a phone, so the desktop size is unchanged. */
   font-size:0.75rem;
   font-family: Arial, Helvetica, sans-serif; /* explicit for inputs */
   background:#fff;
@@ -164,7 +167,12 @@ export interface ShareProfileDialogData {
   border-radius:999px;
   background:#e5e7eb;
   margin:4px auto 10px;
-}`]
+}
+
+@media (max-width: 600px) {
+  .link input { font-size: max(0.75rem, 16px); }
+}
+`]
 })
 export class ShareProfileDialogComponent {
   private dialogRef = inject<DialogRef<ShareChannel>>(DialogRef);

@@ -74,6 +74,12 @@ export interface ReportProfileDialogData {
       color:#111827;
     }
     .textarea{ resize:vertical; }
+    /* Lifted to the 16px floor only on a phone, where anything smaller makes
+       the browser zoom the page in on focus and never zoom back out. Desktop
+       keeps the size the design chose. */
+    @media (max-width: 600px) {
+      .select, .textarea { font-size: max(0.875rem, 16px); }
+    }
     .btns{ display:flex; gap:10px; margin-top:16px; }
     .btn{ border:0; border-radius:12px; padding:12px; cursor:pointer; font-weight:800; flex:1 1 0; }
     .send{ background:#d9534f; color:#fff; }

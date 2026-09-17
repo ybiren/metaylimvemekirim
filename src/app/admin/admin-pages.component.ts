@@ -197,6 +197,8 @@ type PageContentDto = { path: string; title: string; html: string };
     .html-box textarea{
       width:100%;
       font-family:monospace;
+      /* See the note in styles.scss: under 16px a phone zooms the page in on
+         focus. Lifted in the media query below, desktop left alone. */
       font-size:0.875rem;
       margin-top:10px;
       padding:10px;
@@ -213,7 +215,10 @@ type PageContentDto = { path: string; title: string; html: string };
         grid-template-columns:1fr;
       }
     }
-  `]
+      @media (max-width: 600px) {
+      .html-box textarea { font-size: max(0.875rem, 16px); }
+    }
+`]
 })
 export class AdminPagesComponent {
 

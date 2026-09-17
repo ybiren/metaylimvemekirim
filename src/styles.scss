@@ -46,6 +46,23 @@ html, body {
   html {
     font-size: 112.5%;
   }
+
+  /* Never let a focusable field be smaller than 16px on a phone.
+     Chrome and Safari zoom the whole page in when one is focused below that,
+     and the page does not zoom back out: the layout is then wider than the
+     screen, so whatever sits at the ends of a row - the chat's send and emoji
+     buttons, for instance - is pushed off the edge and the visitor has to pan
+     around to find it.
+     Form controls do not inherit the page font, so every field in this app was
+     sitting on the browser's own ~13px default and every one of them did this.
+     max() rather than 1rem alone: a visitor whose browser default is small
+     would land back under 16px and get the zoom again. */
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+    font-size: max(1rem, 16px);
+  }
 }
 
 /* =========================

@@ -422,6 +422,17 @@
   border-radius: 999px;
   background: #fff;
   outline: none;
+
+  /* Form controls do not inherit the page's font, so without this the box was
+     left on the browser's own ~13px default. Chrome and Safari zoom the whole
+     page in when a field smaller than 16px is focused, and the zoom is what put
+     the send and emoji buttons off the edges of the screen the moment the
+     keyboard opened - the composer itself fits perfectly well.
+     max() rather than 1rem alone: a visitor whose browser default is small
+     would land back under 16px and get the zoom again. */
+  font-family: inherit;
+  font-size: max(1rem, 16px);
+  line-height: 1.3;
 }
 
 .chat__send {
