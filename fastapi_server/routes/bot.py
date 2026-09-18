@@ -10,12 +10,18 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 import httpx
 from dotenv import load_dotenv
-from fastapi import APIRouter, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel
+from sqlalchemy import func, or_
+from sqlalchemy.orm import Session
+
+from db import get_db
+from models.user import User
+from ws.notify import LAST_TOUCH, TTL_SEC
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -49,6 +55,14 @@ STT_PROMPT = (
 # The knowledge base never changes while the process runs - read it once
 # instead of hitting the disk on every question.
 _KNOWLEDGE = (BASE_DIR / "knowledge" / "bot_knowledge.md").read_text(encoding="utf-8")
+
+# A second document the bot answers from but the help page does not show.
+# /api/bot/knowledge returns _KNOWLEDGE alone; the prompt below gets both.
+#
+# It holds the WhatsApp joining links and a phone number: the right things to
+# give somebody who asks, and the wrong things to publish as an open list on a
+# page search engines crawl.
+_USEFUL = (BASE_DIR / "knowledge" / "useful_info.md").read_text(encoding="utf-8")
 
 MAX_QUESTION_CHARS = 500
 MAX_HISTORY_TURNS = 6
@@ -97,7 +111,84 @@ SYSTEM_PROMPT = f"""אתה הבוט של אתר "מטיילים ומכירים" 
 
 --- בסיס הידע ---
 {_KNOWLEDGE}
+
+{_USEFUL}
 --- סוף בסיס הידע ---"""
+
+# Counted fresh per question and appended to the system prompt above. Not part
+# of bot_knowledge.md on purpose: that file is what the help page renders, and
+# a number frozen into a printed page is a number that is wrong by tomorrow.
+LIVE_RULE = """
+11. בהמשך מופיעים נתונים מספריים עדכניים על האתר. הם חלק מבסיס הידע לכל דבר -
+    השתמש בהם כדי לענות על שאלות כמה משתמשים רשומים, כמה נשים או גברים רשומים,
+    וכמה נמצאים כרגע באתר. אל תמציא מספרים שאינם מופיעים שם, ואל תחשב מהם
+    אחוזים או מגמות."""
+
+# Presence is a dictionary in ws/notify.py, not a column, so "how many are here
+# now" cannot be a WHERE clause - the ids come from memory and only the gender
+# split is a query. The same source feeds the "כרגע באתר" badge, so the bot and
+# the badge can never disagree.
+#
+# Cached because the presence TTL is 90 seconds: counting more often than that
+# buys no accuracy and puts four COUNTs on every question asked.
+STATS_TTL_SEC = 60
+_stats_cache: Dict[str, Any] = {"at": 0.0, "text": ""}
+
+MALE = 1
+FEMALE = 2
+
+
+def _live_stats(db: Session) -> str:
+    """The site's figures, as a block for the prompt."""
+    now = time.time()
+    if _stats_cache["text"] and now - _stats_cache["at"] < STATS_TTL_SEC:
+        return _stats_cache["text"]
+
+    # "Registered" means a member somebody could actually meet: a deleted,
+    # blocked or frozen account is not on the site, so counting it would make
+    # the number an answer to a question nobody asked.
+    real = db.query(User).filter(
+        or_(User.isdeleted.is_(False), User.isdeleted.is_(None)),
+        or_(User.isfreezed.is_(False), User.isfreezed.is_(None)),
+        User.is_blocked.is_(False),
+    )
+
+    by_gender = dict(
+        real.with_entities(User.gender, func.count(User.id)).group_by(User.gender).all()
+    )
+    women = by_gender.get(FEMALE, 0)
+    men = by_gender.get(MALE, 0)
+    # Deliberately the sum of the split rather than its own COUNT: two numbers
+    # that do not add up are worse than either of them being slightly stale.
+    total = sum(by_gender.values())
+
+    online_ids = [uid for uid, seen in LAST_TOUCH.items() if now - seen <= TTL_SEC]
+
+    online_women = online_men = 0
+    if online_ids:
+        online = dict(
+            real.filter(User.id.in_(online_ids))
+            .with_entities(User.gender, func.count(User.id))
+            .group_by(User.gender)
+            .all()
+        )
+        online_women = online.get(FEMALE, 0)
+        online_men = online.get(MALE, 0)
+
+    text = (
+        "\n--- נתונים עדכניים על האתר ---\n"
+        f"סך המשתמשים הרשומים: {total}\n"
+        f"נשים רשומות: {women}\n"
+        f"גברים רשומים: {men}\n"
+        f"נמצאים כרגע באתר: {online_women + online_men}\n"
+        f"נשים כרגע באתר: {online_women}\n"
+        f"גברים כרגע באתר: {online_men}\n"
+        "--- סוף נתונים עדכניים ---"
+    )
+
+    _stats_cache["at"] = now
+    _stats_cache["text"] = text
+    return text
 
 bot_router = APIRouter(prefix="/api/bot", tags=["bot"])
 
@@ -135,7 +226,7 @@ def _client_ip(request: Request) -> str:
 
 
 @bot_router.post("/ask")
-async def ask(body: AskBody, request: Request):
+async def ask(body: AskBody, request: Request, db: Session = Depends(get_db)):
     if not GROQ_API_KEY:
         # Calling Groq with an empty bearer only returns a confusing 401 - say
         # plainly that the server was never configured.
@@ -157,7 +248,18 @@ async def ask(body: AskBody, request: Request):
     # request is billed by us, not by the caller.
     history = body.history[-MAX_HISTORY_TURNS:]
 
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    # The figures ride along with every question rather than only the ones that
+    # look like they need them: deciding that in advance means guessing at the
+    # phrasing, which is the thing the model is better at than a regex.
+    try:
+        live = LIVE_RULE + "\n" + _live_stats(db)
+    except Exception as exc:
+        # A database that is having a bad minute must not take the bot down with
+        # it - every other question it answers needs no database at all.
+        log.warning("Could not read the site figures: %s", exc)
+        live = ""
+
+    messages = [{"role": "system", "content": SYSTEM_PROMPT + live}]
     messages += [{"role": t.role, "content": t.content} for t in history]
     messages.append({"role": "user", "content": question})
 
