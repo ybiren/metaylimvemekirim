@@ -17,6 +17,7 @@ import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { ChatService, ChatMsg, EDIT_WINDOW_MS } from '../../services/chat.service';
+import { isMobileLayout } from '../../core/is-mobile';
 import { PresenceService } from '../../services/presence.service';
 import { UsersService } from '../../services/users.service';
 import { getCurrentUserId } from '../../core/current-user';
@@ -170,8 +171,13 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     );
     this.isBlocked.set(!!blocked);
 
-    // focus input when opening
-    queueMicrotask(() => this.inputEl?.nativeElement?.focus());
+    // Focus the box on opening - but not on a phone, where focusing it throws
+    // the keyboard up over half the screen before the visitor has even read
+    // what is in the room. They tap the box when they want to write. On a
+    // desktop there is no keyboard to appear, so the cursor is a free courtesy.
+    if (!isMobileLayout()) {
+      queueMicrotask(() => this.inputEl?.nativeElement?.focus());
+    }
   }
 
   ngOnDestroy() {
