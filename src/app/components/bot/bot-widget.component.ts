@@ -81,7 +81,11 @@ const FAB_POS_KEY = 'bot-fab-offset';
         <div class="bot-panel__log" #log>
           @for (m of messages(); track $index) {
             <div class="bot-msg" [class.bot-msg--user]="m.role === 'user'">
-              <div class="bot-bubble">{{ m.text }}</div>
+              <div class="bot-bubble">@for (part of linkify(m.text); track $index) {@if (part.href) {<a
+                  class="bot-link"
+                  [href]="part.href"
+                  target="_blank"
+                  rel="noopener noreferrer">{{ part.text }}</a>} @else {{{ part.text }}}}</div>
 
               @if (m.role === 'assistant' && canSpeak()) {
                 <button
@@ -294,6 +298,14 @@ const FAB_POS_KEY = 'bot-fab-offset';
       .bot-msg--user .bot-bubble {
         background: #24a859;
         color: #fff;
+      }
+
+      .bot-link {
+        color: #1d4ed8;
+        text-decoration: underline;
+        /* A WhatsApp joining link has no spaces to break at, so without this it
+           would push the bubble wider than the panel. */
+        overflow-wrap: anywhere;
       }
 
       /* Read-aloud button next to each answer */
@@ -875,6 +887,62 @@ export class BotWidgetComponent implements AfterViewChecked, OnDestroy {
   }
 
   // ------------------------------------------------------------------ speech
+
+  /**
+   * Split an answer into plain runs and links, so the template can render the
+   * links as anchors.
+   *
+   * Segments rather than innerHTML with a marked-up string: this text comes
+   * back from a model, which in turn has been fed things visitors typed, and
+   * handing that to innerHTML is how a chat bubble becomes a script tag.
+   * Angular escapes every interpolated part here, so there is nothing to
+   * sanitise and nothing to get wrong.
+   *
+   * Results are cached by string: this runs on every change detection pass for
+   * every message on screen, and the answers do not change once they arrive.
+   */
+  private linkCache = new Map<string, { text: string; href?: string }[]>();
+
+  linkify(text: string): { text: string; href?: string }[] {
+    const cached = this.linkCache.get(text);
+    if (cached) return cached;
+
+    const parts: { text: string; href?: string }[] = [];
+    // Bare http(s) URLs - the prompt forbids Markdown, so that is the only
+    // shape a link arrives in.
+    const re = /https?:\/\/[^\s<>"']+/g;
+
+    let last = 0;
+    let m: RegExpExecArray | null;
+
+    while ((m = re.exec(text)) !== null) {
+      let url = m[0];
+
+      // A URL at the end of a sentence swallows the punctuation after it.
+      // Brackets only when unbalanced, so a query string keeps its own.
+      let trailing = '';
+      while (url.length && '.,;:!?'.includes(url[url.length - 1])) {
+        trailing = url[url.length - 1] + trailing;
+        url = url.slice(0, -1);
+      }
+      while (url.endsWith(')') && (url.match(/\(/g) || []).length < (url.match(/\)/g) || []).length) {
+        trailing = ')' + trailing;
+        url = url.slice(0, -1);
+      }
+
+      if (m.index > last) parts.push({ text: text.slice(last, m.index) });
+      if (url) parts.push({ text: url, href: url });
+      if (trailing) parts.push({ text: trailing });
+
+      last = m.index + m[0].length;
+    }
+
+    if (last < text.length) parts.push({ text: text.slice(last) });
+    if (!parts.length) parts.push({ text });
+
+    this.linkCache.set(text, parts);
+    return parts;
+  }
 
   toggleSpeak(index: number, text: string) {
     if (this.speaking() === index) {
