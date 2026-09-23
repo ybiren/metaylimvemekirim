@@ -39,6 +39,17 @@ admin_albums_router = APIRouter(prefix="/api/admin/albums", tags=["admin_albums"
 # mirroring how admin_pages.py pairs an admin router with a public one.
 public_albums_router = APIRouter(prefix="/api/albums", tags=["albums"])
 
+# Serving the picture bytes back to the admin screen cannot sit behind the
+# admin guard: the tiles and covers there are plain <img src="...">, and a
+# browser sends no X-Admin-Token on an image request - every picture came back
+# 401 the moment it was uploaded. So this one route lives on its own router
+# that main.py includes without the guard, the same arrangement
+# public_updates_router already uses for the home page ticker.
+#
+# Nothing is given away by it: the filename is a uuid nobody can guess, and for
+# an album that is visible the same bytes are already public under /api/albums.
+admin_albums_photo_router = APIRouter(prefix="/api/admin/albums", tags=["admin_albums"])
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 IMAGES_DIR = BASE_DIR / "data" / "images"
 
@@ -374,7 +385,7 @@ async def upload_album_photos(
 
 # ---------- Photos: SERVE ----------
 
-@admin_albums_router.get("/{album_id}/photos/{filename}")
+@admin_albums_photo_router.get("/{album_id}/photos/{filename}")
 def get_album_photo(album_id: int, filename: str, db: Session = Depends(get_db)):
     photo = (
         db.query(AlbumPhoto)
