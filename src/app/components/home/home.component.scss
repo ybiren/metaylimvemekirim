@@ -22,21 +22,84 @@
   direction: rtl;
   padding-right: 10px;
 
-  /* The admin html is injected with [innerHTML], so it never gets this
-     component's scoping attribute - ::ng-deep is what reaches inside it.
-     An embed carries a fixed width (YouTube hands out width="560"), which
-     overflows a phone. */
-  ::ng-deep iframe {
+  /* Everything below exists because this page is not written here: it is
+     whatever an admin pasted into the editor, carrying whatever dimensions
+     came with it. A camera photo, a YouTube embed handed out at width="560",
+     a table copied from a spreadsheet - each arrives sized for somewhere else
+     and none of it knows how wide the screen is. So the content is capped
+     here rather than trusted to fit.
+
+     The html is injected with [innerHTML], so it never gets this component's
+     scoping attribute - ::ng-deep is what reaches inside it. */
+
+  max-width: 100%;
+
+  /* A pasted URL is one long word and will not wrap on its own. */
+  overflow-wrap: break-word;
+
+  /* Anything with its own picture in it. Only the maximums are set, so both
+     dimensions stay auto and the browser scales the thing down to satisfy
+     them with the aspect ratio looking after itself - and something small is
+     still drawn at its own size rather than stretched up to the cap.
+
+     object-fit matters only if the pasted markup carries an explicit width: a
+     max-height on top of that would squash it, and contain letterboxes
+     instead. It does nothing to content that arrives unsized. */
+  ::ng-deep img,
+  ::ng-deep video,
+  ::ng-deep canvas,
+  ::ng-deep svg,
+  ::ng-deep iframe,
+  ::ng-deep embed,
+  ::ng-deep object {
     max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
   }
 
   /* Video keeps its shape instead of being letterboxed once the width is
-     capped. Left to video embeds, since a map or a form is not 16:9. */
+     capped. Left to video embeds, since a map or a form is not 16:9.
+
+     max-height is switched back off here on purpose. An iframe has no
+     intrinsic proportions, so aspect-ratio is the only thing holding the
+     shape: cap the height while the width is still 100% and the box simply
+     stops being 16:9 and the picture inside it distorts. A video laid out
+     from the width is never tall enough to need the cap anyway. */
   ::ng-deep iframe[src*='youtube'],
   ::ng-deep iframe[src*='vimeo'] {
     width: 100%;
     height: auto;
+    max-height: none;
     aspect-ratio: 16 / 9;
+  }
+
+  /* The blocks an editor hangs a pixel width on. */
+  ::ng-deep div,
+  ::ng-deep p,
+  ::ng-deep section,
+  ::ng-deep figure,
+  ::ng-deep blockquote,
+  ::ng-deep ul,
+  ::ng-deep ol {
+    max-width: 100%;
+  }
+
+  /* A table is the one thing that cannot be made narrower than its columns,
+     so it is given its own scrollbar instead of being allowed to push the
+     page sideways. display: block is what makes overflow apply to it. */
+  ::ng-deep table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  /* Preformatted text holds its own line breaks and would otherwise run off
+     the side for as long as the longest line. */
+  ::ng-deep pre,
+  ::ng-deep code {
+    max-width: 100%;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
   }
 }
 

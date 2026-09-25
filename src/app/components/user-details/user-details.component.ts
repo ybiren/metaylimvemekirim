@@ -195,7 +195,7 @@ export class UserDetailsComponent implements OnInit {
     const isMobile = isMobileLayout();
     this.dialog.open(ChatWindowComponent, {
       data: { peerId: this.id, peerName: this.user().name },
-      panelClass: isMobile ? 'im-dialog-mobile' : 'im-dialog-desktop',
+      panelClass: isMobile ? 'im-dialog--mobile' : 'im-dialog--desktop',
       ...(isMobile ? { width: '100vw', height: '100vh' } : { width: 'min(420px, 95vw)', height:'80vh' }),
     });
   }

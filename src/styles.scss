@@ -124,8 +124,25 @@ html, body {
 .cdk-overlay-container .im-dialog--mobile {
   width: 100vw !important;
   max-width: 100vw !important;
-  height: 100dvh !important;           /* dynamic viewport height for mobile */
+
+  /* Two declarations, and the order matters. dvh is what we want, but a
+     browser older than Chrome 108 does not know the unit and throws the whole
+     declaration away - leaving only the height: 100vh the Dialog.open() calls
+     set inline. On a phone vh is measured with the address bar hidden, so that
+     is taller than the screen actually shows, and the bottom of the dialog -
+     the composer, with the send and emoji buttons - sat below the fold with no
+     way to scroll to it. That is the "old smartphone" case.
+
+     100% is the honest fallback: the pane's parent is .cdk-overlay-container,
+     which the CDK pins with position: fixed and inset: 0, and a fixed box on
+     mobile is laid out against the visible area rather than the vh one. New
+     browsers read past it to dvh and track the address bar as it comes and
+     goes. */
+  height: 100% !important;
+  max-height: 100% !important;
+  height: 100dvh !important;
   max-height: 100dvh !important;
+
   margin: 0 !important;
   border-radius: 0 !important;
 }
